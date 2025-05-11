@@ -31,7 +31,7 @@ export default function UniversityIITDelhiPage() {
     {
       title: "Artificial Intelligence",
       description: "Explore the fascinating world of AI, including machine learning, deep learning, and natural language processing. Relevant courses can be found within Minor Degrees.",
-      href: "/university/iit-delhi/academics/minor-degrees", 
+      href: "/university/iit-delhi/artificial-intelligence", 
       icon: Brain,
       actionText: "Learn More"
     },

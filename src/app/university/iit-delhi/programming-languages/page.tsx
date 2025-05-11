@@ -29,6 +29,33 @@ const resourceCategories = [
   { id: "other-resources", title: "Other Resources", icon: FileText },
 ];
 
+const languageBooks: Record<string, string[]> = {
+  cpp: [
+    "The C++ Programming Language",
+    "C++ Software Design",
+    "C++23 Best Practices",
+    "C++ Concurrency in Action"
+  ],
+  python: [
+    "Python Crash Course",
+    "Learning Scientific Programming with Python",
+    "Python Distilled",
+    "Python for Data Analysis"
+  ],
+  rust: [
+    "The Rust Programming Language",
+    "Rust for Rustaceans",
+    "Idiomatic Rust",
+    "Rust by Example",
+    "Programming Rust",
+    "Rust in Action"
+  ],
+  r: [
+    "The R Programming"
+  ],
+  latex: [] // No books for LaTeX were provided by the user
+};
+
 export default function ProgrammingLanguagesPage() {
   return (
     <div className="container mx-auto px-4 py-12">
@@ -72,7 +99,7 @@ export default function ProgrammingLanguagesPage() {
                 </CardHeader>
                 <CardContent>
                   <Tabs defaultValue={resourceCategories[0].id} className="w-full">
-                    <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 gap-2 mb-6 h-auto"> {/* Adjusted grid-cols for 4 tabs */}
+                    <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 gap-2 mb-6 h-auto">
                       {resourceCategories.map((category) => (
                         <TabsTrigger
                           key={category.id}
@@ -86,14 +113,28 @@ export default function ProgrammingLanguagesPage() {
                     </TabsList>
                     {resourceCategories.map((category) => (
                       <TabsContent key={category.id} value={category.id}>
-                        <div className="p-4 border rounded-md bg-secondary/30 min-h-[100px]">
-                          <h3 className="text-lg font-semibold mb-2 text-primary flex items-center">
+                        <div className="p-4 border rounded-md bg-secondary/30 min-h-[150px]"> {/* Increased min-h for more space */}
+                          <h3 className="text-lg font-semibold mb-3 text-primary flex items-center">
                             <category.icon className="mr-2 h-5 w-5" />
                             {category.title} for {lang.title}
                           </h3>
-                          <p className="text-muted-foreground">
-                            Specific {category.title.toLowerCase()} related to {lang.title} will be listed here soon.
-                          </p>
+                          {category.id === 'books' ? (
+                            languageBooks[lang.id] && languageBooks[lang.id].length > 0 ? (
+                              <ul className="list-disc list-inside space-y-1.5 text-foreground/90"> {/* Increased space-y and changed color */}
+                                {languageBooks[lang.id].map((bookTitle, index) => (
+                                  <li key={index}>{bookTitle}</li>
+                                ))}
+                              </ul>
+                            ) : (
+                              <p className="text-muted-foreground">
+                                No specific books listed for {lang.title} yet.
+                              </p>
+                            )
+                          ) : (
+                            <p className="text-muted-foreground">
+                              Specific {category.title.toLowerCase()} related to {lang.title} will be listed here soon.
+                            </p>
+                          )}
                         </div>
                       </TabsContent>
                     ))}

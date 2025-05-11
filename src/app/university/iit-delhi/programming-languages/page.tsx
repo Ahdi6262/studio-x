@@ -2,7 +2,7 @@
 import { PageHeader } from "@/components/core/page-header";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { ArrowLeft, Book, BookOpen, Video, FileText } from "lucide-react"; // Added Video, FileText
+import { ArrowLeft, Book, BookOpen, Video, FileText, ListTree } from "lucide-react"; // Added ListTree
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import type { ElementType } from "react";
@@ -25,6 +25,7 @@ const programmingLanguagesData: LanguageTab[] = [
 const resourceCategories = [
   { id: "books", title: "Books", icon: BookOpen },
   { id: "lectures", title: "Lectures", icon: Video },
+  { id: "libraries", title: "Libraries", icon: ListTree },
   { id: "other-resources", title: "Other Resources", icon: FileText },
 ];
 
@@ -71,7 +72,7 @@ export default function ProgrammingLanguagesPage() {
                 </CardHeader>
                 <CardContent>
                   <Tabs defaultValue={resourceCategories[0].id} className="w-full">
-                    <TabsList className="grid w-full grid-cols-3 gap-2 mb-6 h-auto">
+                    <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 gap-2 mb-6 h-auto"> {/* Adjusted grid-cols for 4 tabs */}
                       {resourceCategories.map((category) => (
                         <TabsTrigger
                           key={category.id}

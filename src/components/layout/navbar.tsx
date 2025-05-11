@@ -1,9 +1,10 @@
+
 "use client";
 
 import Link from 'next/link';
 import { Menu } from 'lucide-react'; 
 import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'; // Added SheetHeader, SheetTitle
 import { Icons } from '@/components/icons';
 import { useAuth } from '@/contexts/auth-context';
 import { UserAvatarDropdown } from '@/components/auth/user-avatar-dropdown';
@@ -44,7 +45,7 @@ export function Navbar() {
     const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href));
     return (
       <Link
-        key={item.href} // Changed from item.label to item.href
+        key={item.href} 
         href={item.href}
         className={cn(
           "text-sm font-medium transition-colors hover:text-primary",
@@ -60,7 +61,7 @@ export function Navbar() {
     const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href));
     return (
       <Link
-        key={item.href} // Changed from item.label to item.href
+        key={item.href}
         href={item.href}
         className={cn(
           "text-lg font-medium transition-colors hover:text-primary hover:bg-primary/5 py-2 px-3 rounded-md block",
@@ -119,7 +120,10 @@ export function Navbar() {
                 </Button>
               </SheetTrigger>
               <SheetContent side="right" className="w-[300px] sm:w-[400px] overflow-y-auto">
-                <Link href="/" className="mb-6 flex items-center space-x-2">
+                <SheetHeader>
+                  <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
+                </SheetHeader>
+                <Link href="/" className="mt-4 mb-6 flex items-center space-x-2"> {/* Adjusted margin for header */}
                   <Icons.Logo className="h-7 w-7 text-primary" />
                   <span className="font-bold text-2xl font-heading">
                     CreatorChain Hub
@@ -160,4 +164,3 @@ export function Navbar() {
     </header>
   );
 }
-

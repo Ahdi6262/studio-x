@@ -17,7 +17,7 @@ const UserCourseActivitySchema = z.object({
   title: z.string(),
   category: z.string(),
   progress: z.number().min(0).max(100),
-  lastAccessed: z.string().datetime().optional(),
+  lastAccessed: z.string().datetime({ precision: 3 }).optional(),
 });
 
 const UserProjectActivitySchema = z.object({
@@ -25,7 +25,7 @@ const UserProjectActivitySchema = z.object({
   title: z.string(),
   tags: z.array(z.string()),
   role: z.string().optional(), // e.g., 'creator', 'contributor'
-  lastContribution: z.string().datetime().optional(),
+  lastContribution: z.string().datetime({ precision: 3 }).optional(),
 });
 
 const UserCommunityActivitySchema = z.object({
@@ -39,7 +39,7 @@ export const DashboardRecommendationsInputSchema = z.object({
   enrolledCourses: z.array(UserCourseActivitySchema).optional().describe('List of courses the user is enrolled in.'),
   createdProjects: z.array(UserProjectActivitySchema).optional().describe('List of projects created or contributed to by the user.'),
   communityEngagement: UserCommunityActivitySchema.optional().describe('User engagement metrics in the community.'),
-  recentActivityEvents: z.array(z.object({ type: z.string(), data: z.any(), timestamp: z.string().datetime() })).optional().describe('Recent generic activity events for the user.'),
+  recentActivityEvents: z.array(z.object({ type: z.string(), data: z.any(), timestamp: z.string().datetime({ precision: 3 }) })).optional().describe('Recent generic activity events for the user.'),
   leaderboardRank: z.number().optional().describe('User\'s current rank on the leaderboard.'),
   achievements: z.array(z.string()).optional().describe('List of achievements unlocked by the user.'),
 });
@@ -57,50 +57,48 @@ const RecommendationItemSchema = z.object({
 
 export const DashboardRecommendationsOutputSchema = z.object({
   recommendations: z.array(RecommendationItemSchema).describe('A list of personalized recommendations for the user.'),
-  // Potentially add a section for "why these recommendations" explanation from the AI
   explanation: z.string().optional().describe('An overall explanation from the AI about how these recommendations were generated.'),
 });
 export type DashboardRecommendationsOutput = z.infer<typeof DashboardRecommendationsOutputSchema>;
 
 
-// This is a placeholder function. In a real application, you would fetch actual user data.
-async function getMockUserInput(userId: string): Promise<DashboardRecommendationsInput> {
+// This is a placeholder function. In a real application, you would fetch actual user data from Firebase/DB.
+// For now, it returns mock data for demonstration purposes.
+async function getMockUserInputForFlow(userId: string): Promise<DashboardRecommendationsInput> {
+  // Simulate fetching user data related to courses, projects, etc.
+  // Replace this with actual database queries in a real app.
   return {
     userId,
     enrolledCourses: [
-      { courseId: '1', title: 'Introduction to Solidity Programming', category: 'Blockchain', progress: 75, lastAccessed: new Date().toISOString() },
-      { courseId: '2', title: 'Advanced Next.js for Web3 Developers', category: 'Web Development', progress: 40 },
+      { courseId: 'mock-course-1', title: 'Intro to Web3', category: 'Blockchain', progress: 60, lastAccessed: new Date(Date.now() - 86400000 * 2).toISOString() }, // 2 days ago
+      { courseId: 'mock-course-2', title: 'AI for Creators', category: 'AI', progress: 25, lastAccessed: new Date(Date.now() - 86400000 * 5).toISOString() }, // 5 days ago
     ],
     createdProjects: [
-      { projectId: '1', title: 'Decentralized Art Marketplace', tags: ['NFT', 'Marketplace', 'Solidity'], role: 'creator' },
+      { projectId: 'mock-project-1', title: 'My First DApp', tags: ['Solidity', 'React'], role: 'creator', lastContribution: new Date(Date.now() - 86400000 * 7).toISOString() }, // 7 days ago
     ],
-    communityEngagement: { forumPosts: 5, commentsMade: 12 },
-    leaderboardRank: 2,
-    achievements: ['Top Contributor', 'Early Adopter'],
+    communityEngagement: { forumPosts: 3, commentsMade: 10 },
+    leaderboardRank: 15,
+    achievements: ['Early Bird', 'First Course Started'],
     recentActivityEvents: [
-        { type: 'lesson_completed', data: { courseId: '1', lessonTitle: 'Smart Contract Basics' }, timestamp: new Date().toISOString() }
+        { type: 'course_enrollment', data: { courseId: 'mock-course-2', courseTitle: 'AI for Creators' }, timestamp: new Date(Date.now() - 86400000 * 1).toISOString() }, // 1 day ago
+        { type: 'project_update', data: { projectId: 'mock-project-1', update: 'Pushed new commit' }, timestamp: new Date(Date.now() - 86400000 * 3).toISOString() } // 3 days ago
     ]
   };
 }
 
-
-export async function getDashboardRecommendations(input: DashboardRecommendationsInput): Promise<DashboardRecommendationsOutput> {
-  // In a real app, you might call:
-  // return dashboardRecommendationsFlow(input);
-
-  // For now, returning mock data or a simple message
-  console.log("getDashboardRecommendations called with input:", input);
-  // This function would normally call the Genkit flow.
-  // For this placeholder, we'll return some mock recommendations.
-  return {
-    recommendations: [
-      { type: 'course', itemId: '3', title: 'NFT Art Creation Masterclass', reason: 'Expand your NFT skills.', link: '/courses/3', relevanceScore: 0.8 },
-      { type: 'project', itemId: 'new-defi', title: 'Contribute to a new DeFi Project', reason: 'Leverage your Solidity knowledge.', link: '/projects/explore/defi', relevanceScore: 0.7 },
-      { type: 'user_to_connect', itemId: 'user-charlie', title: 'Connect with Charlie Crypto', reason: 'Shares interest in Web3 Social Media.', link: '/profile/charlie-crypto', relevanceScore: 0.6 },
-      { type: 'feature_tip', title: 'Explore Life Tracking', description: 'Visualize your journey with our new Life Tracking feature!', link: '/life-tracking', relevanceScore: 0.9}
-    ],
-    explanation: "These recommendations are based on your recent activity and interests. (Mock explanation)",
-  };
+export async function getDashboardRecommendations(userId: string): Promise<DashboardRecommendationsOutput> {
+  // In a real app, you'd fetch real user data here instead of getMockUserInputForFlow
+  const userInput = await getMockUserInputForFlow(userId);
+  try {
+    const result = await dashboardRecommendationsFlow(userInput);
+    return result;
+  } catch (error) {
+    console.error("Error in getDashboardRecommendations calling flow:", error);
+    return {
+      recommendations: [],
+      explanation: "Could not generate recommendations due to an internal error.",
+    };
+  }
 }
 
 const dashboardRecommendationsPrompt = ai.definePrompt({
@@ -181,19 +179,32 @@ const dashboardRecommendationsFlow = ai.defineFlow(
     // e.g., query a database for all available courses, projects, users.
     // For now, the prompt assumes it has enough context from the input.
 
-    const { output } = await dashboardRecommendationsPrompt(input);
+    console.log("dashboardRecommendationsFlow called with input:", JSON.stringify(input, null, 2));
+
+    const { output, errors } = await dashboardRecommendationsPrompt(input);
+
+    if (errors && errors.length > 0) {
+        console.error("Errors from dashboardRecommendationsPrompt:", errors);
+        // Consider how to handle partial errors or if any error means failure
+        // For now, if any error, return empty recommendations
+        return { recommendations: [], explanation: `Could not generate recommendations. Errors: ${errors.map(e => e.message).join(', ')}` };
+    }
+
     if (!output) {
-        // Handle cases where the prompt might not return an output, e.g., due to safety filters or errors.
-        return { recommendations: [], explanation: "Could not generate recommendations at this time." };
+        // Handle cases where the prompt might not return an output, e.g., due to safety filters or other issues.
+        console.warn("dashboardRecommendationsPrompt returned no output.");
+        return { recommendations: [], explanation: "Could not generate recommendations at this time (no output from AI)." };
     }
     return output;
   }
 );
 
-// Helper for Handlebars template (if needed, though Genkit typically handles JSON stringification)
-// z.custom((val) => JSON.stringify(val)) can be used in schema for complex objects if direct stringification is an issue
-// However, for the prompt, directly embedding properties is usually fine.
-// If you need to stringify in the prompt itself, it's better to pre-process it into the input.
-// Handlebars.registerHelper('jsonStringify', function(context) {
-//   return JSON.stringify(context);
-// });
+// Handlebars helper (if needed for complex objects in prompt)
+// genkit may automatically handle basic JSON.stringify, but for explicit control:
+ai.handlebars.registerHelper('jsonStringify', function(context) {
+  try {
+    return JSON.stringify(context);
+  } catch (e) {
+    return "[Unserializable Data]";
+  }
+});

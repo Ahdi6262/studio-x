@@ -1,14 +1,25 @@
+
 import Image from 'next/image';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { mockProjects, type Project } from '@/lib/mock-data';
+import { mockProjects as fallbackProjects, type Project } from '@/lib/mock-data'; // Keep mock as fallback
 import { PageHeader } from '@/components/core/page-header';
 import { ArrowLeft, ExternalLink, CalendarDays, User } from 'lucide-react';
+// import { doc, getDoc } from "firebase/firestore"; // Example for Firebase
+// import { db } from "@/lib/firebase"; // Example for Firebase
 
-// This function would typically fetch data based on params.projectId
 async function getProjectData(projectId: string): Promise<Project | undefined> {
-  return mockProjects.find(p => p.id === projectId);
+  console.log(`Fetching project data for ID: ${projectId} (simulated)...`);
+  await new Promise(resolve => setTimeout(resolve, 500)); // Simulate network delay
+  // In a real app:
+  // const projectRef = doc(db, 'projects', projectId);
+  // const projectSnap = await getDoc(projectRef);
+  // if (projectSnap.exists()) {
+  //   return { id: projectSnap.id, ...projectSnap.data() } as Project;
+  // }
+  // return undefined;
+  return fallbackProjects.find(p => p.id === projectId); // Return mock data for now
 }
 
 export default async function ProjectDetailPage({ params }: { params: { projectId: string } }) {

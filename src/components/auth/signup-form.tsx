@@ -12,13 +12,10 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Icons } from '@/components/icons';
 import { useAuth } from '@/contexts/auth-context';
 import { useToast } from '@/hooks/use-toast';
-import type { MockRegisteredUser } from '@/types/auth';
-
-const MOCK_USERS_STORAGE_KEY = 'mockRegisteredUsers';
 
 export function SignupForm() {
   const router = useRouter();
-  const { login } = useAuth();
+  const { signupUser, signInWithGoogle, signInWithGithub, signInWithFacebook } = useAuth();
   const { toast } = useToast();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -33,64 +30,39 @@ export function SignupForm() {
       return;
     }
     setIsLoading(true);
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-
-    // Mock signup logic
     try {
-      const storedUsersRaw = localStorage.getItem(MOCK_USERS_STORAGE_KEY);
-      let users: MockRegisteredUser[] = storedUsersRaw ? JSON.parse(storedUsersRaw) : [];
-      if (!Array.isArray(users)) users = []; // Ensure it's an array
+      await signupUser(name, email, password);
+      toast({ title: "Signup Successful", description: "Welcome to HEX THE ADD HUB!" });
+      router.push('/dashboard');
+    } catch (error: any) {
+      console.error("Signup failed:", error);
+      toast({ title: "Signup Failed", description: error.message || "Could not create account.", variant: "destructive" });
+    }
+    setIsLoading(false);
+  };
 
-      if (users.find(u => u.email === email)) {
-        toast({ title: "Signup Failed", description: "Email already registered.", variant: "destructive" });
+  const handleSocialSignup = async (provider: 'google' | 'github' | 'facebook') => {
+    setIsLoading(true);
+    try {
+      let socialSignupMethod;
+      if (provider === 'google') socialSignupMethod = signInWithGoogle;
+      else if (provider === 'github') socialSignupMethod = signInWithGithub;
+      else if (provider === 'facebook') socialSignupMethod = signInWithFacebook;
+       else {
+        toast({title: "Error", description: "Unknown social provider", variant: "destructive"});
         setIsLoading(false);
         return;
       }
 
-      const newUserAvatar = `https://avatar.vercel.sh/${email}.png?size=128`;
-      const newUser: MockRegisteredUser = { name, email, password, avatar: newUserAvatar };
-      users.push(newUser);
-      localStorage.setItem(MOCK_USERS_STORAGE_KEY, JSON.stringify(users));
-      
-      // Auto-login after signup
-      login({ name, email, avatar: newUserAvatar }); 
-      toast({ title: "Signup Successful", description: "Welcome to HEX THE ADD HUB!" });
+      await socialSignupMethod();
+      toast({ title: `${provider.charAt(0).toUpperCase() + provider.slice(1)} Signup Successful`, description: "Welcome!" });
       router.push('/dashboard');
-    } catch (error) {
-      console.error("Error during mock signup:", error);
-      toast({ title: "Signup Error", description: "An unexpected error occurred.", variant: "destructive" });
+    } catch (error: any) {
+      console.error(`${provider} signup failed:`, error);
+      toast({ title: `${provider.charAt(0).toUpperCase() + provider.slice(1)} Signup Failed`, description: error.message || "Could not sign up.", variant: "destructive" });
     }
-    
     setIsLoading(false);
-  };
-
-  const handleGoogleSignup = () => {
-    setIsLoading(true);
-    console.log("Attempting Google signup...");
-    setTimeout(() => {
-      toast({ title: "Google Signup", description: "Google signup functionality coming soon!" });
-      setIsLoading(false);
-    }, 1500);
-  };
-
-  const handleGithubSignup = () => {
-    setIsLoading(true);
-    console.log("Attempting GitHub signup...");
-    setTimeout(() => {
-      toast({ title: "GitHub Signup", description: "GitHub signup functionality coming soon!" });
-      setIsLoading(false);
-    }, 1500);
-  };
-
-  const handleFacebookSignup = () => {
-    setIsLoading(true);
-    console.log("Attempting Facebook signup...");
-    setTimeout(() => {
-      toast({ title: "Facebook Signup", description: "Facebook signup functionality coming soon!" });
-      setIsLoading(false);
-    }, 1500);
-  };
+  }
 
   return (
     <Card className="w-full max-w-md shadow-xl">
@@ -134,6 +106,7 @@ export function SignupForm() {
               onChange={(e) => setPassword(e.target.value)}
               required
               disabled={isLoading}
+              minLength={6}
             />
           </div>
           <div className="space-y-2">
@@ -146,6 +119,7 @@ export function SignupForm() {
               onChange={(e) => setConfirmPassword(e.target.value)}
               required
               disabled={isLoading}
+              minLength={6}
             />
           </div>
           <Button type="submit" className="w-full" disabled={isLoading}>
@@ -163,13 +137,13 @@ export function SignupForm() {
           </div>
         </div>
         <div className="mt-6 grid grid-cols-1 gap-4">
-          <Button variant="outline" onClick={handleGoogleSignup} disabled={isLoading}>
+           <Button variant="outline" onClick={() => handleSocialSignup('google')} disabled={isLoading}>
             <Icons.Google className="mr-2 h-4 w-4" /> Google
           </Button>
-          <Button variant="outline" onClick={handleGithubSignup} disabled={isLoading}>
+          <Button variant="outline" onClick={() => handleSocialSignup('github')} disabled={isLoading}>
             <Icons.Github className="mr-2 h-4 w-4" /> GitHub
           </Button>
-          <Button variant="outline" onClick={handleFacebookSignup} disabled={isLoading}>
+          <Button variant="outline" onClick={() => handleSocialSignup('facebook')} disabled={isLoading}>
             <Icons.Facebook className="mr-2 h-4 w-4" /> Facebook
           </Button>
         </div>

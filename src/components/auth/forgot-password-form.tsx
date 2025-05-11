@@ -10,9 +10,11 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft } from 'lucide-react';
+import { useAuth } from '@/contexts/auth-context';
 
 export function ForgotPasswordForm() {
   const router = useRouter();
+  const { sendPasswordReset } = useAuth();
   const { toast } = useToast();
   const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -20,18 +22,20 @@ export function ForgotPasswordForm() {
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
     setIsLoading(true);
-    // Simulate API call to send reset link
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    toast({ 
-      title: "Password Reset Email Sent", 
-      description: `If an account exists for ${email}, a password reset link has been sent. Please check your inbox (and spam folder).` 
-    });
-    
+    try {
+      await sendPasswordReset(email);
+      toast({ 
+        title: "Password Reset Email Sent", 
+        description: `If an account exists for ${email}, a password reset link has been sent. Please check your inbox (and spam folder).` 
+      });
+      setEmail('');
+      // Optionally redirect or clear form
+      // router.push('/login'); 
+    } catch (error: any) {
+      console.error("Password reset failed:", error);
+      toast({ title: "Password Reset Failed", description: error.message || "Could not send reset email.", variant: "destructive" });
+    }
     setIsLoading(false);
-    // Optionally redirect or clear form
-    // router.push('/login'); 
-    setEmail('');
   };
 
   return (

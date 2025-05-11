@@ -13,13 +13,10 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Icons } from '@/components/icons';
 import { useAuth } from '@/contexts/auth-context';
 import { useToast } from '@/hooks/use-toast';
-import type { MockRegisteredUser } from '@/types/auth';
-
-const MOCK_USERS_STORAGE_KEY = 'mockRegisteredUsers';
 
 export function LoginForm() {
   const router = useRouter();
-  const { login } = useAuth();
+  const { loginUser, signInWithGoogle, signInWithGithub, signInWithFacebook } = useAuth();
   const { toast } = useToast();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -29,79 +26,44 @@ export function LoginForm() {
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
     setIsLoading(true);
-    await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API delay
-    
-    let loggedIn = false;
-
-    // 1. Check mock registered users from localStorage
     try {
-      const storedUsersRaw = localStorage.getItem(MOCK_USERS_STORAGE_KEY);
-      if (storedUsersRaw) {
-        const users: MockRegisteredUser[] = JSON.parse(storedUsersRaw);
-        if (Array.isArray(users)) {
-          const matchedUser = users.find(u => u.email === email && u.password === password);
-          if (matchedUser) {
-            login({ name: matchedUser.name, email: matchedUser.email, avatar: matchedUser.avatar }, keepLoggedIn);
-            toast({ title: "Login Successful", description: "Welcome back!" });
-            router.push('/dashboard');
-            loggedIn = true;
-          }
-        }
-      }
-    } catch (error) {
-      console.error("Error reading mock users from localStorage:", error);
-      // Continue to fallback if localStorage fails
+      await loginUser(email, password, keepLoggedIn);
+      toast({ title: "Login Successful", description: "Welcome back!" });
+      router.push('/dashboard');
+    } catch (error: any) {
+      console.error("Login failed:", error);
+      toast({ title: "Login Failed", description: error.message || "Invalid email or password.", variant: "destructive" });
     }
-
-    // 2. Fallback to hardcoded default user if not logged in yet
-    if (!loggedIn) {
-      if (email === 'user@example.com' && password === 'password') {
-        const defaultAvatar = `https://avatar.vercel.sh/${email}.png?size=128`;
-        login({ name: 'Test User', email, avatar: defaultAvatar }, keepLoggedIn);
-        toast({ title: "Login Successful", description: "Welcome back! (Default User)" });
-        router.push('/dashboard');
-        loggedIn = true;
-      }
-    }
-
-    if (!loggedIn) {
-      toast({ title: "Login Failed", description: "Invalid email or password.", variant: "destructive" });
-    }
-    
     setIsLoading(false);
   };
 
-  const handleGoogleLogin = () => {
+  const handleSocialLogin = async (provider: 'google' | 'github' | 'facebook') => {
     setIsLoading(true);
-    console.log("Attempting Google login...");
-    setTimeout(() => {
-      toast({ title: "Google Login", description: "Google login functionality coming soon!" });
-      setIsLoading(false);
-    }, 1500);
-  };
+    try {
+      let socialLoginMethod;
+      if (provider === 'google') socialLoginMethod = signInWithGoogle;
+      else if (provider === 'github') socialLoginMethod = signInWithGithub;
+      else if (provider === 'facebook') socialLoginMethod = signInWithFacebook;
+      else {
+        toast({title: "Error", description: "Unknown social provider", variant: "destructive"});
+        setIsLoading(false);
+        return;
+      }
 
-  const handleGithubLogin = () => {
-    setIsLoading(true);
-    console.log("Attempting GitHub login...");
-    setTimeout(() => {
-      toast({ title: "GitHub Login", description: "GitHub login functionality coming soon!" });
-      setIsLoading(false);
-    }, 1500);
-  };
-
-  const handleFacebookLogin = () => {
-    setIsLoading(true);
-    console.log("Attempting Facebook login...");
-    setTimeout(() => {
-      toast({ title: "Facebook Login", description: "Facebook login functionality coming soon!" });
-      setIsLoading(false);
-    }, 1500);
-  };
+      await socialLoginMethod();
+      toast({ title: `${provider.charAt(0).toUpperCase() + provider.slice(1)} Login Successful`, description: "Welcome!" });
+      router.push('/dashboard');
+    } catch (error: any) {
+      console.error(`${provider} login failed:`, error);
+      // Handle specific Firebase errors for social logins if needed (e.g., account-exists-with-different-credential)
+      toast({ title: `${provider.charAt(0).toUpperCase() + provider.slice(1)} Login Failed`, description: error.message || "Could not sign in.", variant: "destructive" });
+    }
+    setIsLoading(false);
+  }
 
   const handleKeepLoggedInChange = (checked: boolean | 'indeterminate') => {
-    setTimeout(() => {
-        setKeepLoggedIn(checked as boolean);
-    }, 0);
+    // Ensure setTimeout is not needed due to direct state update
+    setKeepLoggedIn(checked as boolean);
   };
 
   return (
@@ -165,13 +127,13 @@ export function LoginForm() {
           </div>
         </div>
         <div className="mt-6 grid grid-cols-1 gap-4">
-          <Button variant="outline" onClick={handleGoogleLogin} disabled={isLoading}>
+          <Button variant="outline" onClick={() => handleSocialLogin('google')} disabled={isLoading}>
             <Icons.Google className="mr-2 h-4 w-4" /> Google
           </Button>
-          <Button variant="outline" onClick={handleGithubLogin} disabled={isLoading}>
+          <Button variant="outline" onClick={() => handleSocialLogin('github')} disabled={isLoading}>
             <Icons.Github className="mr-2 h-4 w-4" /> GitHub
           </Button>
-          <Button variant="outline" onClick={handleFacebookLogin} disabled={isLoading}>
+          <Button variant="outline" onClick={() => handleSocialLogin('facebook')} disabled={isLoading}>
             <Icons.Facebook className="mr-2 h-4 w-4" /> Facebook
           </Button>
         </div>

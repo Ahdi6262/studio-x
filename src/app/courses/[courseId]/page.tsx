@@ -1,16 +1,30 @@
+
 import Image from 'next/image';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { mockCourses, type Course } from '@/lib/mock-data';
+import { mockCourses as fallbackCourses, type Course } from '@/lib/mock-data'; // Keep mock as fallback
 import { PageHeader } from '@/components/core/page-header';
 import { ArrowLeft, Star, Users, Clock, BookOpen, CheckCircle, PlayCircle } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Separator } from '@/components/ui/separator';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card'; // Added CardDescription
+import { Skeleton } from '@/components/ui/skeleton';
+// import { doc, getDoc } from "firebase/firestore"; // Example for Firebase
+// import { db } from "@/lib/firebase"; // Example for Firebase
+
 
 async function getCourseData(courseId: string): Promise<Course | undefined> {
-  return mockCourses.find(c => c.id === courseId);
+  console.log(`Fetching course data for ID: ${courseId} (simulated)...`);
+  await new Promise(resolve => setTimeout(resolve, 500)); // Simulate network delay
+  // In a real app:
+  // const courseRef = doc(db, 'courses', courseId);
+  // const courseSnap = await getDoc(courseRef);
+  // if (courseSnap.exists()) {
+  //   return { id: courseSnap.id, ...courseSnap.data() } as Course;
+  // }
+  // return undefined;
+  return fallbackCourses.find(c => c.id === courseId); // Return mock data for now
 }
 
 export default async function CourseDetailPage({ params }: { params: { courseId: string } }) {
@@ -124,6 +138,7 @@ export default async function CourseDetailPage({ params }: { params: { courseId:
               <CardTitle className="text-3xl text-primary">
                 {typeof course.price === 'number' ? `$${course.price}` : course.price}
               </CardTitle>
+              { typeof course.price === 'number' && <CardDescription>One-time payment</CardDescription> }
             </CardHeader>
             <CardContent className="space-y-3">
               <Button size="lg" className="w-full">Enroll Now</Button>
@@ -147,3 +162,23 @@ export default async function CourseDetailPage({ params }: { params: { courseId:
     </div>
   );
 }
+
+// Skeleton for loading state (optional, if pre-rendering or data fetching is slow)
+// export function CourseDetailSkeleton() {
+//   return (
+//     <div className="container mx-auto px-4 py-12">
+//       <Skeleton className="h-8 w-32 mb-8" />
+//       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+//         <div className="lg:col-span-2 space-y-8">
+//           <Skeleton className="h-12 w-3/4" />
+//           <Skeleton className="h-8 w-1/2" />
+//           <Skeleton className="aspect-video w-full rounded-lg" />
+//           <Skeleton className="h-48 w-full" />
+//         </div>
+//         <aside className="lg:col-span-1">
+//           <Skeleton className="h-96 w-full rounded-lg" />
+//         </aside>
+//       </div>
+//     </div>
+//   );
+// }

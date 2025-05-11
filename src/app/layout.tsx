@@ -35,7 +35,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning> {/* Removed className="dark" */}
+    <html lang="en" suppressHydrationWarning>
       <head>
         <meta name="theme-color" content="#FFB347" /> 
         <meta name="apple-mobile-web-app-capable" content="yes" />

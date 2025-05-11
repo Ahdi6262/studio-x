@@ -1,7 +1,8 @@
+
 "use client";
 
 import Link from 'next/link';
-import { LogOut, UserCircle, LayoutDashboard } from 'lucide-react';
+import { LogOut, UserCircle, LayoutDashboard, Settings } from 'lucide-react'; // Added Settings
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   DropdownMenu,
@@ -13,31 +14,33 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/auth-context';
-import { useRouter } from 'next/navigation'; // Corrected import
+import { useRouter } from 'next/navigation'; 
 
 interface UserAvatarDropdownProps {
   isMobile?: boolean;
 }
 
 export function UserAvatarDropdown({ isMobile = false }: UserAvatarDropdownProps) {
-  const { user, logout } = useAuth();
+  const { user, logoutUser } = useAuth(); // Changed to logoutUser
   const router = useRouter();
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logoutUser();
     router.push('/'); // Redirect to home page after logout
   };
 
   if (!user) return null;
 
   const fallbackName = user.name ? user.name.substring(0, 2).toUpperCase() : 'U';
+  const avatarSrc = user.avatar || (user.email ? `https://avatar.vercel.sh/${user.email}.png?size=32` : undefined);
+
 
   if (isMobile) {
     return (
       <div className="flex flex-col space-y-2">
         <div className="flex items-center space-x-2 p-2">
           <Avatar>
-            <AvatarImage src={user.avatar || `https://avatar.vercel.sh/${user.email}.png`} alt={user.name} />
+            <AvatarImage src={avatarSrc} alt={user.name || 'User'} />
             <AvatarFallback>{fallbackName}</AvatarFallback>
           </Avatar>
           <div>
@@ -52,6 +55,9 @@ export function UserAvatarDropdown({ isMobile = false }: UserAvatarDropdownProps
         <Button variant="ghost" className="w-full justify-start" asChild>
           <Link href="/dashboard"><LayoutDashboard className="mr-2 h-4 w-4" /> Dashboard</Link>
         </Button>
+         <Button variant="ghost" className="w-full justify-start" asChild>
+          <Link href="/settings"><Settings className="mr-2 h-4 w-4" /> Settings</Link>
+        </Button>
         <Button variant="ghost" className="w-full justify-start text-destructive hover:text-destructive" onClick={handleLogout}>
           <LogOut className="mr-2 h-4 w-4" /> Logout
         </Button>
@@ -64,7 +70,7 @@ export function UserAvatarDropdown({ isMobile = false }: UserAvatarDropdownProps
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="relative h-8 w-8 rounded-full">
           <Avatar className="h-8 w-8">
-            <AvatarImage src={user.avatar || `https://avatar.vercel.sh/${user.email}.png`} alt={user.name} />
+             <AvatarImage src={avatarSrc} alt={user.name || 'User'} />
             <AvatarFallback>{fallbackName}</AvatarFallback>
           </Avatar>
         </Button>
@@ -84,6 +90,9 @@ export function UserAvatarDropdown({ isMobile = false }: UserAvatarDropdownProps
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
           <Link href="/dashboard"><LayoutDashboard className="mr-2 h-4 w-4" /> Dashboard</Link>
+        </DropdownMenuItem>
+         <DropdownMenuItem asChild>
+          <Link href="/settings"><Settings className="mr-2 h-4 w-4" /> Settings</Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive focus:bg-destructive/10">

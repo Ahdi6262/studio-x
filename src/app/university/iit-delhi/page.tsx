@@ -2,9 +2,55 @@
 import { PageHeader } from "@/components/core/page-header";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { School } from "lucide-react"; 
+import { School, DollarSign, Brain, Code2 as Code, Sigma } from "lucide-react"; 
+
+interface KnowledgeArea {
+  title: string;
+  description: string;
+  href: string;
+  icon: React.ElementType;
+  actionText: string;
+}
 
 export default function UniversityIITDelhiPage() {
+  const knowledgeAreas: KnowledgeArea[] = [
+    {
+      title: "IIT Delhi",
+      description: "IIT Delhi offers a unique opportunity to learn and evolve with its comprehensive B.Tech and M.Tech programs.",
+      href: "/university/iit-delhi/academics",
+      icon: School,
+      actionText: "Explore Academics"
+    },
+    {
+      title: "Quantitative Finance",
+      description: "Delve into the intersection of finance, mathematics, and computational techniques to model and manage risk.",
+      href: "#", // Placeholder link, update when page exists
+      icon: DollarSign,
+      actionText: "Learn More"
+    },
+    {
+      title: "Artificial Intelligence",
+      description: "Explore the fascinating world of AI, including machine learning, deep learning, and natural language processing.",
+      href: "#", // Placeholder link, update when page exists
+      icon: Brain,
+      actionText: "Learn More"
+    },
+    {
+      title: "Programming Languages",
+      description: "Master various programming paradigms and languages, from foundational C++ to modern Python and JavaScript.",
+      href: "#", // Placeholder link, update when page exists
+      icon: Code,
+      actionText: "Learn More"
+    },
+    {
+      title: "Mathematics",
+      description: "Deepen your understanding of core mathematical concepts, theories, and their applications in various scientific fields.",
+      href: "#", // Placeholder link, update when page exists
+      icon: Sigma,
+      actionText: "Learn More"
+    }
+  ];
+
   return (
     <div className="container mx-auto px-4 py-12">
       <PageHeader
@@ -12,26 +58,23 @@ export default function UniversityIITDelhiPage() {
         description="This section outlines the diverse sources of my learning, including foundational academic knowledge from institutions like IIT Delhi, and ongoing exploration of various research areas."
       />
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <div className="bg-card p-6 rounded-lg shadow-md hover:shadow-primary/20 transition-shadow">
-          <div className="flex items-center mb-3">
-            <School className="h-6 w-6 text-primary mr-3" />
-            <h2 className="text-xl font-semibold text-primary">IIT Delhi</h2>
+        {knowledgeAreas.map((area) => (
+          <div key={area.title} className="bg-card p-6 rounded-lg shadow-md hover:shadow-primary/20 transition-shadow flex flex-col">
+            <div className="flex items-center mb-3">
+              <area.icon className="h-6 w-6 text-primary mr-3 flex-shrink-0" />
+              <h2 className="text-xl font-semibold text-primary">{area.title}</h2>
+            </div>
+            <p className="text-muted-foreground text-sm mb-4 flex-grow min-h-[80px]"> 
+              {area.description}
+            </p>
+            <Button asChild variant="link" className="p-0 text-primary mt-auto self-start">
+              <Link href={area.href}>
+                {area.actionText} &rarr;
+              </Link>
+            </Button>
           </div>
-          <p className="text-muted-foreground mb-4">
-            IIT Delhi offers a unique opportunity to learn and evolve with its comprehensive B.Tech and M.Tech programs.
-          </p>
-          <Button asChild variant="link" className="p-0 text-primary">
-            <Link href="/university/iit-delhi/academics">
-              Explore Academics &rarr;
-            </Link>
-          </Button>
-        </div>
-        {/* Add other sections related to University IIT Delhi here if needed in the future */}
+        ))}
       </div>
     </div>
   );
 }
-
-
-
-

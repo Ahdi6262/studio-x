@@ -10,10 +10,11 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
-import { collection, query, where, getDocs, limit, doc, getDoc, orderBy } from "firebase/firestore"; // Added orderBy
-import { db } from '@/lib/firebase'; // Assuming db is your initialized Firestore instance
+// Firebase imports are removed as data source changes to MySQL via API
+// import { collection, query, where, getDocs, limit, doc, getDoc, orderBy } from "firebase/firestore";
+// import { db } from '@/lib/firebase'; 
 
-// Mock data types for user activity - in a real app, these would be more detailed
+// Mock data types for user activity - adjust if API response differs
 const UserCourseActivitySchema = z.object({
   courseId: z.string(),
   title: z.string(),
@@ -41,7 +42,7 @@ export const DashboardRecommendationsInputSchema = z.object({
   enrolledCourses: z.array(UserCourseActivitySchema).optional().describe('List of courses the user is enrolled in.'),
   createdProjects: z.array(UserProjectActivitySchema).optional().describe('List of projects created or contributed to by the user.'),
   communityEngagement: UserCommunityActivitySchema.optional().describe('User engagement metrics in the community.'),
-  recentActivityEvents: z.array(z.object({ type: z.string(), data: z.any(), timestamp: z.string().datetime({ precision: 3 }) })).optional().describe('Recent generic activity events for the user.'),
+  recentActivityEvents: z.array(z.object({ type: z.string(), data: z.any(), timestamp: z.string().datetime({ precision: 3 }) }).optional().describe('Recent generic activity events for the user.'),
   leaderboardRank: z.number().optional().describe('User\'s current rank on the leaderboard.'),
   achievements: z.array(z.string()).optional().describe('List of achievements unlocked by the user.'),
 });
@@ -64,78 +65,58 @@ export const DashboardRecommendationsOutputSchema = z.object({
 export type DashboardRecommendationsOutput = z.infer<typeof DashboardRecommendationsOutputSchema>;
 
 
-// Fetches real user data from Firestore based on userId
+// This function needs to be rewritten to fetch data from your new MySQL backend APIs
+// or directly from MySQL if this flow runs in a context with DB access.
 async function getUserInputForFlow(userId: string): Promise<DashboardRecommendationsInput> {
   let input: DashboardRecommendationsInput = { userId };
 
-  // Fetch enrolled courses
-  const enrollmentsCol = collection(db, 'course_enrollments');
-  const enrollmentsQuery = query(enrollmentsCol, where("user_id", "==", userId), limit(5));
-  const enrollmentsSnap = await getDocs(enrollmentsQuery);
-  input.enrolledCourses = await Promise.all(enrollmentsSnap.docs.map(async (enrollDoc) => {
-    const enrollment = enrollDoc.data();
-    const courseRef = doc(db, 'courses', enrollment.course_id);
-    const courseSnap = await getDoc(courseRef);
-    const courseData = courseSnap.exists() ? courseSnap.data() : { title: "Unknown Course", category: "N/A" };
-    return {
-      courseId: enrollment.course_id,
-      title: courseData.title,
-      category: courseData.category,
-      progress: enrollment.progress_percentage || 0,
-      lastAccessed: enrollment.last_accessed_lesson_id ? new Date().toISOString() : undefined, // Placeholder for actual last_accessed
-    };
-  }));
+  // Example: Fetching enrolled courses via API
+  try {
+    const enrollmentsResponse = await fetch(`/api/users/${userId}/enrolled-courses`); // Define this API
+    if (enrollmentsResponse.ok) {
+      input.enrolledCourses = await enrollmentsResponse.json();
+    }
+  } catch (e) { console.error("Failed to fetch enrolled courses for recommendations:", e); }
 
-  // Fetch created projects
-  const projectsCol = collection(db, 'projects');
-  const projectsQuery = query(projectsCol, where("user_id", "==", userId), limit(5));
-  const projectsSnap = await getDocs(projectsQuery);
-  input.createdProjects = projectsSnap.docs.map(doc => {
-    const project = doc.data();
-    return {
-      projectId: doc.id,
-      title: project.title,
-      tags: project.tags || [],
-      role: 'creator', // Assuming, could be more complex
-      lastContribution: project.updated_at?.toDate().toISOString(),
-    };
-  });
+  // Example: Fetching created projects via API
+  try {
+    const projectsResponse = await fetch(`/api/users/${userId}/projects`); // Define this API
+    if (projectsResponse.ok) {
+      input.createdProjects = await projectsResponse.json();
+    }
+  } catch (e) { console.error("Failed to fetch created projects for recommendations:", e); }
   
-  // Fetch community engagement (simplified - sum from user_activity_events or dedicated collection)
-  // This is a placeholder, real implementation would require more complex aggregation
+  // Fetch community engagement (placeholder, needs API)
   input.communityEngagement = { forumPosts: Math.floor(Math.random() * 5), commentsMade: Math.floor(Math.random() * 20) };
 
-  // Fetch recent activity events
-  const activityCol = collection(db, 'user_activity_events');
-  const activityQuery = query(activityCol, where("user_id", "==", userId), orderBy("timestamp", "desc"), limit(5));
-  const activitySnap = await getDocs(activityQuery);
-  input.recentActivityEvents = activitySnap.docs.map(doc => {
-    const event = doc.data();
-    return {
-      type: event.event_type,
-      data: event.event_data,
-      timestamp: event.timestamp.toDate().toISOString(),
-    };
-  });
+  // Fetch recent activity events via API
+  try {
+    const activityResponse = await fetch(`/api/users/${userId}/activity-events?limit=5`); // Define this API
+    if (activityResponse.ok) {
+      input.recentActivityEvents = await activityResponse.json();
+    }
+  } catch (e) { console.error("Failed to fetch activity events for recommendations:", e); }
   
-  // Fetch leaderboard rank
-  const userPointsRef = doc(db, 'user_points', userId);
-  const userPointsSnap = await getDoc(userPointsRef);
-  if (userPointsSnap.exists()) {
-    // Rank calculation is complex. For now, using a placeholder or if rank is stored directly.
-    input.leaderboardRank = userPointsSnap.data().rank_all_time || Math.floor(Math.random() * 100) + 1; 
-  }
+  // Fetch leaderboard rank via API
+  try {
+    const pointsResponse = await fetch(`/api/users/${userId}/points`); // Define this API
+    if (pointsResponse.ok) {
+      const pointsData = await pointsResponse.json();
+      input.leaderboardRank = pointsData.rank_all_time || Math.floor(Math.random() * 100) + 1; 
+    }
+  } catch (e) { console.error("Failed to fetch user points for recommendations:", e); }
 
-  // Fetch achievements
-  const userAchievementsCol = collection(db, 'user_achievements');
-  const userAchievementsQuery = query(userAchievementsCol, where("user_id", "==", userId));
-  const userAchievementsSnap = await getDocs(userAchievementsQuery);
-  input.achievements = await Promise.all(userAchievementsSnap.docs.map(async (achDoc) => {
-      const achDefRef = doc(db, 'achievement_definitions', achDoc.data().achievement_key);
-      const achDefSnap = await getDoc(achDefRef);
-      return achDefSnap.exists() ? achDefSnap.data().name : "Unlocked Achievement";
-  }));
 
+  // Fetch achievements via API
+  try {
+    const achievementsResponse = await fetch(`/api/users/${userId}/achievements`); // Define this API
+    if (achievementsResponse.ok) {
+      // Assuming API returns array of achievement names or objects with name
+      input.achievements = (await achievementsResponse.json()).map((ach: any) => ach.name || ach);
+    }
+  } catch (e) { console.error("Failed to fetch user achievements for recommendations:", e); }
+
+  console.log("Generated user input for recommendations flow (API based):", JSON.stringify(input, null, 2));
   return input;
 }
 
@@ -247,10 +228,6 @@ const dashboardRecommendationsFlow = ai.defineFlow(
   async (input) => {
     console.log("dashboardRecommendationsFlow called with input:", JSON.stringify(input, null, 2));
 
-    // The prompt now handles sparse data. Additional logic to fetch all available courses/projects
-    // could be added here if the LLM needs a broader context of what's available to recommend from.
-    // For now, the prompt relies on the user's specific activity.
-
     const { output, errors } = await dashboardRecommendationsPrompt(input);
 
     if (errors && errors.length > 0) {
@@ -274,13 +251,9 @@ ai.handlebars.registerHelper('jsonStringify', function(context) {
   }
 });
 
-// Helper to check if an array is empty (useful in Handlebars)
 ai.handlebars.registerHelper('ifNotEmpty', function(array, options) {
   if (array && array.length > 0) {
     return options.fn(this);
   }
   return options.inverse(this);
 });
-
-
-    

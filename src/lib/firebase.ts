@@ -1,11 +1,9 @@
 
 import { initializeApp, getApps, type FirebaseApp } from "firebase/app";
 import { getAuth, type Auth } from "firebase/auth";
-import { getFirestore, type Firestore } from "firebase/firestore";
-// import { getStorage, type FirebaseStorage } from "firebase/storage"; // For avatar uploads later
+// import { getFirestore, type Firestore } from "firebase/firestore"; // Commented out
+// import { getStorage, type FirebaseStorage } from "firebase/storage";
 
-// Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
   authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
@@ -16,7 +14,6 @@ const firebaseConfig = {
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
 };
 
-// Check if Firebase API key is present
 if (!firebaseConfig.apiKey) {
   console.error(
     "Firebase API Key (NEXT_PUBLIC_FIREBASE_API_KEY) is missing or undefined. " +
@@ -31,8 +28,6 @@ if (!firebaseConfig.projectId) {
   );
 }
 
-
-// Initialize Firebase
 let app: FirebaseApp;
 if (!getApps().length) {
   app = initializeApp(firebaseConfig);
@@ -41,8 +36,10 @@ if (!getApps().length) {
 }
 
 const auth: Auth = getAuth(app);
-const db: Firestore = getFirestore(app);
-// const storage: FirebaseStorage = getStorage(app); // For avatar uploads later
+// const db: Firestore = getFirestore(app); // Commented out: Firestore instance
+// const storage: FirebaseStorage = getStorage(app);
 
-export { app, auth, db /*, storage */ };
-
+// Export db for now, but it should be phased out.
+// Components will fetch from API routes that query MySQL.
+// export { app, auth, db /*, storage */ }; // Original export
+export { app, auth /*, storage */ }; // Export without db for now

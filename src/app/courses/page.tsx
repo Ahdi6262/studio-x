@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useCallback } from 'react';
@@ -7,52 +8,32 @@ import { CourseFilters } from "@/components/courses/course-filters";
 import type { Course } from '@/lib/mock-data'; 
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { PlusCircle, BookOpen } from "lucide-react"; // Added BookOpen
+import { PlusCircle, BookOpen } from "lucide-react"; 
 import { Skeleton } from "@/components/ui/skeleton";
-import { collection, getDocs, query, where, orderBy, limit } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+// Firebase imports removed as we are moving to MySQL via API
+// import { collection, getDocs, query, where, orderBy, limit } from "firebase/firestore";
+// import { db } from "@/lib/firebase";
 
-async function fetchCoursesFromDB(filters?: { searchTerm?: string; category?: string; level?: string }): Promise<Course[]> {
-  console.log("Fetching courses from DB with filters:", filters);
-  const coursesCol = collection(db, 'courses');
-  // Base query: fetch published courses, ordered by title
-  let q = query(coursesCol, where("status", "==", "published"), orderBy("title")); 
-
-  const courseSnapshot = await getDocs(q);
-  let courseList = courseSnapshot.docs.map(doc => {
-    const data = doc.data();
-    return { 
-        id: doc.id, 
-        ...data,
-        // Ensure compatibility with CourseCard props
-        imageUrl: data.cover_image_url || data.imageUrl || 'https://picsum.photos/seed/defaultcourse/600/400',
-        students: data.enrollment_count || 0, // Assuming enrollment_count or similar, default to 0
-        duration: data.duration_text || 'N/A',
-        lessons: data.lessons_count || 0,
-        price: data.is_free ? 'Free' : (data.price_amount ? data.price_amount / 100 : 'N/A'), // Assuming price_amount is in cents
-        instructor: data.instructorName || 'Expert Instructor' // Assuming instructorName or fetch from instructor_id
-    } as Course;
-  });
-
-  // Client-side filtering
-  if (filters) {
-    if (filters.searchTerm) {
-      const lowerSearchTerm = filters.searchTerm.toLowerCase();
-      courseList = courseList.filter(course =>
-        course.title.toLowerCase().includes(lowerSearchTerm) ||
-        course.instructor.toLowerCase().includes(lowerSearchTerm) ||
-        course.description.toLowerCase().includes(lowerSearchTerm)
-      );
-    }
-    if (filters.category &amp;&amp; filters.category !== "All") {
-      courseList = courseList.filter(course => course.category === filters.category);
-    }
-    if (filters.level &amp;&amp; filters.level !== "All") {
-      courseList = courseList.filter(course => course.level === filters.level);
-    }
-  }
+async function fetchCoursesFromAPI(filters?: { searchTerm?: string; category?: string; level?: string }): Promise<Course[]> {
+  console.log("Fetching courses from API with filters:", filters);
+  const queryParams = new URLSearchParams();
+  if (filters?.searchTerm) queryParams.append('searchTerm', filters.searchTerm);
+  if (filters?.category && filters.category !== "All") queryParams.append('category', filters.category);
+  if (filters?.level && filters.level !== "All") queryParams.append('level', filters.level);
   
-  return courseList;
+  try {
+    const response = await fetch(`/api/courses?${queryParams.toString()}`);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch courses: ${response.statusText}`);
+    }
+    const courses: Course[] = await response.json();
+    // The API should return data already in the Course format, or mapping needs to happen here/in API.
+    // For this example, assuming API returns data compatible with Course type.
+    return courses;
+  } catch (error) {
+    console.error("Error fetching courses from API:", error);
+    return []; // Return empty array on error
+  }
 }
 
 
@@ -64,10 +45,11 @@ export default function CoursesPage() {
   const loadCourses = useCallback(async (currentFilters: typeof filters) => {
     setIsLoading(true);
     try {
-      const courses = await fetchCoursesFromDB(currentFilters); 
+      const courses = await fetchCoursesFromAPI(currentFilters); 
       setFilteredCourses(courses);
     } catch (error) {
-      console.error("Failed to fetch courses:", error);
+      console.error("Failed to load courses:", error);
+      setFilteredCourses([]); // Set to empty on error
     }
     setIsLoading(false);
   }, []);
@@ -88,7 +70,7 @@ export default function CoursesPage() {
         title="Explore Courses"
         description="Sharpen your skills and learn from experts. Find courses on blockchain, AI, digital art, and more to accelerate your Web3 journey."
          actions={
-          <Button asChild> {/* Changed variant */}
+          <Button asChild> 
             <Link href="/courses/teach">
               <PlusCircle className="mr-2 h-4 w-4" /> Become an Instructor
             </Link>
@@ -137,4 +119,3 @@ const CardSkeleton = () => (
     </div>
   </div>
 );
-

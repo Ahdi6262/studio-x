@@ -1,4 +1,3 @@
-
 'use client'; 
 
 import { PageHeader } from "@/components/core/page-header";
@@ -10,7 +9,7 @@ import { RefreshCw, Trophy } from "lucide-react"; // Added Trophy
 import { useEffect, useState, useCallback } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/contexts/auth-context";
-import { collection, getDocs, query, orderBy, limit, doc, getDoc } from "firebase/firestore"; 
+import { collection, getDocs, query, orderBy, limit, doc, getDoc, where } from "firebase/firestore"; 
 import { db } from "@/lib/firebase"; 
 
 // Function to fetch leaderboard data from user_points and enrich with user details
@@ -163,3 +162,4 @@ const LeaderboardItemSkeleton = () => (
     </div>
   </div>
 );
+

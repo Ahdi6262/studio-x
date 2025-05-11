@@ -1,4 +1,3 @@
-
 "use client";
 
 import type { FormEvent } from 'react';
@@ -152,3 +151,4 @@ export function LoginForm() {
     </Card>
   );
 }
+

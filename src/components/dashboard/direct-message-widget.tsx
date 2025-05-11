@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect, useState } from "react";
@@ -122,19 +121,19 @@ export function DirectMessageWidget({ userId }: DirectMessageWidgetProps) {
         {messages.length > 0 ? (
           <ul className="space-y-3 mb-4">
             {messages.map(msg => (
-              <li key={msg.id} className={`flex items-center space-x-3 p-2 rounded-md hover:bg-secondary/50 ${msg.unread_count && msg.unread_count > 0 ? 'bg-primary/5' : ''}`}>
+              <li key={msg.id} className={`flex items-center space-x-3 p-2 rounded-md hover:bg-secondary/50 ${msg.unread_count &amp;&amp; msg.unread_count > 0 ? 'bg-primary/5' : ''}`}>
                 <Avatar className="h-9 w-9">
                   <AvatarImage src={msg.other_user_avatar_url} alt={msg.other_user_name || 'User'} data-ai-hint="user message avatar"/>
                   <AvatarFallback>{(msg.other_user_name || "U").substring(0,1)}</AvatarFallback>
                 </Avatar>
                 <div className="flex-1">
                   <div className="flex justify-between items-center">
-                    <span className={`text-sm font-medium ${msg.unread_count && msg.unread_count > 0 ? 'text-primary' : 'text-foreground'}`}>{msg.other_user_name || 'User'}</span>
-                    {msg.last_message_timestamp && <span className="text-xs text-muted-foreground">{msg.last_message_timestamp.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>}
+                    <span className={`text-sm font-medium ${msg.unread_count &amp;&amp; msg.unread_count > 0 ? 'text-primary' : 'text-foreground'}`}>{msg.other_user_name || 'User'}</span>
+                    {msg.last_message_timestamp &amp;&amp; <span className="text-xs text-muted-foreground">{msg.last_message_timestamp.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>}
                   </div>
                   <p className="text-xs text-muted-foreground truncate">{msg.last_message_snippet}</p>
                 </div>
-                {msg.unread_count && msg.unread_count > 0 && (
+                {msg.unread_count &amp;&amp; msg.unread_count > 0 &amp;&amp; (
                     <span className="text-xs bg-primary text-primary-foreground font-semibold px-1.5 py-0.5 rounded-full">{msg.unread_count}</span>
                 )}
               </li>
@@ -157,3 +156,4 @@ export function DirectMessageWidget({ userId }: DirectMessageWidgetProps) {
     </Card>
   );
 }
+

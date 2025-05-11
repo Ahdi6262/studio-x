@@ -1,4 +1,3 @@
-
 import { PageHeader } from "@/components/core/page-header";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -49,3 +48,4 @@ export default function NewBlogPostPage() {
     </div>
   );
 }
+

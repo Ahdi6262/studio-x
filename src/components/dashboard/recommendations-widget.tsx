@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -65,7 +64,7 @@ export function RecommendationsWidget() {
         <CardDescription>Personalized suggestions to help you grow and connect. Powered by Genkit AI.</CardDescription>
       </CardHeader>
       <CardContent>
-        {isLoading && (
+        {isLoading &amp;&amp; (
           <div className="space-y-3">
             {[...Array(3)].map((_, i) => (
               <div key={i} className="p-3 bg-secondary/30 rounded-md space-y-2">
@@ -76,12 +75,12 @@ export function RecommendationsWidget() {
             ))}
           </div>
         )}
-        {!isLoading && error && (
+        {!isLoading &amp;&amp; error &amp;&amp; (
           <div className="text-center py-6 text-destructive">
             <p>{error}</p>
           </div>
         )}
-        {!isLoading && !error && recommendationsData && recommendationsData.recommendations.length > 0 && (
+        {!isLoading &amp;&amp; !error &amp;&amp; recommendationsData &amp;&amp; recommendationsData.recommendations.length > 0 &amp;&amp; (
           <>
             <ul className="space-y-3">
               {recommendationsData.recommendations.map(rec => (
@@ -101,17 +100,17 @@ export function RecommendationsWidget() {
                         )}
                         <span className="ml-2 text-xs text-muted-foreground">({rec.type})</span>
                       </h4>
-                      {rec.description && <p className="text-sm text-muted-foreground mt-0.5">{rec.description}</p>}
-                      {rec.reason && <p className="text-xs text-primary/80 mt-1 italic">Reason: {rec.reason}</p>}
+                      {rec.description &amp;&amp; <p className="text-sm text-muted-foreground mt-0.5">{rec.description}</p>}
+                      {rec.reason &amp;&amp; <p className="text-xs text-primary/80 mt-1 italic">Reason: {rec.reason}</p>}
                     </div>
                   </div>
                 </li>
               ))}
             </ul>
-            {recommendationsData.explanation && <p className="text-xs text-muted-foreground mt-4 italic">AI Explanation: {recommendationsData.explanation}</p>}
+            {recommendationsData.explanation &amp;&amp; <p className="text-xs text-muted-foreground mt-4 italic">AI Explanation: {recommendationsData.explanation}</p>}
           </>
         )}
-        {!isLoading && !error && (!recommendationsData || recommendationsData.recommendations.length === 0) && (
+        {!isLoading &amp;&amp; !error &amp;&amp; (!recommendationsData || recommendationsData.recommendations.length === 0) &amp;&amp; (
           <div className="text-center py-6 text-muted-foreground">
             <p>No recommendations available yet. Engage more to get personalized suggestions!</p>
           </div>
@@ -123,3 +122,4 @@ export function RecommendationsWidget() {
     </Card>
   );
 }
+

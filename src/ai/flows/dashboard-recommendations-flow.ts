@@ -10,7 +10,7 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
-import { collection, query, where, getDocs, limit, doc, getDoc } from "firebase/firestore";
+import { collection, query, where, getDocs, limit, doc, getDoc, orderBy } from "firebase/firestore"; // Added orderBy
 import { db } from '@/lib/firebase'; // Assuming db is your initialized Firestore instance
 
 // Mock data types for user activity - in a real app, these would be more detailed
@@ -123,7 +123,7 @@ async function getUserInputForFlow(userId: string): Promise<DashboardRecommendat
   const userPointsSnap = await getDoc(userPointsRef);
   if (userPointsSnap.exists()) {
     // Rank calculation is complex. For now, using a placeholder or if rank is stored directly.
-    input.leaderboardRank = userPointsSnap.data().rank || Math.floor(Math.random() * 100) + 1; 
+    input.leaderboardRank = userPointsSnap.data().rank_all_time || Math.floor(Math.random() * 100) + 1; 
   }
 
   // Fetch achievements
@@ -281,3 +281,6 @@ ai.handlebars.registerHelper('ifNotEmpty', function(array, options) {
   }
   return options.inverse(this);
 });
+
+
+    

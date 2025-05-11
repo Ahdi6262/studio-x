@@ -1,4 +1,3 @@
-
 import type { Timestamp } from "firebase/firestore";
 
 export interface BlogPost {
@@ -19,3 +18,4 @@ export interface BlogPost {
   created_at: Timestamp | any;
   updated_at: Timestamp | any;
 }
+

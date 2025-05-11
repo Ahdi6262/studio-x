@@ -31,8 +31,8 @@ export default function AdminPage() {
               { title: "User Management", icon: Users, desc: "View, edit, and manage user accounts, roles, and permissions." },
               { title: "Course Management", icon: BookOpen, desc: "Create, update, and publish courses, modules, and lessons." },
               { title: "Project Management", icon: FolderKanban, desc: "Oversee user-submitted projects, feature or moderate content." },
-              { title: "Blog & Content", icon: Rss, desc: "Manage blog posts, static pages, and other platform content." },
-              { title: "Analytics & Reporting", icon: BarChart3, desc: "Access key metrics, user engagement data, and platform performance." },
+              { title: "Blog &amp; Content", icon: Rss, desc: "Manage blog posts, static pages, and other platform content." },
+              { title: "Analytics &amp; Reporting", icon: BarChart3, desc: "Access key metrics, user engagement data, and platform performance." },
               { title: "Site Settings", icon: Settings2, desc: "Configure platform-wide settings, integrations, and feature flags." },
             ].map(item => (
               <Card key={item.title} className="bg-secondary/30">
@@ -53,3 +53,4 @@ export default function AdminPage() {
     </div>
   );
 }
+

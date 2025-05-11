@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useCallback } from 'react';
@@ -45,10 +44,10 @@ async function fetchCoursesFromDB(filters?: { searchTerm?: string; category?: st
         course.description.toLowerCase().includes(lowerSearchTerm)
       );
     }
-    if (filters.category && filters.category !== "All") {
+    if (filters.category &amp;&amp; filters.category !== "All") {
       courseList = courseList.filter(course => course.category === filters.category);
     }
-    if (filters.level && filters.level !== "All") {
+    if (filters.level &amp;&amp; filters.level !== "All") {
       courseList = courseList.filter(course => course.level === filters.level);
     }
   }
@@ -138,3 +137,4 @@ const CardSkeleton = () => (
     </div>
   </div>
 );
+

@@ -1,16 +1,15 @@
-
 import Image from 'next/image';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import type { Course } from '@/lib/mock-data'; 
-import { PageHeader } from '@/components/core/page-header";
+import { PageHeader } from "@/components/core/page-header";
 import { ArrowLeft, Star, Users, Clock, BookOpen, CheckCircle, PlayCircle } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Separator } from '@/components/ui/separator';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { doc, getDoc, collection, getDocs, orderBy } from "firebase/firestore"; 
+import { doc, getDoc, collection, getDocs, orderBy, query as firestoreQuery } from "firebase/firestore"; // Renamed query to firestoreQuery
 import { db } from "@/lib/firebase"; 
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -18,16 +17,21 @@ import remarkGfm from 'remark-gfm';
 interface CourseModule {
   id: string;
   title: string;
+  description?: string; // Added
+  order_index: number; // Added
   lessons: CourseLesson[];
 }
 interface CourseLesson {
   id: string;
   title: string;
   content_type: string;
+  order_index: number; // Added
+  estimated_duration_minutes?: number; // Added
+  is_previewable?: boolean; // Added
   // Add other lesson-specific fields if needed, e.g., duration
 }
 
-async function getCourseData(courseId: string): Promise<(Course & { modules?: CourseModule[] }) | undefined> {
+async function getCourseData(courseId: string): Promise<(Course &amp; { modules?: CourseModule[] }) | undefined> {
   console.log(`Fetching course data for ID: ${courseId} from Firebase...`);
   const courseRef = doc(db, 'courses', courseId);
   const courseSnap = await getDoc(courseRef);
@@ -37,17 +41,23 @@ async function getCourseData(courseId: string): Promise<(Course & { modules?: Co
 
     // Fetch modules and their lessons
     const modulesCol = collection(db, 'courses', courseId, 'course_modules');
-    const modulesQuery = query(modulesCol, orderBy("order_index"));
+    const modulesQuery = firestoreQuery(modulesCol, orderBy("order_index"));
     const modulesSnap = await getDocs(modulesQuery);
     
     const modules: CourseModule[] = await Promise.all(
       modulesSnap.docs.map(async (moduleDoc) => {
         const moduleData = moduleDoc.data();
         const lessonsCol = collection(db, 'courses', courseId, 'course_modules', moduleDoc.id, 'course_lessons');
-        const lessonsQuery = query(lessonsCol, orderBy("order_index"));
+        const lessonsQuery = firestoreQuery(lessonsCol, orderBy("order_index"));
         const lessonsSnap = await getDocs(lessonsQuery);
         const lessons = lessonsSnap.docs.map(lessonDoc => ({ id: lessonDoc.id, ...lessonDoc.data() } as CourseLesson));
-        return { id: moduleDoc.id, title: moduleData.title, lessons };
+        return { 
+            id: moduleDoc.id, 
+            title: moduleData.title, 
+            description: moduleData.description,
+            order_index: moduleData.order_index,
+            lessons 
+        };
       })
     );
     
@@ -106,17 +116,17 @@ export default async function CourseDetailPage({ params }: { params: { courseId:
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-8">
           <div>
-            {course.category && <Badge variant="secondary" className="mb-2">{course.category}</Badge>}
+            {course.category &amp;&amp; <Badge variant="secondary" className="mb-2">{course.category}</Badge>}
             <h1 className="text-4xl font-bold tracking-tight text-foreground">{course.title}</h1>
-            {course.description && <p className="mt-2 text-lg text-muted-foreground">{course.description}</p>}
+            {course.description &amp;&amp; <p className="mt-2 text-lg text-muted-foreground">{course.description}</p>}
             <div className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-muted-foreground">
               <span>Taught by: <span className="font-medium text-primary">{instructorName}</span></span>
-              {typeof course.rating === 'number' && 
+              {typeof course.rating === 'number' &amp;&amp; 
                 <div className="flex items-center">
                   <Star className="h-4 w-4 mr-1 text-yellow-400 fill-yellow-400" /> {course.rating} rating
                 </div>
               }
-              {typeof course.students === 'number' && 
+              {typeof course.students === 'number' &amp;&amp; 
                 <div className="flex items-center">
                   <Users className="h-4 w-4 mr-1" /> {course.students.toLocaleString()} students
                 </div>
@@ -138,7 +148,7 @@ export default async function CourseDetailPage({ params }: { params: { courseId:
           </div>
           
           <Separator />
-          {course.long_description && (
+          {course.long_description &amp;&amp; (
             <div>
               <h2 className="text-2xl font-semibold mb-4">About this course</h2>
               <div className="prose dark:prose-invert max-w-none text-foreground/90">
@@ -148,7 +158,7 @@ export default async function CourseDetailPage({ params }: { params: { courseId:
           )}
           <Separator />
 
-          {course.learning_objectives && course.learning_objectives.length > 0 && (
+          {course.learning_objectives &amp;&amp; course.learning_objectives.length > 0 &amp;&amp; (
             <div>
               <h2 className="text-2xl font-semibold mb-4">What you&apos;ll learn</h2>
               <ul className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3">
@@ -165,7 +175,7 @@ export default async function CourseDetailPage({ params }: { params: { courseId:
 
           <div>
             <h2 className="text-2xl font-semibold mb-4">Course Content</h2>
-            {(course.modules && course.modules.length > 0) ? (
+            {(course.modules &amp;&amp; course.modules.length > 0) ? (
               <Accordion type="single" collapsible className="w-full">
                 {course.modules.map((module, index) => (
                   <AccordionItem value={`module-${module.id}`} key={module.id}>
@@ -177,6 +187,7 @@ export default async function CourseDetailPage({ params }: { params: { courseId:
                         {module.lessons.map(lesson => (
                           <li key={lesson.id} className="flex items-center text-muted-foreground hover:text-foreground transition-colors">
                             <PlayCircle className="h-4 w-4 mr-2 text-primary/70" /> {lesson.title} ({lesson.content_type})
+                            {lesson.estimated_duration_minutes &amp;&amp; <span className="ml-auto text-xs"> ({lesson.estimated_duration_minutes} min)</span>}
                           </li>
                         ))}
                       </ul>
@@ -196,7 +207,7 @@ export default async function CourseDetailPage({ params }: { params: { courseId:
               <CardTitle className="text-3xl text-primary">
                 {course.price}
               </CardTitle>
-              { course.price !== 'Free' && <CardDescription>One-time payment</CardDescription> }
+              { course.price !== 'Free' &amp;&amp; <CardDescription>One-time payment</CardDescription> }
             </CardHeader>
             <CardContent className="space-y-3">
               <Button size="lg" className="w-full">Enroll Now</Button>
@@ -207,8 +218,8 @@ export default async function CourseDetailPage({ params }: { params: { courseId:
             <CardContent>
               <h3 className="font-semibold mb-2">This course includes:</h3>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                {course.duration_text && <li className="flex items-center"><Clock className="h-4 w-4 mr-2 text-primary" /> {course.duration_text} on-demand video</li>}
-                {course.lessons_count && <li className="flex items-center"><BookOpen className="h-4 w-4 mr-2 text-primary" /> {course.lessons_count} lessons & articles</li>}
+                {course.duration_text &amp;&amp; <li className="flex items-center"><Clock className="h-4 w-4 mr-2 text-primary" /> {course.duration_text} on-demand video</li>}
+                {course.lessons_count &amp;&amp; <li className="flex items-center"><BookOpen className="h-4 w-4 mr-2 text-primary" /> {course.lessons_count} lessons &amp; articles</li>}
                 <li className="flex items-center"><CheckCircle className="h-4 w-4 mr-2 text-primary" /> Full lifetime access</li>
                 <li className="flex items-center"><Users className="h-4 w-4 mr-2 text-primary" /> Access on mobile and TV</li>
                 <li className="flex items-center"><Badge variant="outline" className="mr-2">Certificate</Badge> of completion</li>
@@ -239,3 +250,4 @@ export function CourseDetailSkeleton() { // Keep for Suspense
     </div>
   );
 }
+

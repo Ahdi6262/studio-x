@@ -1,11 +1,10 @@
-
 "use client";
 
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { BookOpenText, FolderGit2, Activity } from "lucide-react"; // Added Activity as a generic icon
-import { collection, query, where, getDocs, limit } from "firebase/firestore";
+import { collection, query, where, getDocs, limit, doc, getDoc } from "firebase/firestore"; // Added doc, getDoc
 import { db } from "@/lib/firebase";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -47,30 +46,40 @@ export function ProgressTrackerWidget({ userId }: ProgressTrackerWidgetProps) {
         
         const coursesDataPromises = enrollmentsSnap.docs.map(async (enrollDoc) => {
           const enrollment = enrollDoc.data();
-          // To get course title, you'd ideally fetch from 'courses' collection using enrollment.course_id
-          // For simplicity here, we'll use a placeholder title or assume it's on enrollment doc
+          // To get course title, fetch from 'courses' collection using enrollment.course_id
+          const courseRef = doc(db, 'courses', enrollment.course_id);
+          const courseSnap = await getDoc(courseRef);
+          const courseTitle = courseSnap.exists() ? courseSnap.data().title : `Course ${enrollment.course_id.substring(0,5)}...`;
+          
           return {
             id: enrollment.course_id,
-            title: enrollment.course_title || `Course ${enrollment.course_id.substring(0,5)}...`, // Placeholder
+            title: courseTitle, 
             progress: enrollment.progress_percentage || 0,
           };
         });
         const courses = await Promise.all(coursesDataPromises);
         setCourseProgress(courses);
 
-        // Fetch Project Progress (Simplified: assuming projects have a 'progress' field)
-        // This might need more complex logic based on your `project_contributions` schema
+        // Fetch Project Progress 
         const projectsCol = collection(db, 'projects');
-        const projectsQuery = query(projectsCol, where("user_id", "==", userId), limit(5)); // Limit for display
+        // Query projects created by user_id OR where user_id is in a contributors array (if you have that)
+        // For simplicity, sticking to user_id as author for now.
+        const projectsQuery = query(projectsCol, where("user_id", "==", userId), limit(5)); 
         const projectsSnap = await getDocs(projectsQuery);
-        const projectsData = projectsSnap.docs.map(doc => {
-          const project = doc.data();
+        const projectsData = projectsSnap.docs.map(docData => { // Renamed doc to docData to avoid conflict
+          const project = docData.data();
+          // Assuming 'progress' field or calculate. For now, using status to infer.
+          let progressValue = 0;
+          if (project.status === 'published') progressValue = 100;
+          else if (project.status === 'in_progress') progressValue = 50; // Example
+          else if (project.status === 'draft') progressValue = 10; // Example
+          // Else, you might need a dedicated progress field or logic based on contributions.
+          
           return {
-            id: doc.id,
+            id: docData.id,
             title: project.title,
-            // Assuming 'progress' field exists. If not, calculate from contributions or set default.
-            progress: project.progress || Math.floor(Math.random() * 100), // Placeholder progress
-            status: project.status || 'In Progress', // From schema
+            progress: project.progress_percentage || progressValue, // Prefer explicit progress field
+            status: project.status || 'Draft', 
           };
         });
         setProjectProgress(projectsData);
@@ -170,3 +179,4 @@ export function ProgressTrackerWidget({ userId }: ProgressTrackerWidgetProps) {
     </Card>
   );
 }
+

@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useAuth } from "@/contexts/auth-context";
@@ -39,13 +38,13 @@ export default function ProfilePage() {
   const [isPageLoading, setIsPageLoading] = useState(true);
 
   useEffect(() => {
-    if (!authIsLoading && !isAuthenticated) {
+    if (!authIsLoading &amp;&amp; !isAuthenticated) {
       router.push('/login');
     } else if (user) {
       setDisplayName(user.name || '');
       setBio(user.bio || '');
       setIsPageLoading(false);
-    } else if (!authIsLoading && !user) {
+    } else if (!authIsLoading &amp;&amp; !user) {
       setIsPageLoading(false); 
     }
   }, [isAuthenticated, user, router, authIsLoading]);
@@ -163,7 +162,7 @@ export default function ProfilePage() {
         title="My Profile" 
         description="Manage your account settings and preferences."
         actions={
-          !isEditing && (
+          !isEditing &amp;&amp; (
             <Button variant="outline" onClick={() => setIsEditing(true)}>
               <Edit3 className="mr-2 h-4 w-4" /> Edit Profile
             </Button>
@@ -190,7 +189,7 @@ export default function ProfilePage() {
               onChange={handleFileChange} 
             />
             <Button className="w-full mt-2" onClick={handleAvatarUploadClick} disabled={isSaving}>
-              <UploadCloud className="mr-2 h-4 w-4" /> {isSaving && fileInputRef.current?.files?.length ? 'Uploading...' : 'Change Avatar'}
+              <UploadCloud className="mr-2 h-4 w-4" /> {isSaving &amp;&amp; fileInputRef.current?.files?.length ? 'Uploading...' : 'Change Avatar'}
             </Button>
           </CardContent>
         </Card>
@@ -294,3 +293,4 @@ export default function ProfilePage() {
     </div>
   );
 }
+

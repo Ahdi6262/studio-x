@@ -1,4 +1,3 @@
-
 import { PageHeader } from "@/components/core/page-header";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, CalendarDays, UserCircle, Tag } from "lucide-react";
@@ -67,7 +66,7 @@ export default async function BlogPostPage({ params }: { params: { slug: string 
       </div>
 
       <article className="bg-card p-6 sm:p-8 rounded-xl shadow-xl">
-        {post.cover_image_url && (
+        {post.cover_image_url &amp;&amp; (
           <div className="relative w-full h-64 md:h-80 rounded-lg overflow-hidden mb-8 shadow-inner">
             <Image
               src={post.cover_image_url}
@@ -85,13 +84,13 @@ export default async function BlogPostPage({ params }: { params: { slug: string 
             <div className="flex items-center">
               <UserCircle className="h-4 w-4 mr-1.5" /> {authorName}
             </div>
-            {post.published_at && (
+            {post.published_at &amp;&amp; (
               <div className="flex items-center">
                 <CalendarDays className="h-4 w-4 mr-1.5" />
                 {new Date(post.published_at.seconds * 1000).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
               </div>
             )}
-            {post.category && (
+            {post.category &amp;&amp; (
                 <Badge variant="secondary">{post.category}</Badge>
             )}
           </div>
@@ -107,7 +106,7 @@ export default async function BlogPostPage({ params }: { params: { slug: string 
           </ReactMarkdown>
         </div>
 
-        {post.tags && post.tags.length > 0 && (
+        {post.tags &amp;&amp; post.tags.length > 0 &amp;&amp; (
           <>
             <Separator className="my-8" />
             <footer className="mt-6">
@@ -151,3 +150,4 @@ export function BlogPostSkeleton() { // For potential use with Suspense
     </div>
   );
 }
+

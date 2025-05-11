@@ -1,4 +1,3 @@
-
 "use client";
 
 import type { ReactNode } from 'react';
@@ -120,7 +119,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     await firebaseUpdateProfile(userCredential.user, { displayName: name });
     
-    const newUserFirestoreData: Partial<UserData> & { created_at: any, updated_at: any } = {
+    const newUserFirestoreData: Partial<UserData> &amp; { created_at: any, updated_at: any } = {
         uid: userCredential.user.uid,
         email: email,
         name: name,
@@ -159,7 +158,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const updateUserProfile = async (displayName: string, bio?: string): Promise<void> => {
     if (auth.currentUser) {
         await firebaseUpdateProfile(auth.currentUser, { displayName });
-        const updates: Partial<UserData & { updated_at: any }> = { 
+        const updates: Partial<UserData &amp; { updated_at: any }> = { 
           name: displayName, 
           updated_at: serverTimestamp() 
         };
@@ -223,7 +222,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return firebaseUser;
     } catch (error: any) {
         // Handle account-exists-with-different-credential error
-        if (error.code === 'auth/account-exists-with-different-credential' && auth.currentUser && error.customData?.email) {
+        if (error.code === 'auth/account-exists-with-different-credential' &amp;&amp; auth.currentUser &amp;&amp; error.customData?.email) {
             const methods = await fetchSignInMethodsForEmail(auth, error.customData.email);
             // Here you might prompt the user to link accounts or sign in with the existing method.
             // For simplicity, we'll try to link if the current user is anonymous or if we have a way to confirm.
@@ -248,8 +247,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signInWithFacebook = () => handleSocialSignIn(new FacebookAuthProvider());
 
   const connectWallet = async (address: string, chainId: string): Promise<void> => {
-    if (auth.currentUser && user) {
-      const newWallet = { address, chain_id: chainId, linked_at: serverTimestamp(), is_primary: !(user.web3_wallets && user.web3_wallets.length > 0) };
+    if (auth.currentUser &amp;&amp; user) {
+      const newWallet = { address, chain_id: chainId, linked_at: serverTimestamp(), is_primary: !(user.web3_wallets &amp;&amp; user.web3_wallets.length > 0) };
       const userDocRef = doc(db, "users", auth.currentUser.uid);
       await updateDoc(userDocRef, {
         web3_wallets: arrayUnion(newWallet),
@@ -268,7 +267,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   return (
     <AuthContext.Provider value={{ 
-        isAuthenticated: !!user && !isLoading,
+        isAuthenticated: !!user &amp;&amp; !isLoading,
         user, 
         isLoading, 
         loginUser, 
@@ -294,3 +293,4 @@ export function useAuth() {
   }
   return context;
 }
+

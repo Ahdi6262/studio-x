@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useCallback } from 'react';
@@ -41,13 +40,13 @@ async function fetchProjectsFromDB(filters?: { searchTerm?: string; category?: s
       projectList = projectList.filter(project =>
         project.title.toLowerCase().includes(lowerSearchTerm) ||
         project.description.toLowerCase().includes(lowerSearchTerm) ||
-        (project.author && project.author.toLowerCase().includes(lowerSearchTerm)) ||
-        (project.tags && project.tags.some(tag => tag.toLowerCase().includes(lowerSearchTerm)))
+        (project.author &amp;&amp; project.author.toLowerCase().includes(lowerSearchTerm)) ||
+        (project.tags &amp;&amp; project.tags.some(tag => tag.toLowerCase().includes(lowerSearchTerm)))
       );
     }
-    if (filters.category && filters.category !== "All") {
+    if (filters.category &amp;&amp; filters.category !== "All") {
       projectList = projectList.filter(project => 
-        project.tags && project.tags.includes(filters.category)
+        project.tags &amp;&amp; project.tags.includes(filters.category)
       );
     }
   }
@@ -134,3 +133,4 @@ const CardSkeleton = () => (
     <Skeleton className="h-9 w-full mt-2 bg-muted" />
   </div>
 );
+

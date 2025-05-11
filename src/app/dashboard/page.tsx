@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect, useState } from "react";
@@ -14,7 +13,7 @@ import { CommunityFeedWidget } from "@/components/dashboard/community-feed-widge
 import { AchievementsWidget } from "@/components/dashboard/achievements-widget";
 import { DirectMessageWidget } from "@/components/dashboard/direct-message-widget";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { BookOpen, FolderKanban, Settings, User, Trophy, Edit, LayoutGrid, LucideIcon, Award } from "lucide-react"; // Added Award
+import { BookOpen, FolderKanban, Settings, User, Trophy, Edit, LayoutGrid, type LucideIcon, Award } from "lucide-react"; // Added Award
 import { Skeleton } from "@/components/ui/skeleton";
 import { doc, getDoc, collection, query, where, getCountFromServer } from "firebase/firestore";
 import { db } from "@/lib/firebase";
@@ -79,13 +78,13 @@ export default function DashboardPage() {
   const [isDashboardLoading, setIsDashboardLoading] = useState(true);
 
   useEffect(() => {
-    if (!authIsLoading && !isAuthenticated) {
+    if (!authIsLoading &amp;&amp; !isAuthenticated) {
       router.push("/login");
     }
   }, [isAuthenticated, authIsLoading, router]);
 
   useEffect(() => {
-    if (isAuthenticated && user?.uid) {
+    if (isAuthenticated &amp;&amp; user?.uid) {
       const loadData = async () => {
         setIsDashboardLoading(true);
         try {
@@ -98,7 +97,7 @@ export default function DashboardPage() {
         setIsDashboardLoading(false);
       };
       loadData();
-    } else if (!authIsLoading && !isAuthenticated) {
+    } else if (!authIsLoading &amp;&amp; !isAuthenticated) {
         setIsDashboardLoading(false);
     }
   }, [isAuthenticated, user, authIsLoading]);
@@ -138,7 +137,7 @@ export default function DashboardPage() {
         }
       />
 
-    {dashboardStats && (
+    {dashboardStats &amp;&amp; (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-8">
             <StatCard
                 title="Total Points"
@@ -175,7 +174,7 @@ export default function DashboardPage() {
         </div>
         
         <div className="space-y-8">
-            {quickLinksData.length > 0 && <QuickLinks title="Quick Links" links={quickLinksData} /> }
+            {quickLinksData.length > 0 &amp;&amp; <QuickLinks title="Quick Links" links={quickLinksData} /> }
             <AchievementsWidget userId={user.uid} />
             <CommunityFeedWidget />
             <DirectMessageWidget userId={user.uid} />
@@ -201,3 +200,4 @@ export default function DashboardPage() {
     </div>
   );
 }
+

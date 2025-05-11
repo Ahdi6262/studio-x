@@ -1,3 +1,4 @@
+
 import { PageHeader } from "@/components/core/page-header";
 import { CalendarDays } from "lucide-react";
 
@@ -19,7 +20,7 @@ export default function EventsPage() {
         description="Stay updated with our upcoming workshops, seminars, conferences, and community gatherings."
       />
       <div className="bg-card p-4 sm:p-6 rounded-lg shadow-xl">
-        <div className="aspect-[16/10] md:aspect-[16/9] lg:aspect-[21/9] xl:aspect-[16/6] w-full">
+        <div className="aspect-[16/10] md:aspect-[16/9] lg:aspect-[21/9] xl:aspect-[16/6] w-full border border-border/40 rounded-lg overflow-hidden">
           <iframe
             src={calendarEmbedUrl}
             style={{ borderWidth: 0 }}
@@ -28,7 +29,7 @@ export default function EventsPage() {
             frameBorder="0"
             scrolling="no"
             title="Events Calendar"
-            className="rounded-md"
+            className="rounded-md" // iframe itself can also have rounded corners if its content supports it
           ></iframe>
         </div>
         <p className="mt-4 text-sm text-muted-foreground text-center">
@@ -38,3 +39,4 @@ export default function EventsPage() {
     </div>
   );
 }
+

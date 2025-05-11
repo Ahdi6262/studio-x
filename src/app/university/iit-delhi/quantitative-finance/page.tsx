@@ -1,8 +1,41 @@
 
 import { PageHeader } from "@/components/core/page-header";
-import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { ArrowLeft, DollarSign, TrendingUp } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft, Calculator, Briefcase, Sigma, DollarSign } from "lucide-react"; // Added Calculator, Briefcase, Sigma
+import type { ElementType } from "react";
+
+interface QFSubTopic {
+  title: string;
+  description: string;
+  href: string;
+  icon: ElementType;
+  actionText: string;
+}
+
+const qfSubTopicsData: QFSubTopic[] = [
+  {
+    title: "Quantitative Modeling",
+    description: "Explore mathematical and statistical models used to analyze financial markets and make investment decisions.",
+    href: "/university/iit-delhi/quantitative-finance/quantitative-modeling",
+    icon: Calculator,
+    actionText: "Explore Modeling"
+  },
+  {
+    title: "Financial Engineering",
+    description: "Learn about the design, development, and implementation of innovative financial products and processes.",
+    href: "/university/iit-delhi/quantitative-finance/financial-engineering",
+    icon: Briefcase,
+    actionText: "Explore Engineering"
+  },
+  {
+    title: "Mathematics in Finance",
+    description: "Understand the core mathematical theories and techniques that form the backbone of quantitative finance.",
+    href: "/university/iit-delhi/quantitative-finance/mathematics",
+    icon: Sigma,
+    actionText: "Explore Math"
+  }
+];
 
 export default function QuantitativeFinancePage() {
   return (
@@ -14,14 +47,25 @@ export default function QuantitativeFinancePage() {
       </Button>
       <PageHeader
         title="Quantitative Finance"
-        description="Exploring the application of mathematical and statistical methods in finance."
+        description="Exploring the application of mathematical and statistical methods in finance. Delve into modeling, engineering, and core mathematical principles."
       />
-      <div className="bg-card p-8 rounded-lg shadow-lg text-center flex flex-col items-center">
-        <TrendingUp className="w-16 h-16 text-primary mb-6" />
-        <h2 className="text-3xl font-semibold mb-3">Content Coming Soon!</h2>
-        <p className="text-muted-foreground max-w-xl">
-          Detailed information, resources, and insights related to Quantitative Finance will be available here shortly. This section will cover topics such as financial modeling, risk management, algorithmic trading, and more.
-        </p>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {qfSubTopicsData.map(item => (
+          <Link href={item.href} key={item.title} className="block hover:no-underline group">
+            <div className="bg-card p-6 rounded-lg shadow-md group-hover:shadow-primary/20 transition-shadow flex flex-col h-full">
+              <div className="flex items-center mb-3">
+                <item.icon className="h-7 w-7 text-primary mr-3 flex-shrink-0" />
+                <h2 className="text-xl font-semibold text-primary">{item.title}</h2>
+              </div>
+              <p className="text-muted-foreground mb-4 text-sm flex-grow min-h-[80px]">
+                {item.description}
+              </p>
+              <div className="mt-auto self-start text-primary text-sm font-medium group-hover:underline">
+                {item.actionText} &rarr;
+              </div>
+            </div>
+          </Link>
+        ))}
       </div>
     </div>
   );

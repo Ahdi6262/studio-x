@@ -1,7 +1,8 @@
+
 "use client";
 
 import Link from 'next/link';
-import { Menu, Settings as SettingsIcon, Link2, Search, Bell } from 'lucide-react';
+import { Menu, Settings as SettingsIcon, Link2, Search, Bell, Coins, Landmark } from 'lucide-react'; // Added Coins, Landmark
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Icons } from '@/components/icons';
@@ -30,7 +31,8 @@ const utilityNavItems = [
   { label: 'Leaderboard', href: '/leaderboard' },
   { label: 'Blog', href: '/blog' },
   { label: 'Life Tracking', href: '/life-tracking'},
-  // Settings is now part of user dropdown or a dedicated icon if preferred
+  { label: 'Community Token', href: '/community-token', icon: Coins },
+  { label: 'Governance', href: '/governance', icon: Landmark },
 ];
 
 
@@ -95,7 +97,7 @@ export function Navbar() {
   };
 
 
-  const renderNavItems = useCallback((items: {label: string, href: string, requiresAuth?: boolean}[]) => items.map((item) => {
+  const renderNavItems = useCallback((items: {label: string, href: string, requiresAuth?: boolean, icon?: any}[]) => items.map((item) => {
     if (item.requiresAuth && !isAuthenticated && !authIsLoading) {
       return null;
     }
@@ -103,21 +105,23 @@ export function Navbar() {
         return <div key={item.label} className="h-6 w-20 bg-muted/50 rounded-md animate-pulse px-3 py-1.5"></div>;
     }
     const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href));
+    const IconComponent = item.icon;
     return (
       <Link
         key={item.label}
         href={item.href}
         className={cn(
-          "text-sm font-medium transition-colors hover:text-primary",
+          "text-sm font-medium transition-colors hover:text-primary flex items-center",
           isActive ? "text-primary bg-primary/10 px-3 py-1.5 rounded-md" : "text-foreground/70 px-3 py-1.5"
         )}
       >
+        {IconComponent && <IconComponent className="mr-1.5 h-4 w-4" />}
         {item.label}
       </Link>
     );
   }), [pathname, isAuthenticated, authIsLoading]);
 
-  const renderMobileNavItems = useCallback((items: {label: string, href: string, requiresAuth?: boolean}[], closeSheetFn: () => void ) => items.map((item) => {
+  const renderMobileNavItems = useCallback((items: {label: string, href: string, requiresAuth?: boolean, icon?: any}[], closeSheetFn: () => void ) => items.map((item) => {
      if (item.requiresAuth && !isAuthenticated && !authIsLoading) { // Check authIsLoading here too
       return null;
     }
@@ -125,16 +129,18 @@ export function Navbar() {
         return <div key={item.label} className="h-10 bg-muted/50 rounded-md animate-pulse w-full"></div>;
     }
     const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href));
+    const IconComponent = item.icon;
     return (
       <Link
         key={item.label}
         href={item.href}
         onClick={closeSheetFn}
         className={cn(
-          "text-lg font-medium transition-colors hover:text-primary hover:bg-primary/5 py-2 px-3 rounded-md block",
+          "text-lg font-medium transition-colors hover:text-primary hover:bg-primary/5 py-2 px-3 rounded-md block flex items-center",
           isActive ? "text-primary bg-primary/10" : ""
         )}
       >
+        {IconComponent && <IconComponent className="mr-2 h-5 w-5" />}
         {item.label}
       </Link>
     );
@@ -228,11 +234,11 @@ export function Navbar() {
                   {isMounted && (
                     <Button
                       variant="outline"
-                      className="w-full justify-start py-2"
+                      className="w-full justify-start py-2 text-lg"
                       onClick={() => { handleConnectWallet(); closeSheet(); }}
                       disabled={isConnectingWallet || !!connectedWalletAddress}
                     >
-                      <Link2 className="mr-2 h-4 w-4" />
+                      <Link2 className="mr-2 h-5 w-5" />
                       {isConnectingWallet ? "Connecting..." : connectedWalletAddress ? `${connectedWalletAddress.substring(0,6)}...` : "Connect Wallet"}
                     </Button>
                   )}
@@ -242,10 +248,10 @@ export function Navbar() {
                      <UserAvatarDropdown isMobile={true} />
                     ) : (
                       <>
-                       <Button variant="outline" className="w-full py-2" asChild>
+                       <Button variant="outline" className="w-full py-2 text-lg" asChild>
                         <Link href="/login" onClick={closeSheet}>Login</Link>
                       </Button>
-                      <Button className="w-full py-2" asChild>
+                      <Button className="w-full py-2 text-lg" asChild>
                         <Link href="/signup" onClick={closeSheet}>Sign Up</Link>
                       </Button>
                       </>

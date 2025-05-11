@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -78,13 +79,13 @@ export default function DashboardPage() {
   const [isDashboardLoading, setIsDashboardLoading] = useState(true);
 
   useEffect(() => {
-    if (!authIsLoading &amp;&amp; !isAuthenticated) {
+    if (!authIsLoading && !isAuthenticated) {
       router.push("/login");
     }
   }, [isAuthenticated, authIsLoading, router]);
 
   useEffect(() => {
-    if (isAuthenticated &amp;&amp; user?.uid) {
+    if (isAuthenticated && user?.uid) {
       const loadData = async () => {
         setIsDashboardLoading(true);
         try {
@@ -97,7 +98,7 @@ export default function DashboardPage() {
         setIsDashboardLoading(false);
       };
       loadData();
-    } else if (!authIsLoading &amp;&amp; !isAuthenticated) {
+    } else if (!authIsLoading && !isAuthenticated) {
         setIsDashboardLoading(false);
     }
   }, [isAuthenticated, user, authIsLoading]);
@@ -137,7 +138,7 @@ export default function DashboardPage() {
         }
       />
 
-    {dashboardStats &amp;&amp; (
+    {dashboardStats && (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-8">
             <StatCard
                 title="Total Points"
@@ -174,7 +175,7 @@ export default function DashboardPage() {
         </div>
         
         <div className="space-y-8">
-            {quickLinksData.length > 0 &amp;&amp; <QuickLinks title="Quick Links" links={quickLinksData} /> }
+            {quickLinksData.length > 0 && <QuickLinks title="Quick Links" links={quickLinksData} /> }
             <AchievementsWidget userId={user.uid} />
             <CommunityFeedWidget />
             <DirectMessageWidget userId={user.uid} />

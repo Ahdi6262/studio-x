@@ -259,6 +259,44 @@ Tracks payment transactions.
 - `created_at`: TIMESTAMP
 - `updated_at`: TIMESTAMP
 
+## 10. Community Token (Planned)
+
+### `community_token_stakes` (Firestore Collection)
+Tracks user stakes of the community token.
+- `id`: STRING (Document ID)
+- `user_id`: STRING (Foreign Key to `users.uid`, Indexed)
+- `amount_staked`: NUMBER
+- `staked_at`: TIMESTAMP
+- `rewards_claimed_at`: TIMESTAMP (Nullable)
+- `updated_at`: TIMESTAMP
+
+## 11. DAO Governance (Planned)
+
+### `dao_proposals` (Firestore Collection)
+Stores DAO governance proposals.
+- `id`: STRING (Document ID)
+- `proposer_id`: STRING (Foreign Key to `users.uid`, Indexed)
+- `title`: STRING
+- `description`: STRING (Markdown/HTML)
+- `status`: STRING (e.g., 'pending_vote', 'active_vote', 'passed', 'failed', 'executed', Indexed)
+- `created_at`: TIMESTAMP
+- `voting_starts_at`: TIMESTAMP
+- `voting_ends_at`: TIMESTAMP
+- `execution_details`: MAP (Optional, for on-chain execution parameters like smart contract calls)
+- `yes_votes`: NUMBER (Count or sum of voting power)
+- `no_votes`: NUMBER
+- `abstain_votes`: NUMBER
+- `updated_at`: TIMESTAMP
+
+### `dao_proposal_votes` (Firestore Subcollection under `dao_proposals/{proposalId}/votes` or top-level)
+Document ID could be `user_id` to ensure one vote per user per proposal.
+- `user_id`: STRING (Foreign Key to `users.uid`)
+- `proposal_id`: STRING (Foreign Key to `dao_proposals.id`, Indexed)
+- `vote_option`: STRING (e.g., 'for', 'against', 'abstain')
+- `voting_power`: NUMBER (Based on token/NFT holding at snapshot time of proposal creation)
+- `transaction_hash`: STRING (Optional, if vote is recorded on-chain)
+- `voted_at`: TIMESTAMP
+
 ---
 This Firestore schema prioritizes denormalization where appropriate for read efficiency, common in NoSQL databases. Security rules will be crucial to manage access. Cloud Functions can be used for periodic tasks like resetting monthly points, aggregating counts, or processing complex achievements.
 The `updated_at` fields should ideally be managed using server timestamps for accuracy.

@@ -2,17 +2,37 @@ import { PageHeader } from "@/components/core/page-header";
 import { CalendarDays } from "lucide-react";
 
 export default function EventsPage() {
+  // Replace with your actual Google Calendar Embed URL
+  // To get this URL:
+  // 1. Go to Google Calendar (calendar.google.com).
+  // 2. On the left, under "My calendars", hover over the calendar you want to embed.
+  // 3. Click the three dots (Options) and select "Settings and sharing".
+  // 4. In the left menu, click "Integrate calendar".
+  // 5. Copy the "Embed code" (it's an iframe). You only need the URL from the `src` attribute of the iframe.
+  // 6. Make sure your calendar's access permissions are set to "Make available to public" if you want everyone to see it.
+  const calendarEmbedUrl = "https://calendar.google.com/calendar/embed?src=your_calendar_id%40group.calendar.google.com&ctz=America%2FNew_York"; // Replace with your calendar ID and timezone
+
   return (
     <div className="container mx-auto px-4 py-12">
       <PageHeader
-        title="Events"
-        description="Stay updated with our upcoming workshops, seminars, conferences, and other events."
+        title="Events Calendar"
+        description="Stay updated with our upcoming workshops, seminars, conferences, and community gatherings."
       />
-      <div className="bg-card p-8 rounded-lg shadow-lg text-center flex flex-col items-center">
-        <CalendarDays className="w-16 h-16 text-primary mb-6" />
-        <h2 className="text-3xl font-semibold mb-3">Events Calendar Coming Soon!</h2>
-        <p className="text-muted-foreground max-w-xl">
-          We are currently curating our events schedule. Please check back shortly for a list of exciting upcoming activities, including academic conferences, guest lectures, student workshops, and community gatherings.
+      <div className="bg-card p-4 sm:p-6 rounded-lg shadow-xl">
+        <div className="aspect-[16/10] md:aspect-[16/9] lg:aspect-[21/9] xl:aspect-[16/6] w-full">
+          <iframe
+            src={calendarEmbedUrl}
+            style={{ borderWidth: 0 }}
+            width="100%"
+            height="100%"
+            frameBorder="0"
+            scrolling="no"
+            title="Events Calendar"
+            className="rounded-md"
+          ></iframe>
+        </div>
+        <p className="mt-4 text-sm text-muted-foreground text-center">
+          <strong>Note:</strong> This is a placeholder calendar. Please replace the embed URL in the code with your actual public Google Calendar.
         </p>
       </div>
     </div>

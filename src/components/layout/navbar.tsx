@@ -2,9 +2,9 @@
 "use client";
 
 import Link from 'next/link';
-import { Menu } from 'lucide-react'; 
+import { Menu, Settings as SettingsIcon } from 'lucide-react'; // Added SettingsIcon
 import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'; // Added SheetHeader, SheetTitle
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Icons } from '@/components/icons';
 import { useAuth } from '@/contexts/auth-context';
 import { UserAvatarDropdown } from '@/components/auth/user-avatar-dropdown';
@@ -29,6 +29,7 @@ const utilityNavItems = [
   { label: 'Leaderboard', href: '/leaderboard' },
   { label: 'Blog', href: '/blog' },
   { label: 'Life Tracking', href: '/life-tracking'},
+  { label: 'Settings', href: '/settings' }, // Added Settings
 ];
 
 
@@ -130,10 +131,10 @@ export function Navbar() {
                 </Button>
               </SheetTrigger>
               <SheetContent side="right" className="w-[300px] sm:w-[400px] overflow-y-auto">
-                <SheetHeader className="sr-only"> {/* Visually hide header but provide for accessibility */}
+                <SheetHeader className="sr-only">
                   <SheetTitle>Navigation Menu</SheetTitle>
                 </SheetHeader>
-                <Link href="/" onClick={closeSheet} className="mt-4 mb-6 flex items-center space-x-2"> {/* Adjusted margin for header */}
+                <Link href="/" onClick={closeSheet} className="mt-4 mb-6 flex items-center space-x-2">
                   <Icons.Logo className="h-7 w-7 text-primary" />
                   <span className="font-bold text-2xl font-heading">
                     HEX THE ADD HUB
@@ -159,7 +160,6 @@ export function Navbar() {
                       </>
                     )
                   ) : (
-                     // Skeleton loaders for mobile auth buttons
                     <div className="space-y-2">
                       <div className="h-10 bg-muted/50 rounded-md animate-pulse w-full"></div>
                       <div className="h-10 bg-muted/50 rounded-md animate-pulse w-full"></div>
@@ -174,3 +174,4 @@ export function Navbar() {
     </header>
   );
 }
+

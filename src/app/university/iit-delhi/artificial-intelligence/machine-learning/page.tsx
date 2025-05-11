@@ -19,6 +19,15 @@ const resourceCategories: ResourceCategory[] = [
   { id: "other-resources", title: "Other Resources", icon: FileText },
 ];
 
+const mlBooks: Record<string, string[]> = {
+  ml: [
+    "Hands-On Machine Learning with Scikit-Learn, Keras & TensorFlow", // Assuming full title
+    "Cracking the Machine Learning Interview",
+    "Pattern Recognition and Machine Learning",
+    "Foundations of Machine Learning"
+  ]
+};
+
 export default function MachineLearningPage() {
   return (
     <div className="container mx-auto px-4 py-12">
@@ -58,14 +67,31 @@ export default function MachineLearningPage() {
 
             {resourceCategories.map((category) => (
               <TabsContent key={category.id} value={category.id}>
-                <div className="p-4 border rounded-md bg-secondary/30 min-h-[200px] flex flex-col items-center justify-center text-center">
-                  <category.icon className="w-12 h-12 text-primary mb-4" />
-                  <h3 className="text-xl font-semibold mb-2 text-foreground">
-                    {category.title} on Machine Learning
+                <div className="p-4 border rounded-md bg-secondary/30 min-h-[200px]">
+                  <h3 className="text-lg font-semibold mb-3 text-primary flex items-center">
+                    <category.icon className="mr-2 h-5 w-5" />
+                    {category.title} for Machine Learning
                   </h3>
-                  <p className="text-muted-foreground max-w-md">
-                    Specific {category.title.toLowerCase()} related to Machine Learning, covering concepts, algorithms (supervised, unsupervised, reinforcement learning), and practical applications, will be listed here soon.
-                  </p>
+                  {category.id === 'books' ? (
+                    mlBooks.ml && mlBooks.ml.length > 0 ? (
+                      <ul className="list-disc list-inside space-y-1.5 text-foreground/90">
+                        {mlBooks.ml.map((bookTitle, index) => (
+                          <li key={index}>{bookTitle}</li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="text-muted-foreground">
+                        No specific books listed for Machine Learning yet.
+                      </p>
+                    )
+                  ) : (
+                     <div className="flex flex-col items-center justify-center text-center min-h-[150px]">
+                        <category.icon className="w-10 h-10 text-primary mb-3" />
+                        <p className="text-muted-foreground max-w-md">
+                        Specific {category.title.toLowerCase()} related to Machine Learning, covering concepts, algorithms (supervised, unsupervised, reinforcement learning), and practical applications, will be listed here soon.
+                        </p>
+                    </div>
+                  )}
                 </div>
               </TabsContent>
             ))}
@@ -75,4 +101,3 @@ export default function MachineLearningPage() {
     </div>
   );
 }
-

@@ -19,6 +19,16 @@ const resourceCategories: ResourceCategory[] = [
   { id: "other-resources", title: "Other Resources", icon: FileText },
 ];
 
+const aiBooks: Record<string, string[]> = {
+  ai: [
+    "AI Engineering",
+    "Co-intelligence",
+    "Artificial Intelligence: A Modern Approach",
+    "Power and Prediction", // Corrected from "Power and process" based on common book titles
+    "The Coming Wave"
+  ]
+};
+
 export default function AIOverviewPage() {
   return (
     <div className="container mx-auto px-4 py-12">
@@ -58,14 +68,31 @@ export default function AIOverviewPage() {
 
             {resourceCategories.map((category) => (
               <TabsContent key={category.id} value={category.id}>
-                <div className="p-4 border rounded-md bg-secondary/30 min-h-[200px] flex flex-col items-center justify-center text-center">
-                  <category.icon className="w-12 h-12 text-primary mb-4" />
-                  <h3 className="text-xl font-semibold mb-2 text-foreground">
-                    {category.title} on AI Overview
+                <div className="p-4 border rounded-md bg-secondary/30 min-h-[200px]">
+                  <h3 className="text-lg font-semibold mb-3 text-primary flex items-center">
+                    <category.icon className="mr-2 h-5 w-5" />
+                    {category.title} for AI Overview
                   </h3>
-                  <p className="text-muted-foreground max-w-md">
-                    Specific {category.title.toLowerCase()} related to the overview of Artificial Intelligence, covering its history, subfields, ethical implications, and future trends, will be listed here soon.
-                  </p>
+                  {category.id === 'books' ? (
+                    aiBooks.ai && aiBooks.ai.length > 0 ? (
+                      <ul className="list-disc list-inside space-y-1.5 text-foreground/90">
+                        {aiBooks.ai.map((bookTitle, index) => (
+                          <li key={index}>{bookTitle}</li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="text-muted-foreground">
+                        No specific books listed for AI Overview yet.
+                      </p>
+                    )
+                  ) : (
+                    <div className="flex flex-col items-center justify-center text-center min-h-[150px]">
+                        <category.icon className="w-10 h-10 text-primary mb-3" />
+                        <p className="text-muted-foreground max-w-md">
+                        Specific {category.title.toLowerCase()} related to the overview of Artificial Intelligence, covering its history, subfields, ethical implications, and future trends, will be listed here soon.
+                        </p>
+                    </div>
+                  )}
                 </div>
               </TabsContent>
             ))}
@@ -75,4 +102,3 @@ export default function AIOverviewPage() {
     </div>
   );
 }
-

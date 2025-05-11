@@ -2,7 +2,7 @@
 import { PageHeader } from "@/components/core/page-header";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { ArrowLeft, Layers, BookOpen, Video, FileText } from "lucide-react"; // Added BookOpen, Video, FileText
+import { ArrowLeft, Layers, BookOpen, Video, FileText } from "lucide-react"; 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import type { ElementType } from "react";
@@ -18,6 +18,15 @@ const resourceCategories: ResourceCategory[] = [
   { id: "lectures", title: "Lectures", icon: Video },
   { id: "other-resources", title: "Other Resources", icon: FileText },
 ];
+
+const dlBooks: Record<string, string[]> = {
+  dl: [
+    "Deep Learning by Ian Goodfellow, Yoshua Bengio, and Aaron Courville", // Assuming this is "Deep-learning_Christopher"
+    "Understanding Deep Learning by Simon J.D. Prince",
+    "Deep Learning by Yoshua Bengio, Ian Goodfellow, and Aaron Courville" // Duplicate, but kept as user listed "Deep learning by bengio" separately
+  ]
+};
+
 
 export default function DeepLearningPage() {
   return (
@@ -58,14 +67,31 @@ export default function DeepLearningPage() {
 
             {resourceCategories.map((category) => (
               <TabsContent key={category.id} value={category.id}>
-                <div className="p-4 border rounded-md bg-secondary/30 min-h-[200px] flex flex-col items-center justify-center text-center">
-                  <category.icon className="w-12 h-12 text-primary mb-4" />
-                  <h3 className="text-xl font-semibold mb-2 text-foreground">
-                    {category.title} on Deep Learning
+                 <div className="p-4 border rounded-md bg-secondary/30 min-h-[200px]">
+                  <h3 className="text-lg font-semibold mb-3 text-primary flex items-center">
+                    <category.icon className="mr-2 h-5 w-5" />
+                    {category.title} for Deep Learning
                   </h3>
-                  <p className="text-muted-foreground max-w-md">
-                    Specific {category.title.toLowerCase()} related to Deep Learning, including architectures (CNNs, RNNs, Transformers), frameworks, and applications in areas like computer vision and NLP, will be listed here soon.
-                  </p>
+                  {category.id === 'books' ? (
+                    dlBooks.dl && dlBooks.dl.length > 0 ? (
+                      <ul className="list-disc list-inside space-y-1.5 text-foreground/90">
+                        {dlBooks.dl.map((bookTitle, index) => (
+                          <li key={index}>{bookTitle}</li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="text-muted-foreground">
+                        No specific books listed for Deep Learning yet.
+                      </p>
+                    )
+                  ) : (
+                    <div className="flex flex-col items-center justify-center text-center min-h-[150px]">
+                        <category.icon className="w-10 h-10 text-primary mb-3" />
+                        <p className="text-muted-foreground max-w-md">
+                        Specific {category.title.toLowerCase()} related to Deep Learning, including architectures (CNNs, RNNs, Transformers), frameworks, and applications in areas like computer vision and NLP, will be listed here soon.
+                        </p>
+                    </div>
+                  )}
                 </div>
               </TabsContent>
             ))}
@@ -75,4 +101,3 @@ export default function DeepLearningPage() {
     </div>
   );
 }
-

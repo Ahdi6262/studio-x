@@ -6,14 +6,15 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageHeader } from "@/components/core/page-header";
-import { Edit3, Mail, User, Shield, UploadCloud, Save, BookUser } from "lucide-react"; // Added BookUser for Bio
+import { Edit3, Mail, User, Shield, UploadCloud, Save, BookUser } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, type ChangeEvent, useState, type FormEvent } from "react";
 import { Icons } from "@/components/icons";
 import { useToast } from "@/hooks/use-toast";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea"; // Added Textarea for Bio
+import { Textarea } from "@/components/ui/textarea";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function ProfilePage() {
   const { 
@@ -24,7 +25,7 @@ export default function ProfilePage() {
     signInWithGoogle, 
     signInWithGithub, 
     signInWithFacebook,
-    isLoading: authIsLoading, // Renamed from useAuth's isLoading
+    isLoading: authIsLoading,
   } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
@@ -32,63 +33,23 @@ export default function ProfilePage() {
 
   const [isEditing, setIsEditing] = useState(false);
   const [displayName, setDisplayName] = useState('');
-  const [bio, setBio] = useState(''); // State for bio
+  const [bio, setBio] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   
-  // Separate loading state for this page's data if any, distinct from auth loading
   const [isPageLoading, setIsPageLoading] = useState(true);
-
 
   useEffect(() => {
     if (!authIsLoading && !isAuthenticated) {
       router.push('/login');
     } else if (user) {
       setDisplayName(user.name || '');
-      // Assuming user object from AuthContext might have a bio field, or fetch it
-      // For now, let's assume it's part of the user object or fetched separately if needed.
-      // setBio(user.bio || ''); // Example: if bio was part of UserData
-      // If bio needs to be fetched separately from Firestore:
-      // fetchUserBio(user.uid).then(setBio); 
-      setIsPageLoading(false); // Page data (name, bio) is ready
+      setBio(user.bio || '');
+      setIsPageLoading(false);
     } else if (!authIsLoading && !user) {
-        setIsPageLoading(false); // Stop page loading if no user and auth is done
+      setIsPageLoading(false); 
     }
   }, [isAuthenticated, user, router, authIsLoading]);
 
-
-  if (authIsLoading || isPageLoading || !user) { 
-    return (
-      <div className="container mx-auto px-4 py-12">
-        <PageHeader title="Profile" description="Loading profile..." />
-         <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-primary"></div>
-        </div>
-      </div>
-    );
-  }
-  
-  const fallbackName = user.name ? user.name.substring(0, 2).toUpperCase() : (user.email ? user.email.substring(0,2).toUpperCase() : 'U');
-  const avatarSrc = user.avatar || (user.email ? `https://avatar.vercel.sh/${user.email}.png?size=128` : `https://avatar.vercel.sh/default.png?size=128`);
-
-
-  const handleSocialLink = async (providerName: 'google' | 'github' | 'facebook') => {
-    setIsSaving(true);
-    try {
-        let linkMethod;
-        if (providerName === 'google') linkMethod = signInWithGoogle;
-        else if (providerName === 'github') linkMethod = signInWithGithub;
-        else if (providerName === 'facebook') linkMethod = signInWithFacebook;
-        else return;
-
-        await linkMethod(); 
-        toast({ title: `${providerName.charAt(0).toUpperCase() + providerName.slice(1)} Account Linked/Refreshed`, description: `Successfully connected with ${providerName}.` });
-    } catch (error: any) {
-        console.error(`Error linking ${providerName} account:`, error);
-        toast({ title: `Failed to link ${providerName}`, description: error.message || "An error occurred.", variant: "destructive"});
-    }
-    setIsSaving(false);
-  };
-  
   const handleAvatarUploadClick = () => {
     fileInputRef.current?.click();
   };
@@ -105,12 +66,14 @@ export default function ProfilePage() {
         return;
       }
 
-      setIsSaving(true); // Indicate loading for avatar upload
+      setIsSaving(true);
       const reader = new FileReader();
       reader.onloadend = async () => {
-        const dataUrl = reader.result as string;
+        const dataUrl = reader.result as string; // Firebase Storage can take data URLs for upload
         try {
-          await updateUserAvatar(dataUrl); 
+          // In a real app, upload dataUrl to Firebase Storage, get the download URL, then update user profile
+          // For now, we simulate this by directly using dataUrl if avatar field expects it, or placeholder if URL needed
+          await updateUserAvatar(dataUrl); // Assuming updateUserAvatar can handle data URL or uploads it
           toast({ title: "Avatar Updated", description: "Your new avatar has been set." });
         } catch (error: any) {
            toast({ title: "Avatar Update Failed", description: error.message || "Could not update avatar.", variant: "destructive" });
@@ -130,7 +93,6 @@ export default function ProfilePage() {
     }
     setIsSaving(true);
     try {
-        // Pass both displayName and bio to updateUserProfile
         await updateUserProfile(displayName.trim(), bio.trim());
         toast({title: "Profile Updated", description: "Your profile information has been saved."});
         setIsEditing(false);
@@ -140,6 +102,60 @@ export default function ProfilePage() {
     setIsSaving(false);
   };
 
+  const handleSocialLink = async (providerName: 'google' | 'github' | 'facebook') => {
+    setIsSaving(true);
+    try {
+        let linkMethod;
+        if (providerName === 'google') linkMethod = signInWithGoogle; // These methods now handle linking/creating
+        else if (providerName === 'github') linkMethod = signInWithGithub;
+        else if (providerName === 'facebook') linkMethod = signInWithFacebook;
+        else return;
+
+        await linkMethod(); 
+        toast({ title: `${providerName.charAt(0).toUpperCase() + providerName.slice(1)} Account Action Successful`, description: `Successfully interacted with ${providerName}.` });
+    } catch (error: any) {
+        console.error(`Error with ${providerName} account:`, error);
+        toast({ title: `Failed to process ${providerName}`, description: error.message || "An error occurred.", variant: "destructive"});
+    }
+    setIsSaving(false);
+  };
+
+  if (authIsLoading || isPageLoading || !user) { 
+    return (
+      <div className="container mx-auto px-4 py-12">
+        <PageHeader title="Profile" description="Loading profile..." />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <Card className="md:col-span-1">
+                <CardHeader className="items-center text-center">
+                    <Skeleton className="h-32 w-32 rounded-full mb-4" />
+                    <Skeleton className="h-6 w-3/4 mb-1" />
+                    <Skeleton className="h-4 w-1/2" />
+                </CardHeader>
+                <CardContent>
+                    <Skeleton className="h-10 w-full mt-2" />
+                </CardContent>
+            </Card>
+            <Card className="md:col-span-2">
+                <CardHeader>
+                    <Skeleton className="h-7 w-1/2 mb-1" />
+                    <Skeleton className="h-4 w-3/4" />
+                </CardHeader>
+                <CardContent className="space-y-6">
+                    <Skeleton className="h-10 w-full" />
+                    <Skeleton className="h-24 w-full" />
+                    <Skeleton className="h-10 w-full" />
+                    <Skeleton className="h-10 w-1/3" />
+                </CardContent>
+            </Card>
+        </div>
+      </div>
+    );
+  }
+  
+  const fallbackName = user.name ? user.name.substring(0, 2).toUpperCase() : (user.email ? user.email.substring(0,2).toUpperCase() : 'U');
+  // Use user.avatar_url which matches Firestore schema
+  const avatarSrc = user.avatar_url || (user.email ? `https://avatar.vercel.sh/${user.email}.png?size=128` : `https://avatar.vercel.sh/default.png?size=128`);
+
 
   return (
     <div className="container mx-auto px-4 py-12">
@@ -148,12 +164,7 @@ export default function ProfilePage() {
         description="Manage your account settings and preferences."
         actions={
           !isEditing && (
-            <Button variant="outline" onClick={() => {
-              setIsEditing(true);
-              // Initialize bio from user.bio or Firestore when entering edit mode
-              // For now, this assumes user.bio exists or is fetched and set by useEffect
-              // setBio(user.bio || ''); 
-            }}>
+            <Button variant="outline" onClick={() => setIsEditing(true)}>
               <Edit3 className="mr-2 h-4 w-4" /> Edit Profile
             </Button>
           )
@@ -164,10 +175,10 @@ export default function ProfilePage() {
         <Card className="md:col-span-1">
           <CardHeader className="items-center text-center">
             <Avatar className="h-32 w-32 mb-4 border-4 border-primary shadow-lg">
-              <AvatarImage src={avatarSrc} alt={user.name || "User avatar"} />
+              <AvatarImage src={avatarSrc} alt={user.name || "User avatar"} data-ai-hint="user profile picture"/>
               <AvatarFallback className="text-4xl">{fallbackName}</AvatarFallback>
             </Avatar>
-            <CardTitle className="text-2xl">{user.name || 'User'}</CardTitle>
+            <CardTitle className="text-2xl">{displayName || 'User'}</CardTitle>
             <CardDescription>{user.email}</CardDescription>
           </CardHeader>
           <CardContent>
@@ -179,7 +190,7 @@ export default function ProfilePage() {
               onChange={handleFileChange} 
             />
             <Button className="w-full mt-2" onClick={handleAvatarUploadClick} disabled={isSaving}>
-              <UploadCloud className="mr-2 h-4 w-4" /> {isSaving ? 'Uploading...' : 'Change Avatar'}
+              <UploadCloud className="mr-2 h-4 w-4" /> {isSaving && fileInputRef.current?.files?.length ? 'Uploading...' : 'Change Avatar'}
             </Button>
           </CardContent>
         </Card>
@@ -234,14 +245,14 @@ export default function ProfilePage() {
                         <User className="h-5 w-5 mr-3 text-muted-foreground" />
                         <div>
                             <p className="text-sm text-muted-foreground">Full Name</p>
-                            <p className="font-medium">{user.name || 'Not set'}</p>
+                            <p className="font-medium">{displayName || 'Not set'}</p>
                         </div>
                     </div>
-                     <div className="flex items-start"> {/* Changed to items-start for bio alignment */}
-                        <BookUser className="h-5 w-5 mr-3 text-muted-foreground mt-1" /> {/* Added mt-1 for alignment */}
+                     <div className="flex items-start">
+                        <BookUser className="h-5 w-5 mr-3 text-muted-foreground mt-1" />
                         <div>
                             <p className="text-sm text-muted-foreground">Bio</p>
-                            <p className="font-medium whitespace-pre-wrap">{user.bio || 'No bio set.'}</p> {/* Added whitespace-pre-wrap for bio formatting */}
+                            <p className="font-medium whitespace-pre-wrap">{bio || 'No bio set.'}</p>
                         </div>
                     </div>
                     <div className="flex items-center">
@@ -264,15 +275,15 @@ export default function ProfilePage() {
               <h3 className="text-lg font-semibold mb-2">Connected Accounts</h3>
               <div className="space-y-3">
                 <Button variant="outline" className="w-full justify-start" onClick={() => handleSocialLink('google')} disabled={isSaving}>
-                  <Icons.Google className="mr-2 h-4 w-4" /> Connect Google Account
+                  <Icons.Google className="mr-2 h-4 w-4" /> Connect/Refresh Google
                 </Button>
                  <Button variant="outline" className="w-full justify-start" onClick={() => handleSocialLink('github')} disabled={isSaving}>
-                  <Icons.Github className="mr-2 h-4 w-4" /> Connect GitHub Account
+                  <Icons.Github className="mr-2 h-4 w-4" /> Connect/Refresh GitHub
                 </Button>
                 <Button variant="outline" className="w-full justify-start" onClick={() => handleSocialLink('facebook')} disabled={isSaving}>
-                  <Icons.Facebook className="mr-2 h-4 w-4" /> Connect Facebook Account
+                  <Icons.Facebook className="mr-2 h-4 w-4" /> Connect/Refresh Facebook
                 </Button>
-                 <Button variant="outline" className="w-full justify-start" disabled>
+                 <Button variant="outline" className="w-full justify-start" disabled> {/* Web3 wallet linking needs separate logic */}
                   <Icons.Metamask className="mr-2 h-5 w-5" /> Link Web3 Wallet (Coming Soon)
                 </Button>
               </div>

@@ -14,18 +14,22 @@ import {
   GoogleAuthProvider,
   GithubAuthProvider,
   FacebookAuthProvider,
-  signInWithPopup
+  signInWithPopup,
+  linkWithPopup,
+  fetchSignInMethodsForEmail
 } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
-import { doc, setDoc, getDoc, serverTimestamp } from "firebase/firestore"; 
+import { doc, setDoc, getDoc, serverTimestamp, arrayUnion, updateDoc } from "firebase/firestore"; 
 
-export interface UserData { // Exporting for use elsewhere, e.g., ProfilePage
+export interface UserData {
   uid: string;
   name: string | null;
   email: string | null;
-  avatar?: string | null;
-  bio?: string | null; // Added bio
-  dashboard_layout_preferences?: Record<string, any>; // Added dashboard preferences
+  avatar_url?: string | null; // Matches Firestore schema
+  bio?: string | null;
+  dashboard_layout_preferences?: Record<string, any>;
+  web3_wallets?: Array<{ address: string; chain_id: string; linked_at: any; is_primary: boolean; }>;
+  auth_providers_linked?: Array<{ provider_name: string; provider_user_id: string; }>;
 }
 
 interface AuthContextType {
@@ -36,16 +40,17 @@ interface AuthContextType {
   signupUser: (name: string, email: string, password: string) => Promise<FirebaseUser>;
   logoutUser: () => Promise<void>;
   updateUserAvatar: (avatarUrl: string) => Promise<void>;
-  updateUserProfile: (displayName: string, bio?: string) => Promise<void>; // Added bio to signature
+  updateUserProfile: (displayName: string, bio?: string) => Promise<void>;
   sendPasswordReset: (email: string) => Promise<void>;
   signInWithGoogle: () => Promise<FirebaseUser>;
   signInWithGithub: () => Promise<FirebaseUser>;
   signInWithFacebook: () => Promise<FirebaseUser>;
+  connectWallet: (address: string, chainId: string) => Promise<void>; // Basic wallet connect
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const USER_DATA_STORAGE_KEY = 'authUser';
+const USER_DATA_STORAGE_KEY = 'authUser'; // For client-side caching if needed, though Firestore is primary
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<UserData | null>(null);
@@ -53,39 +58,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      setIsLoading(true); // Set loading true at the start of auth state change
+      setIsLoading(true);
       if (firebaseUser) {
         const userDocRef = doc(db, "users", firebaseUser.uid);
         const userDocSnap = await getDoc(userDocRef);
         
         if (userDocSnap.exists()) {
-          const firestoreUser = userDocSnap.data() as UserData; // Assume UserData includes all fields like name, email, avatar_url, bio
-          setUser({
+          const firestoreUser = userDocSnap.data() as UserData;
+          const userData: UserData = {
             uid: firebaseUser.uid,
             name: firestoreUser.name || firebaseUser.displayName,
             email: firestoreUser.email || firebaseUser.email,
-            avatar: firestoreUser.avatar_url || firebaseUser.photoURL, // Use avatar_url from schema
-            bio: firestoreUser.bio, // Get bio from Firestore
-            dashboard_layout_preferences: firestoreUser.dashboard_layout_preferences,
-          });
-          localStorage.setItem(USER_DATA_STORAGE_KEY, JSON.stringify(userDocSnap.data()));
+            avatar_url: firestoreUser.avatar_url || firebaseUser.photoURL,
+            bio: firestoreUser.bio || '',
+            dashboard_layout_preferences: firestoreUser.dashboard_layout_preferences || {},
+            web3_wallets: firestoreUser.web3_wallets || [],
+            auth_providers_linked: firestoreUser.auth_providers_linked || [],
+          };
+          setUser(userData);
+          localStorage.setItem(USER_DATA_STORAGE_KEY, JSON.stringify(userData));
         } else {
-          // New user or user not in Firestore yet, create a basic profile
+          // New user from Firebase Auth but not in Firestore (e.g. first social login)
           const newUserProfile: UserData = {
             uid: firebaseUser.uid,
-            email: firebaseUser.email,
-            name: firebaseUser.displayName,
-            avatar: firebaseUser.photoURL,
-            bio: '', // Initialize bio as empty
-            dashboard_layout_preferences: {}, // Default empty preferences
-          };
-          await setDoc(doc(db, "users", firebaseUser.uid), {
-            uid: firebaseUser.uid, // Storing uid in the document itself for easier querying if needed
             email: firebaseUser.email,
             name: firebaseUser.displayName,
             avatar_url: firebaseUser.photoURL,
             bio: '',
             dashboard_layout_preferences: {},
+            web3_wallets: [],
+            auth_providers_linked: firebaseUser.providerData.map(p => ({ provider_name: p.providerId, provider_user_id: p.uid })),
+          };
+          await setDoc(doc(db, "users", firebaseUser.uid), {
+            ...newUserProfile,
             created_at: serverTimestamp(),
             updated_at: serverTimestamp(),
           }, { merge: true });
@@ -104,9 +109,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const loginUser = async (email: string, password: string, keepLoggedIn: boolean = false): Promise<FirebaseUser> => {
     setIsLoading(true);
+    // Firebase handles session persistence based on its own rules, keepLoggedIn is more for app-level logic if needed
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
-    // Auth state change will handle fetching from Firestore and setting user state
-    // No need to manually set localStorage here as onAuthStateChanged will do it.
     setIsLoading(false);
     return userCredential.user;
   };
@@ -116,48 +120,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     await firebaseUpdateProfile(userCredential.user, { displayName: name });
     
-    const newUserProfile: UserData = {
+    const newUserFirestoreData: Partial<UserData> & { created_at: any, updated_at: any } = {
         uid: userCredential.user.uid,
         email: email,
         name: name,
-        avatar: userCredential.user.photoURL, // Usually null initially
-        bio: '',
-        dashboard_layout_preferences: {},
-    };
-    await setDoc(doc(db, "users", userCredential.user.uid), {
-        uid: userCredential.user.uid,
-        name: name,
-        email: email,
         avatar_url: userCredential.user.photoURL || null,
         bio: '',
         dashboard_layout_preferences: {},
+        web3_wallets: [],
+        auth_providers_linked: [{ provider_name: 'password', provider_user_id: userCredential.user.uid }],
         created_at: serverTimestamp(),
         updated_at: serverTimestamp(),
-    });
-
-    // setUser(newUserProfile); // Let onAuthStateChanged handle this
-    // localStorage.setItem(USER_DATA_STORAGE_KEY, JSON.stringify(newUserProfile));
+    };
+    await setDoc(doc(db, "users", userCredential.user.uid), newUserFirestoreData);
     setIsLoading(false);
     return userCredential.user;
   };
 
   const logoutUser = async (): Promise<void> => {
-    // setIsLoading(true); // No need, onAuthStateChanged handles loading state
     await signOut(auth);
-    // setUser(null); // onAuthStateChanged handles this
-    // localStorage.removeItem(USER_DATA_STORAGE_KEY);
-    // sessionStorage.removeItem(USER_DATA_STORAGE_KEY);
-    // setIsLoading(false);
   };
 
   const updateUserAvatar = async (avatarUrl: string): Promise<void> => {
     if (auth.currentUser) {
       await firebaseUpdateProfile(auth.currentUser, { photoURL: avatarUrl });
       const userDocRef = doc(db, "users", auth.currentUser.uid);
-      await setDoc(userDocRef, { avatar_url: avatarUrl, updated_at: serverTimestamp() }, { merge: true });
-      // Refresh user state from Firestore via onAuthStateChanged or by manually updating user state
+      await updateDoc(userDocRef, { avatar_url: avatarUrl, updated_at: serverTimestamp() });
       if (user) {
-        const updatedUser = { ...user, avatar: avatarUrl };
+        const updatedUser = { ...user, avatar_url: avatarUrl };
         setUser(updatedUser);
         localStorage.setItem(USER_DATA_STORAGE_KEY, JSON.stringify(updatedUser));
       }
@@ -177,7 +167,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           updates.bio = bio;
         }
         const userDocRef = doc(db, "users", auth.currentUser.uid);
-        await setDoc(userDocRef, updates, { merge: true });
+        await updateDoc(userDocRef, updates);
         
         if (user) {
           const updatedUser = { ...user, name: displayName, bio: bio !== undefined ? bio : user.bio };
@@ -203,7 +193,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         const providerData = { provider_name: provider.providerId, provider_user_id: firebaseUser.uid };
 
-        if (!userDocSnap.exists()) {
+        if (!userDocSnap.exists()) { // New user via social sign-in
             await setDoc(userDocRef, {
                 uid: firebaseUser.uid,
                 name: firebaseUser.displayName,
@@ -211,28 +201,41 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 avatar_url: firebaseUser.photoURL,
                 bio: '',
                 dashboard_layout_preferences: {},
-                auth_providers: [providerData],
+                web3_wallets: [],
+                auth_providers_linked: [providerData],
                 created_at: serverTimestamp(),
                 updated_at: serverTimestamp(),
-            }, { merge: true });
-        } else {
-            // User exists, update timestamp and ensure provider info is there if needed
-            const existingData = userDocSnap.data();
-            const authProviders = existingData.auth_providers || [];
-            if (!authProviders.some((p:any) => p.provider_name === provider.providerId)) {
+            });
+        } else { // Existing user, link provider or update info
+            const existingData = userDocSnap.data() as UserData;
+            const authProviders = existingData.auth_providers_linked || [];
+            if (!authProviders.some((p) => p.provider_name === provider.providerId)) {
                 authProviders.push(providerData);
             }
-            await setDoc(userDocRef, { 
-              updated_at: serverTimestamp(), 
-              // Update avatar/name if different from provider, could be optional
+            await updateDoc(userDocRef, { 
+              updated_at: serverTimestamp(),
               name: firebaseUser.displayName || existingData.name, 
               avatar_url: firebaseUser.photoURL || existingData.avatar_url,
-              auth_providers: authProviders
-            }, { merge: true });
+              email: firebaseUser.email || existingData.email, // Update email if changed by provider
+              auth_providers_linked: authProviders
+            });
         }
-        // onAuthStateChanged will update the user state and localStorage
         return firebaseUser;
-    } catch (error) {
+    } catch (error: any) {
+        // Handle account-exists-with-different-credential error
+        if (error.code === 'auth/account-exists-with-different-credential' && auth.currentUser && error.customData?.email) {
+            const methods = await fetchSignInMethodsForEmail(auth, error.customData.email);
+            // Here you might prompt the user to link accounts or sign in with the existing method.
+            // For simplicity, we'll try to link if the current user is anonymous or if we have a way to confirm.
+            // This part needs careful UX design.
+            try {
+                await linkWithPopup(auth.currentUser, provider); // This attempts to link the new credential
+                return auth.currentUser; // Return the updated user
+            } catch (linkError) {
+                console.error("Social account linking error:", linkError);
+                throw linkError; // Rethrow or handle specific link errors
+            }
+        }
         console.error("Social sign-in error:", error);
         throw error;
     } finally {
@@ -244,9 +247,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signInWithGithub = () => handleSocialSignIn(new GithubAuthProvider());
   const signInWithFacebook = () => handleSocialSignIn(new FacebookAuthProvider());
 
+  const connectWallet = async (address: string, chainId: string): Promise<void> => {
+    if (auth.currentUser && user) {
+      const newWallet = { address, chain_id: chainId, linked_at: serverTimestamp(), is_primary: !(user.web3_wallets && user.web3_wallets.length > 0) };
+      const userDocRef = doc(db, "users", auth.currentUser.uid);
+      await updateDoc(userDocRef, {
+        web3_wallets: arrayUnion(newWallet),
+        updated_at: serverTimestamp()
+      });
+      // Update local user state
+      setUser(prevUser => ({
+        ...prevUser!,
+        web3_wallets: [...(prevUser?.web3_wallets || []), newWallet]
+      }));
+    } else {
+      throw new Error("User not authenticated to connect wallet.");
+    }
+  };
+
+
   return (
     <AuthContext.Provider value={{ 
-        isAuthenticated: !!user && !isLoading, // Ensure not loading before confirming auth
+        isAuthenticated: !!user && !isLoading,
         user, 
         isLoading, 
         loginUser, 
@@ -257,7 +279,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         sendPasswordReset,
         signInWithGoogle,
         signInWithGithub,
-        signInWithFacebook
+        signInWithFacebook,
+        connectWallet
     }}>
       {children}
     </AuthContext.Provider>

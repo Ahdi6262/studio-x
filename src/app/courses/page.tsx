@@ -8,7 +8,7 @@ import { CourseFilters } from "@/components/courses/course-filters";
 import type { Course } from '@/lib/mock-data'; 
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { PlusCircle } from "lucide-react";
+import { PlusCircle, BookOpen } from "lucide-react"; // Added BookOpen
 import { Skeleton } from "@/components/ui/skeleton";
 import { collection, getDocs, query, where, orderBy, limit } from "firebase/firestore";
 import { db } from "@/lib/firebase";
@@ -16,15 +16,26 @@ import { db } from "@/lib/firebase";
 async function fetchCoursesFromDB(filters?: { searchTerm?: string; category?: string; level?: string }): Promise<Course[]> {
   console.log("Fetching courses from DB with filters:", filters);
   const coursesCol = collection(db, 'courses');
-  let q = query(coursesCol, orderBy("title")); // Default ordering
-
-  // This is a simplified client-side filtering after fetching.
-  // For production, implement server-side filtering or more advanced client-side search.
-  // Firestore queries for text search are limited. Consider Algolia or similar for full-text search.
+  // Base query: fetch published courses, ordered by title
+  let q = query(coursesCol, where("status", "==", "published"), orderBy("title")); 
 
   const courseSnapshot = await getDocs(q);
-  let courseList = courseSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Course));
+  let courseList = courseSnapshot.docs.map(doc => {
+    const data = doc.data();
+    return { 
+        id: doc.id, 
+        ...data,
+        // Ensure compatibility with CourseCard props
+        imageUrl: data.cover_image_url || data.imageUrl || 'https://picsum.photos/seed/defaultcourse/600/400',
+        students: data.enrollment_count || 0, // Assuming enrollment_count or similar, default to 0
+        duration: data.duration_text || 'N/A',
+        lessons: data.lessons_count || 0,
+        price: data.is_free ? 'Free' : (data.price_amount ? data.price_amount / 100 : 'N/A'), // Assuming price_amount is in cents
+        instructor: data.instructorName || 'Expert Instructor' // Assuming instructorName or fetch from instructor_id
+    } as Course;
+  });
 
+  // Client-side filtering
   if (filters) {
     if (filters.searchTerm) {
       const lowerSearchTerm = filters.searchTerm.toLowerCase();
@@ -38,8 +49,7 @@ async function fetchCoursesFromDB(filters?: { searchTerm?: string; category?: st
       courseList = courseList.filter(course => course.category === filters.category);
     }
     if (filters.level && filters.level !== "All") {
-      // Assuming 'level' property exists on Course type
-      // courseList = courseList.filter(course => course.level === filters.level);
+      courseList = courseList.filter(course => course.level === filters.level);
     }
   }
   
@@ -48,7 +58,6 @@ async function fetchCoursesFromDB(filters?: { searchTerm?: string; category?: st
 
 
 export default function CoursesPage() {
-  const [allCourses, setAllCourses] = useState<Course[]>([]);
   const [filteredCourses, setFilteredCourses] = useState<Course[]>([]);
   const [filters, setFilters] = useState({ searchTerm: "", category: "All", level: "All" });
   const [isLoading, setIsLoading] = useState(true);
@@ -56,27 +65,10 @@ export default function CoursesPage() {
   const loadCourses = useCallback(async (currentFilters: typeof filters) => {
     setIsLoading(true);
     try {
-      // Pass filters to fetch function if you implement server-side filtering
       const courses = await fetchCoursesFromDB(currentFilters); 
-      setAllCourses(courses); // Store all fetched courses (potentially unfiltered if filtering is client-side)
-      // Apply initial filtering based on currentFilters
-      let coursesToFilter = [...courses];
-      if (currentFilters.searchTerm) {
-        const lowerSearchTerm = currentFilters.searchTerm.toLowerCase();
-        coursesToFilter = coursesToFilter.filter(course =>
-          course.title.toLowerCase().includes(lowerSearchTerm) ||
-          course.instructor.toLowerCase().includes(lowerSearchTerm) ||
-          course.description.toLowerCase().includes(lowerSearchTerm)
-        );
-      }
-      if (currentFilters.category !== "All") {
-        coursesToFilter = coursesToFilter.filter(course => course.category === currentFilters.category);
-      }
-      // if (currentFilters.level !== "All") { ... }
-      setFilteredCourses(coursesToFilter);
+      setFilteredCourses(courses);
     } catch (error) {
       console.error("Failed to fetch courses:", error);
-      // Handle error, e.g., show a toast message
     }
     setIsLoading(false);
   }, []);
@@ -97,8 +89,8 @@ export default function CoursesPage() {
         title="Explore Courses"
         description="Sharpen your skills and learn from experts. Find courses on blockchain, AI, digital art, and more to accelerate your Web3 journey."
          actions={
-          <Button asChild variant="outline">
-            <Link href="/courses/teach"> {/* Assuming a page for instructors */}
+          <Button asChild> {/* Changed variant */}
+            <Link href="/courses/teach">
               <PlusCircle className="mr-2 h-4 w-4" /> Become an Instructor
             </Link>
           </Button>
@@ -120,9 +112,12 @@ export default function CoursesPage() {
           ))}
         </div>
       ) : (
-        <div className="text-center py-12 col-span-full">
-          <h2 className="text-2xl font-semibold mb-2">No courses match your criteria!</h2>
-          <p className="text-muted-foreground mb-4">Try adjusting your search or filters, or check back soon for new learning opportunities.</p>
+        <div className="text-center py-16 col-span-full bg-card rounded-xl shadow-lg">
+          <BookOpen className="mx-auto h-16 w-16 text-primary mb-6" />
+          <h2 className="text-3xl font-bold mb-3 text-primary">No Courses Found!</h2>
+          <p className="text-lg text-muted-foreground max-w-md mx-auto">
+            Try adjusting your search filters, or check back soon for new learning opportunities.
+          </p>
         </div>
       )}
     </div>
@@ -130,12 +125,16 @@ export default function CoursesPage() {
 }
 
 const CardSkeleton = () => (
-  <div className="flex flex-col space-y-3">
-    <Skeleton className="h-[220px] w-full rounded-xl" />
-    <div className="space-y-2">
-      <Skeleton className="h-4 w-[250px]" />
-      <Skeleton className="h-4 w-[200px]" />
+  <div className="flex flex-col space-y-3 bg-card p-4 rounded-xl shadow">
+    <Skeleton className="h-[220px] w-full rounded-lg bg-muted" />
+    <div className="space-y-2 pt-2">
+      <Skeleton className="h-5 w-3/4 bg-muted" />
+      <Skeleton className="h-4 w-1/2 bg-muted" />
+      <Skeleton className="h-4 w-full bg-muted" />
+    </div>
+     <div className="flex justify-between items-center pt-2">
+        <Skeleton className="h-6 w-1/4 bg-muted" />
+        <Skeleton className="h-9 w-1/3 bg-muted rounded-md" />
     </div>
   </div>
 );
-

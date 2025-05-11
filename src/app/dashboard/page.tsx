@@ -14,17 +14,16 @@ import { CommunityFeedWidget } from "@/components/dashboard/community-feed-widge
 import { AchievementsWidget } from "@/components/dashboard/achievements-widget";
 import { DirectMessageWidget } from "@/components/dashboard/direct-message-widget";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { BookOpen, FolderKanban, CalendarClock, Award, MessageSquare, Settings, User, Trophy, Edit, LayoutGrid, LucideIcon } from "lucide-react";
+import { BookOpen, FolderKanban, Settings, User, Trophy, Edit, LayoutGrid, LucideIcon, Award } from "lucide-react"; // Added Award
 import { Skeleton } from "@/components/ui/skeleton";
-import { doc, getDoc, collection, query, where, getDocs,getCountFromServer } from "firebase/firestore";
+import { doc, getDoc, collection, query, where, getCountFromServer } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
 interface UserStats {
   points: number;
-  leaderboardRank: number | string; // Can be 'N/A' or a number
+  leaderboardRank: string; 
   coursesEnrolled: number;
   projectsCreated: number;
-  // upcomingEvents: number; // This would require an 'events' collection and user RSVPs
 }
 
 interface QuickLinkItemData {
@@ -43,37 +42,28 @@ async function fetchDashboardData(userId: string): Promise<{ stats: UserStats, q
     projectsCreated: 0,
   };
 
-  // Fetch points and rank from 'user_points'
   const userPointsRef = doc(db, 'user_points', userId);
   const userPointsSnap = await getDoc(userPointsRef);
   if (userPointsSnap.exists()) {
-    userStats.points = userPointsSnap.data().total_points || 0;
-    // Leaderboard rank would typically be calculated server-side or via a more complex query.
-    // For simplicity, we'll just show points. A full rank would need to query all users and sort.
-    // As a placeholder, if you store monthly/weekly rank, you could fetch that.
-    userStats.leaderboardRank = `#${userPointsSnap.data().rank || 'N/A'}`; // Assuming rank is stored
+    const data = userPointsSnap.data();
+    userStats.points = data.total_points || 0;
+    userStats.leaderboardRank = data.rank_all_time ? `#${data.rank_all_time}` : (data.total_points > 0 ? 'Calculating...' : 'N/A');
   }
 
-  // Fetch enrolled courses count
   const enrollmentsCol = collection(db, 'course_enrollments');
   const enrollmentsQuery = query(enrollmentsCol, where("user_id", "==", userId));
   const enrollmentsSnap = await getCountFromServer(enrollmentsQuery);
   userStats.coursesEnrolled = enrollmentsSnap.data().count;
 
-
-  // Fetch created projects count
   const projectsCol = collection(db, 'projects');
-  const projectsQuery = query(projectsCol, where("user_id", "==", userId));
+  const projectsQuery = query(projectsCol, where("user_id", "==", userId), where("status", "==", "published"));
   const projectsSnap = await getCountFromServer(projectsQuery);
   userStats.projectsCreated = projectsSnap.data().count;
   
-  // Upcoming events would require an 'events' collection and a way to track user RSVPs or interest.
-  // For now, this is omitted from UserStats.
-
   const quickLinks: QuickLinkItemData[] = [
     { href: "/profile", label: "My Profile", icon: User },
-    { href: "/courses", label: "My Courses", icon: BookOpen },
-    { href: "/portfolio", label: "My Projects", icon: FolderKanban },
+    { href: "/courses", label: "My Courses", icon: BookOpen }, // Assuming this page shows enrolled courses
+    { href: "/portfolio", label: "My Portfolio", icon: FolderKanban }, // Changed from My Projects for consistency
     { href: "/settings", label: "Account Settings", icon: Settings },
   ];
   
@@ -87,7 +77,6 @@ export default function DashboardPage() {
   const [dashboardStats, setDashboardStats] = useState<UserStats | null>(null);
   const [quickLinksData, setQuickLinksData] = useState<QuickLinkItemData[]>([]);
   const [isDashboardLoading, setIsDashboardLoading] = useState(true);
-
 
   useEffect(() => {
     if (!authIsLoading && !isAuthenticated) {
@@ -105,7 +94,6 @@ export default function DashboardPage() {
           setQuickLinksData(data.quickLinks);
         } catch (error) {
             console.error("Failed to load dashboard data:", error);
-            // Potentially set an error state to display to the user
         }
         setIsDashboardLoading(false);
       };
@@ -115,27 +103,28 @@ export default function DashboardPage() {
     }
   }, [isAuthenticated, user, authIsLoading]);
 
-
   if (authIsLoading || isDashboardLoading || !user) {
     return (
       <div className="container mx-auto px-4 py-12">
-        <PageHeader title="Dashboard" description="Loading your dashboard..." />
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-4 mb-8"> {/* Adjusted to 4 for stats */}
-          {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-32 rounded-lg" />)}
+        <PageHeader title="Dashboard" description="Loading your personalized dashboard..." />
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-8">
+          {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-32 rounded-lg bg-card" />)}
         </div>
         <div className="grid gap-6 lg:grid-cols-3">
-            <Skeleton className="h-64 lg:col-span-2 rounded-lg" />
-            <Skeleton className="h-64 rounded-lg" />
+            <Skeleton className="h-80 lg:col-span-2 rounded-lg bg-card" /> {/* Increased height for ActivityChart */}
+            <div className="space-y-6">
+                <Skeleton className="h-48 rounded-lg bg-card" /> {/* QuickLinks placeholder */}
+                <Skeleton className="h-48 rounded-lg bg-card" /> {/* Another widget placeholder */}
+            </div>
         </div>
          <div className="grid gap-6 mt-8 md:grid-cols-2 lg:grid-cols-3">
-          <Skeleton className="h-48 rounded-lg" />
-          <Skeleton className="h-48 rounded-lg" />
-          <Skeleton className="h-48 rounded-lg" />
+          <Skeleton className="h-64 rounded-lg bg-card" />
+          <Skeleton className="h-64 rounded-lg bg-card" />
+          <Skeleton className="h-64 rounded-lg bg-card" />
         </div>
       </div>
     );
   }
-
 
   return (
     <div className="container mx-auto px-4 py-12">
@@ -143,63 +132,53 @@ export default function DashboardPage() {
         title={`Welcome back, ${user.name ? user.name.split(' ')[0] : 'Creator'}!`}
         description="Here's a quick overview of your activity and progress."
         actions={
-            <Button variant="outline" disabled> {/* Implement customization later */}
+            <Button variant="outline" disabled>
                 <LayoutGrid className="mr-2 h-4 w-4" /> Customize Layout (Soon)
             </Button>
         }
       />
 
     {dashboardStats && (
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-4 mb-8"> {/* Adjusted to 4 for stats */}
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-8">
             <StatCard
-            title="Total Points"
-            value={dashboardStats.points.toLocaleString()}
-            icon={Award}
-            description="Earned from contributions"
+                title="Total Points"
+                value={dashboardStats.points.toLocaleString()}
+                icon={Award} // Changed from Star
+                description="Earned from contributions"
             />
             <StatCard
                 title="Leaderboard Rank"
-                value={dashboardStats.leaderboardRank.toString()} // Ensure it's a string
+                value={dashboardStats.leaderboardRank}
                 icon={Trophy}
-                description="Keep climbing!"
+                description="All-time ranking"
             />
             <StatCard
-            title="Courses Enrolled"
-            value={dashboardStats.coursesEnrolled.toString()}
-            icon={BookOpen}
-            description="Keep learning and growing"
+                title="Courses Enrolled"
+                value={dashboardStats.coursesEnrolled.toString()}
+                icon={BookOpen}
+                description="Keep learning and growing"
             />
             <StatCard
-            title="Projects Created"
-            value={dashboardStats.projectsCreated.toString()}
-            icon={FolderKanban}
-            description="Showcasing your skills"
+                title="Published Projects"
+                value={dashboardStats.projectsCreated.toString()}
+                icon={FolderKanban}
+                description="Showcasing your skills"
             />
-            {/* Upcoming Events StatCard removed for now, pending data source
-            <StatCard
-            title="Upcoming Events"
-            value={dashboardStats.upcomingEvents.toString()}
-            icon={CalendarClock}
-            description="Stay connected"
-            /> 
-            */}
         </div>
     )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Main Column */}
         <div className="lg:col-span-2 space-y-8">
-          <ActivityChart /> {/* Ensure this component fetches or receives real data */}
-          <RecommendationsWidget /> {/* This will use Genkit and Firebase data */}
-          <ProgressTrackerWidget userId={user.uid}/> {/* Pass userId to fetch specific progress */}
+          <ActivityChart />
+          <RecommendationsWidget />
+          <ProgressTrackerWidget userId={user.uid}/>
         </div>
         
-        {/* Sidebar Column */}
         <div className="space-y-8">
             {quickLinksData.length > 0 && <QuickLinks title="Quick Links" links={quickLinksData} /> }
-            <AchievementsWidget userId={user.uid} /> {/* Pass userId to fetch specific achievements */}
-            <CommunityFeedWidget /> {/* This will fetch community events */}
-            <DirectMessageWidget userId={user.uid} /> {/* Pass userId for context */}
+            <AchievementsWidget userId={user.uid} />
+            <CommunityFeedWidget />
+            <DirectMessageWidget userId={user.uid} />
             
              <Card>
                 <CardHeader>
@@ -212,11 +191,11 @@ export default function DashboardPage() {
                 </CardHeader>
                 <CardContent>
                     <div className="text-center py-8 text-muted-foreground">
-                        <p>Layout customization is under development.</p>
+                        <LayoutGrid className="mx-auto h-12 w-12 text-primary/50 mb-4" />
+                        <p>Personalize your dashboard by arranging widgets to best suit your workflow. This feature is under development.</p>
                     </div>
                 </CardContent>
             </Card>
-            {/* Old Recent Activity placeholder - can be removed or repurposed */}
         </div>
       </div>
     </div>

@@ -8,21 +8,33 @@ import { ProjectFilters } from "@/components/portfolio/project-filters";
 import type { Project } from "@/lib/mock-data"; 
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { PlusCircle } from "lucide-react";
+import { PlusCircle, FolderOpen } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { collection, getDocs, query, orderBy } from "firebase/firestore";
+import { collection, getDocs, query, orderBy, where } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
 async function fetchProjectsFromDB(filters?: { searchTerm?: string; category?: string }): Promise<Project[]> {
   console.log("Fetching projects from DB with filters:", filters);
   const projectsCol = collection(db, 'projects');
-  // Add orderBy('published_date', 'desc') or similar if you have such a field and want to sort
-  const q = query(projectsCol, orderBy("title")); 
+  
+  // Base query: fetch published projects, ordered by title (or published_at if available and preferred)
+  let q = query(projectsCol, where("status", "==", "published"), orderBy("title")); 
 
   const projectSnapshot = await getDocs(q);
-  let projectList = projectSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Project));
+  let projectList = projectSnapshot.docs.map(doc => {
+    const data = doc.data();
+    return { 
+      id: doc.id, 
+      ...data,
+      // Ensure date field compatibility if mock data 'date' is different from schema 'published_at'
+      date: data.published_at ? data.published_at.toDate().toLocaleDateString() : (data.date || 'N/A'),
+      imageUrl: data.image_url || data.imageUrl || 'https://picsum.photos/seed/default/600/400', // Fallback for imageUrl
+      tags: data.tags || [],
+      author: data.authorName || 'Unknown Creator' // Assuming authorName or similar, or fetch from user_id
+    } as Project;
+  });
 
-  // Simplified client-side filtering. For production, consider server-side or Algolia.
+  // Client-side filtering for now. For production, consider server-side or Algolia/Typesense.
   if (filters) {
     if (filters.searchTerm) {
       const lowerSearchTerm = filters.searchTerm.toLowerCase();
@@ -43,7 +55,6 @@ async function fetchProjectsFromDB(filters?: { searchTerm?: string; category?: s
 }
 
 export default function PortfolioPage() {
-  const [allProjects, setAllProjects] = useState<Project[]>([]);
   const [filteredProjects, setFilteredProjects] = useState<Project[]>([]);
   const [filters, setFilters] = useState({ searchTerm: "", category: "All" });
   const [isLoading, setIsLoading] = useState(true);
@@ -52,24 +63,7 @@ export default function PortfolioPage() {
     setIsLoading(true);
     try {
       const projects = await fetchProjectsFromDB(currentFilters);
-      setAllProjects(projects);
-      // Apply initial filtering based on currentFilters
-      let projectsToFilter = [...projects];
-      if (currentFilters.searchTerm) {
-        const lowerSearchTerm = currentFilters.searchTerm.toLowerCase();
-        projectsToFilter = projectsToFilter.filter(project =>
-          project.title.toLowerCase().includes(lowerSearchTerm) ||
-          project.description.toLowerCase().includes(lowerSearchTerm) ||
-          (project.author && project.author.toLowerCase().includes(lowerSearchTerm)) ||
-          (project.tags && project.tags.some(tag => tag.toLowerCase().includes(lowerSearchTerm)))
-        );
-      }
-      if (currentFilters.category !== "All") {
-        projectsToFilter = projectsToFilter.filter(project => 
-          project.tags && project.tags.includes(currentFilters.category)
-        );
-      }
-      setFilteredProjects(projectsToFilter);
+      setFilteredProjects(projects); // fetchProjectsFromDB now handles filtering
     } catch (error) {
       console.error("Failed to fetch projects:", error);
     }
@@ -91,7 +85,7 @@ export default function PortfolioPage() {
         description="Discover innovative projects and skilled creators in the Web3 space. Filter by category, technology, or creator to find what inspires you."
         actions={
           <Button asChild>
-            <Link href="/portfolio/new"> {/* Assuming a page for creating new projects */}
+            <Link href="/portfolio/new">
               <PlusCircle className="mr-2 h-4 w-4" /> Add Your Project
             </Link>
           </Button>
@@ -113,9 +107,12 @@ export default function PortfolioPage() {
           ))}
         </div>
       ) : (
-        <div className="text-center py-12 col-span-full">
-          <h2 className="text-2xl font-semibold mb-2">No projects match your criteria!</h2>
-          <p className="text-muted-foreground mb-4">Try adjusting your search or filters.</p>
+        <div className="text-center py-16 col-span-full bg-card rounded-xl shadow-lg">
+          <FolderOpen className="mx-auto h-16 w-16 text-primary mb-6" />
+          <h2 className="text-3xl font-bold mb-3 text-primary">No Projects Found!</h2>
+          <p className="text-lg text-muted-foreground max-w-md mx-auto">
+            Try adjusting your search filters, or be the first to add a project to this category!
+          </p>
         </div>
       )}
     </div>
@@ -123,12 +120,17 @@ export default function PortfolioPage() {
 }
 
 const CardSkeleton = () => (
-  <div className="flex flex-col space-y-3">
-    <Skeleton className="h-[220px] w-full rounded-xl" />
-    <div className="space-y-2">
-      <Skeleton className="h-4 w-[250px]" />
-      <Skeleton className="h-4 w-[200px]" />
+  <div className="flex flex-col space-y-3 bg-card p-4 rounded-xl shadow">
+    <Skeleton className="h-[220px] w-full rounded-lg bg-muted" />
+    <div className="space-y-2 pt-2">
+      <Skeleton className="h-5 w-3/4 bg-muted" />
+      <Skeleton className="h-4 w-full bg-muted" />
+      <Skeleton className="h-4 w-5/6 bg-muted" />
     </div>
+    <div className="flex gap-2 pt-1">
+        <Skeleton className="h-6 w-16 bg-muted rounded-full" />
+        <Skeleton className="h-6 w-20 bg-muted rounded-full" />
+    </div>
+    <Skeleton className="h-9 w-full mt-2 bg-muted" />
   </div>
 );
-

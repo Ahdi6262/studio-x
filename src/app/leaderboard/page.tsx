@@ -6,7 +6,7 @@ import { LeaderboardItem } from "@/components/leaderboard/leaderboard-item";
 import type { LeaderboardUser } from "@/lib/mock-data";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { RefreshCw } from "lucide-react";
+import { RefreshCw, Trophy } from "lucide-react"; // Added Trophy
 import { useEffect, useState, useCallback } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/contexts/auth-context";
@@ -14,47 +14,50 @@ import { collection, getDocs, query, orderBy, limit, doc, getDoc } from "firebas
 import { db } from "@/lib/firebase"; 
 
 // Function to fetch leaderboard data from user_points and enrich with user details
-async function fetchLeaderboardDataFromDB(): Promise<LeaderboardUser[]> {
-  console.log("Fetching leaderboard data from DB...");
+async function fetchLeaderboardDataFromDB(period: 'all-time' | 'monthly' | 'weekly' = 'all-time'): Promise<LeaderboardUser[]> {
+  console.log(`Fetching ${period} leaderboard data from DB...`);
   
-  // Fetch top users from 'user_points' collection, ordered by total_points
   const userPointsCol = collection(db, 'user_points');
-  // Fetching top 50 for example. Adjust 'limit' as needed.
-  const q = query(userPointsCol, orderBy("total_points", "desc"), limit(50)); 
+  let pointsField = "total_points";
+  if (period === 'monthly') pointsField = "monthly_points";
+  else if (period === 'weekly') pointsField = "weekly_points";
+
+  const q = query(userPointsCol, orderBy(pointsField, "desc"), limit(50)); 
   const userPointsSnapshot = await getDocs(q);
 
   const leaderboardListPromises = userPointsSnapshot.docs.map(async (pointDoc, index) => {
     const pointData = pointDoc.data();
     const userId = pointDoc.id;
 
-    // Fetch user details from 'users' collection
     const userRef = doc(db, 'users', userId);
     const userSnap = await getDoc(userRef);
     
     let userName = 'Anonymous User';
-    let userAvatarUrl = ''; // Default avatar or placeholder
-    let achievements: string[] = []; // Placeholder for achievements
+    let userAvatarUrl = ''; // Default or placeholder
+    let userAchievements: string[] = []; // Placeholder for achievements
 
     if (userSnap.exists()) {
       const userData = userSnap.data();
       userName = userData.name || 'Anonymous User';
-      userAvatarUrl = userData.avatar_url || ''; // Use avatar_url from your schema
-      // If you store achievements directly on the user document or have a subcollection, fetch here.
-      // For simplicity, achievements are mocked or can be fetched from user_achievements
+      userAvatarUrl = userData.avatar_url || '';
+      // Fetch user_achievements (simplified: get first few achievement names)
+      const achievementsCol = collection(db, 'user_achievements');
+      const achievementsQuery = query(achievementsCol, where("user_id", "==", userId), limit(2));
+      const achievementsSnap = await getDocs(achievementsQuery);
+      userAchievements = await Promise.all(achievementsSnap.docs.map(async (achDoc) => {
+        const achDefRef = doc(db, 'achievement_definitions', achDoc.data().achievement_key);
+        const achDefSnap = await getDoc(achDefRef);
+        return achDefSnap.exists() ? achDefSnap.data().name : "Achievement";
+      }));
     }
     
-    // Simulate achievements for now as schema is complex
-    const mockAchievementsList = ["Top Contributor", "Early Bird", "Course Completer"];
-    achievements = mockAchievementsList.slice(0, Math.floor(Math.random() * mockAchievementsList.length) +1);
-
-
     return {
       id: userId,
-      rank: index + 1, // Assign rank based on order from query
+      rank: index + 1,
       name: userName,
       avatarUrl: userAvatarUrl,
-      points: pointData.total_points || 0,
-      achievements: achievements, // Replace with actual achievements if fetched
+      points: pointData[pointsField] || 0,
+      achievements: userAchievements,
     } as LeaderboardUser;
   });
 
@@ -68,6 +71,7 @@ export default function LeaderboardPage() {
   const [leaderboardData, setLeaderboardData] = useState<LeaderboardUser[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'all-time' | 'monthly' | 'weekly'>('all-time');
 
   useEffect(() => {
     if (user?.uid) {
@@ -75,11 +79,10 @@ export default function LeaderboardPage() {
     }
   }, [user]);
 
-  const loadLeaderboard = useCallback(async () => {
+  const loadLeaderboard = useCallback(async (period: 'all-time' | 'monthly' | 'weekly') => {
     setIsLoading(true);
     try {
-      const data = await fetchLeaderboardDataFromDB();
-      // Sorting is already done by Firestore query (orderBy total_points)
+      const data = await fetchLeaderboardDataFromDB(period);
       setLeaderboardData(data);
     } catch (error) {
       console.error("Failed to fetch leaderboard data:", error);
@@ -89,11 +92,11 @@ export default function LeaderboardPage() {
 
 
   useEffect(() => {
-    loadLeaderboard();
-  }, [loadLeaderboard]);
+    loadLeaderboard(activeTab);
+  }, [loadLeaderboard, activeTab]);
 
   const handleRefresh = () => {
-    loadLeaderboard();
+    loadLeaderboard(activeTab);
   }
 
   return (
@@ -108,53 +111,55 @@ export default function LeaderboardPage() {
         }
       />
 
-      <Tabs defaultValue="all-time" className="w-full mb-8">
+      <Tabs defaultValue="all-time" className="w-full mb-8" onValueChange={(value) => setActiveTab(value as any)}>
         <TabsList className="grid w-full grid-cols-3 md:w-auto md:inline-flex">
           <TabsTrigger value="all-time">All Time</TabsTrigger>
-          <TabsTrigger value="monthly" disabled>Monthly (Soon)</TabsTrigger>
-          <TabsTrigger value="weekly" disabled>Weekly (Soon)</TabsTrigger>
+          <TabsTrigger value="monthly">Monthly</TabsTrigger>
+          <TabsTrigger value="weekly">Weekly</TabsTrigger>
         </TabsList>
-        <TabsContent value="all-time">
-          {isLoading ? (
-            <div className="space-y-4 mt-6">
-              {[...Array(5)].map((_, i) => <LeaderboardItemSkeleton key={i} />)}
-            </div>
-          ) : leaderboardData.length > 0 ? (
-             <div className="space-y-4 mt-6">
-              {leaderboardData.map((userData) => (
-                <LeaderboardItem key={userData.id} user={userData} isCurrentUser={userData.id === currentUserId} />
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-12">
-              <h2 className="text-2xl font-semibold mb-2">Leaderboard is Empty!</h2>
-              <p className="text-muted-foreground">Start contributing to appear on the leaderboard.</p>
-            </div>
-          )}
-        </TabsContent>
-        <TabsContent value="monthly">
-          <div className="text-center py-12 text-muted-foreground">
-            Monthly leaderboard coming soon! This requires tracking points over specific time periods.
-          </div>
-        </TabsContent>
-        <TabsContent value="weekly">
-          <div className="text-center py-12 text-muted-foreground">
-            Weekly leaderboard coming soon! Similar to monthly, requires periodic point tracking.
-          </div>
-        </TabsContent>
+
+        {(['all-time', 'monthly', 'weekly'] as const).map(tabValue => (
+            <TabsContent key={tabValue} value={tabValue}>
+            {isLoading ? (
+                <div className="space-y-4 mt-6">
+                {[...Array(5)].map((_, i) => <LeaderboardItemSkeleton key={i} />)}
+                </div>
+            ) : leaderboardData.length > 0 ? (
+                <div className="space-y-4 mt-6">
+                {leaderboardData.map((userData) => (
+                    <LeaderboardItem key={userData.id} user={userData} isCurrentUser={userData.id === currentUserId} />
+                ))}
+                </div>
+            ) : (
+                <div className="text-center py-16 bg-card rounded-xl shadow-lg">
+                    <Trophy className="mx-auto h-16 w-16 text-primary mb-6" />
+                    <h2 className="text-3xl font-bold mb-3 text-primary">Leaderboard is Empty!</h2>
+                    <p className="text-lg text-muted-foreground max-w-md mx-auto">
+                        Start contributing to appear on the {tabValue.replace('-', ' ')} leaderboard.
+                    </p>
+                </div>
+            )}
+            </TabsContent>
+        ))}
       </Tabs>
     </div>
   );
 }
 
 const LeaderboardItemSkeleton = () => (
-  <div className="flex items-center p-4 rounded-lg bg-card space-x-4">
-    <Skeleton className="h-10 w-10 rounded-full" />
+  <div className="flex items-center p-4 rounded-lg bg-card space-x-4 shadow">
+    <Skeleton className="h-8 w-8 rounded-md" /> {/* Rank icon placeholder */}
+    <Skeleton className="h-12 w-12 rounded-full" />
     <div className="flex-1 space-y-2">
-      <Skeleton className="h-4 w-3/4" />
-      <Skeleton className="h-3 w-1/2" />
+      <Skeleton className="h-5 w-3/5" />
+      <div className="flex gap-1">
+        <Skeleton className="h-4 w-16 rounded-full" />
+        <Skeleton className="h-4 w-20 rounded-full" />
+      </div>
     </div>
-    <Skeleton className="h-6 w-16" />
+    <div className="text-right">
+        <Skeleton className="h-6 w-16 mb-1" />
+        <Skeleton className="h-3 w-12" />
+    </div>
   </div>
 );
-

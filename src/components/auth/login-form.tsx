@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Checkbox } from '@/components/ui/checkbox'; // Added Checkbox import
+import { Checkbox } from '@/components/ui/checkbox';
 import { Icons } from '@/components/icons';
 import { useAuth } from '@/contexts/auth-context';
 import { useToast } from '@/hooks/use-toast';
@@ -19,7 +19,7 @@ export function LoginForm() {
   const { toast } = useToast();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [keepLoggedIn, setKeepLoggedIn] = useState(false); // Added state for "Keep me signed in"
+  const [keepLoggedIn, setKeepLoggedIn] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (event: FormEvent) => {
@@ -30,9 +30,9 @@ export function LoginForm() {
     
     // Mock login logic
     if (email === 'user@example.com' && password === 'password') {
-      login({ name: 'Test User', email }, keepLoggedIn); // Pass keepLoggedIn to login function
+      login({ name: 'Test User', email }, keepLoggedIn);
       toast({ title: "Login Successful", description: "Welcome back!" });
-      router.push('/profile'); // Redirect to profile or dashboard
+      router.push('/profile'); 
     } else {
       toast({ title: "Login Failed", description: "Invalid email or password.", variant: "destructive" });
     }
@@ -81,7 +81,7 @@ export function LoginForm() {
               />
               <Label htmlFor="keep-logged-in" className="text-sm font-normal">Keep me signed in</Label>
             </div>
-            <Link href="#" className="text-sm text-primary hover:underline">
+            <Link href="/forgot-password" className="text-sm text-primary hover:underline">
               Forgot password?
             </Link>
           </div>

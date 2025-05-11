@@ -80,13 +80,12 @@
   }
   body {
     @apply bg-background text-foreground;
-    @apply font-urw; /* Apply URW Gothic L, sans-serif to body */
+    @apply font-sans; /* Uses Open Sans from tailwind.config.ts */
     @apply leading-relaxed; /* Increased line height */
   }
-  h1 {
-    @apply font-sans; /* Apply Geist font to H1 tags */
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-heading font-semibold; /* Uses Poppins from tailwind.config.ts, default to semibold */
   }
-  /* Other text elements like h2-h6, p, etc., will inherit font-urw from body */
   p {
     @apply text-[#efefff]; /* Changed paragraph color */
   }

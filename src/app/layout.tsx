@@ -1,19 +1,23 @@
 import type { Metadata } from 'next';
-import { Geist, Geist_Mono } from 'next/font/google';
+import { Poppins, Open_Sans } from 'next/font/google';
 import './globals.css';
 import { Navbar } from '@/components/layout/navbar';
 import { Footer } from '@/components/layout/footer';
 import { Toaster } from "@/components/ui/toaster";
 import { AuthProvider } from '@/contexts/auth-context';
 
-const geistSans = Geist({
-  variable: '--font-geist-sans',
+const poppins = Poppins({
   subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-poppins',
+  weight: ['400', '500', '600', '700'], // Added more weights
 });
 
-const geistMono = Geist_Mono({
-  variable: '--font-geist-mono',
+const openSans = Open_Sans({
   subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-open-sans',
+  weight: ['400', '600'], // Added more weights
 });
 
 export const metadata: Metadata = {
@@ -28,7 +32,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="dark">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased flex flex-col min-h-screen`}>
+      <body className={`${poppins.variable} ${openSans.variable} font-sans antialiased flex flex-col min-h-screen bg-background text-foreground`}>
         <AuthProvider>
           <Navbar />
           <main className="flex-1">{children}</main>

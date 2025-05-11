@@ -12,9 +12,9 @@ export default {
   theme: {
   	extend: {
       fontFamily: {
-        sans: ['var(--font-geist-sans)', ...defaultTheme.fontFamily.sans],
-        mono: ['var(--font-geist-mono)', ...defaultTheme.fontFamily.mono],
-        urw: ['"URW Gothic L"', 'sans-serif'],
+        sans: ['var(--font-open-sans)', ...defaultTheme.fontFamily.sans],
+        heading: ['var(--font-poppins)', ...defaultTheme.fontFamily.sans],
+        mono: defaultTheme.fontFamily.mono, // Keep default mono if Geist Mono is removed
       },
   		colors: {
   			background: 'hsl(var(--background))',
@@ -118,9 +118,9 @@ export default {
           '50%': { transform: 'translateY(-15px) translateX(-20px) scale(0.96) rotate(12deg)', borderRadius: '70% 30% 60% 40% / 30% 60% 50% 70%' },
           '75%': { transform: 'translateY(10px) translateX(10px) scale(1) rotate(-2deg)', borderRadius: '40% 60% 60% 40% / 50% 50% 50% 50%' },
         },
-        glowBlue: { // Added blue glow keyframes
-          '0%, 100%': { boxShadow: '0 0 5px rgba(0,0,255,0.5), 0 0 10px rgba(0,0,255,0.4), 0 0 15px rgba(0,0,255,0.3)' },
-          '50%': { boxShadow: '0 0 10px rgba(0,0,255,0.7), 0 0 20px rgba(0,0,255,0.6), 0 0 30px rgba(0,0,255,0.5)' },
+        glowBlue: { // For #0000ff or similar blue
+          '0%, 100%': { boxShadow: '0 0 5px rgba(0, 120, 255, 0.5), 0 0 10px rgba(0, 120, 255, 0.4), 0 0 15px rgba(0, 120, 255, 0.3)' },
+          '50%': { boxShadow: '0 0 10px rgba(0, 120, 255, 0.7), 0 0 20px rgba(0, 120, 255, 0.6), 0 0 30px rgba(0, 120, 255, 0.5)' },
         },
   		},
   		animation: {
@@ -131,7 +131,7 @@ export default {
         'float-2': 'float-2 25s ease-in-out infinite',
         'float-3': 'float-3 30s ease-in-out infinite',
         'float-4': 'float-4 22s ease-in-out infinite',
-        'glowBlue': 'glowBlue 2s ease-in-out infinite alternate', // Added blue glow animation
+        'glowBlue': 'glowBlue 2s ease-in-out infinite alternate',
   		}
   	}
   },

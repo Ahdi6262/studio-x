@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, type FormEvent } from 'react';
@@ -37,6 +38,39 @@ export function SignupForm() {
     router.push('/profile'); // Redirect to profile or dashboard
     
     setIsLoading(false);
+  };
+
+  const handleGoogleSignup = () => {
+    setIsLoading(true);
+    // Placeholder for Google signup API call
+    console.log("Attempting Google signup...");
+    // Example: window.location.href = '/api/auth/google/signup';
+    setTimeout(() => {
+      toast({ title: "Google Signup", description: "Google signup functionality coming soon!" });
+      setIsLoading(false);
+    }, 1500);
+  };
+
+  const handleGithubSignup = () => {
+    setIsLoading(true);
+    // Placeholder for GitHub signup API call
+    console.log("Attempting GitHub signup...");
+    // Example: window.location.href = '/api/auth/github/signup';
+    setTimeout(() => {
+      toast({ title: "GitHub Signup", description: "GitHub signup functionality coming soon!" });
+      setIsLoading(false);
+    }, 1500);
+  };
+
+  const handleFacebookSignup = () => {
+    setIsLoading(true);
+    // Placeholder for Facebook signup API call
+    console.log("Attempting Facebook signup...");
+    // Example: window.location.href = '/api/auth/facebook/signup';
+    setTimeout(() => {
+      toast({ title: "Facebook Signup", description: "Facebook signup functionality coming soon!" });
+      setIsLoading(false);
+    }, 1500);
   };
 
   return (
@@ -109,12 +143,15 @@ export function SignupForm() {
             </span>
           </div>
         </div>
-        <div className="mt-6 grid grid-cols-2 gap-4">
-          <Button variant="outline" disabled={isLoading}>
+        <div className="mt-6 grid grid-cols-1 gap-4">
+          <Button variant="outline" onClick={handleGoogleSignup} disabled={isLoading}>
             <Icons.Google className="mr-2 h-4 w-4" /> Google
           </Button>
-          <Button variant="outline" disabled={isLoading}>
+          <Button variant="outline" onClick={handleGithubSignup} disabled={isLoading}>
             <Icons.Github className="mr-2 h-4 w-4" /> GitHub
+          </Button>
+          <Button variant="outline" onClick={handleFacebookSignup} disabled={isLoading}>
+            <Icons.Facebook className="mr-2 h-4 w-4" /> Facebook
           </Button>
         </div>
          <Button variant="outline" className="w-full mt-4" disabled={isLoading}>

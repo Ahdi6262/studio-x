@@ -9,7 +9,7 @@ import { PageHeader } from "@/components/core/page-header";
 import { Edit3, Mail, User, Shield } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { Icons } from "@/components/icons"; // Added import for Icons
+import { Icons } from "@/components/icons"; 
 
 export default function ProfilePage() {
   const { user, isAuthenticated } = useAuth();
@@ -30,6 +30,13 @@ export default function ProfilePage() {
   }
   
   const fallbackName = user.name ? user.name.substring(0, 2).toUpperCase() : 'U';
+
+  const handleConnectFacebook = () => {
+    // Placeholder for connecting Facebook account
+    console.log("Attempting to connect Facebook account...");
+    // Example: window.location.href = '/api/auth/facebook/connect';
+    alert("Connect Facebook functionality coming soon!");
+  };
 
   return (
     <div className="container mx-auto px-4 py-12">
@@ -93,6 +100,9 @@ export default function ProfilePage() {
                 </Button>
                  <Button variant="outline" className="w-full justify-start">
                   <Icons.Github className="mr-2 h-4 w-4" /> Connect GitHub Account
+                </Button>
+                <Button variant="outline" className="w-full justify-start" onClick={handleConnectFacebook}>
+                  <Icons.Facebook className="mr-2 h-4 w-4" /> Connect Facebook Account
                 </Button>
                  <Button variant="outline" className="w-full justify-start">
                   <Icons.Metamask className="mr-2 h-5 w-5" /> Link Web3 Wallet

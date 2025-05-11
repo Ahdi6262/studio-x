@@ -39,6 +39,39 @@ export function LoginForm() {
     setIsLoading(false);
   };
 
+  const handleGoogleLogin = () => {
+    setIsLoading(true);
+    // Placeholder for Google login API call
+    console.log("Attempting Google login...");
+    // Example: window.location.href = '/api/auth/google';
+    setTimeout(() => {
+      toast({ title: "Google Login", description: "Google login functionality coming soon!" });
+      setIsLoading(false);
+    }, 1500);
+  };
+
+  const handleGithubLogin = () => {
+    setIsLoading(true);
+    // Placeholder for GitHub login API call
+    console.log("Attempting GitHub login...");
+    // Example: window.location.href = '/api/auth/github';
+    setTimeout(() => {
+      toast({ title: "GitHub Login", description: "GitHub login functionality coming soon!" });
+      setIsLoading(false);
+    }, 1500);
+  };
+
+  const handleFacebookLogin = () => {
+    setIsLoading(true);
+    // Placeholder for Facebook login API call
+    console.log("Attempting Facebook login...");
+    // Example: window.location.href = '/api/auth/facebook';
+    setTimeout(() => {
+      toast({ title: "Facebook Login", description: "Facebook login functionality coming soon!" });
+      setIsLoading(false);
+    }, 1500);
+  };
+
   return (
     <Card className="w-full max-w-md shadow-xl">
       <CardHeader className="text-center">
@@ -99,12 +132,15 @@ export function LoginForm() {
             </span>
           </div>
         </div>
-        <div className="mt-6 grid grid-cols-2 gap-4">
-          <Button variant="outline" disabled={isLoading}>
+        <div className="mt-6 grid grid-cols-1 gap-4">
+          <Button variant="outline" onClick={handleGoogleLogin} disabled={isLoading}>
             <Icons.Google className="mr-2 h-4 w-4" /> Google
           </Button>
-          <Button variant="outline" disabled={isLoading}>
+          <Button variant="outline" onClick={handleGithubLogin} disabled={isLoading}>
             <Icons.Github className="mr-2 h-4 w-4" /> GitHub
+          </Button>
+          <Button variant="outline" onClick={handleFacebookLogin} disabled={isLoading}>
+            <Icons.Facebook className="mr-2 h-4 w-4" /> Facebook
           </Button>
         </div>
         <Button variant="outline" className="w-full mt-4" disabled={isLoading}>

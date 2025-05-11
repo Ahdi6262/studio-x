@@ -6,7 +6,7 @@ import { Navbar } from '@/components/layout/navbar';
 import { Footer } from '@/components/layout/footer';
 import { Toaster } from "@/components/ui/toaster";
 import { AuthProvider } from '@/contexts/auth-context';
-import { ThemeProvider } from '@/contexts/theme-context'; // Import ThemeProvider
+import { ThemeProvider } from '@/contexts/theme-context';
 import { ServiceWorkerRegistrar } from '@/components/core/service-worker-registrar';
 
 const poppins = Poppins({
@@ -35,9 +35,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning> {/* Let ThemeProvider handle class, suppressHydrationWarning for theme changes */}
+    <html lang="en" suppressHydrationWarning> {/* Removed className="dark" */}
       <head>
-        {/* theme-color will be dynamically set by ThemeProvider if needed, or keep a default */}
         <meta name="theme-color" content="#FFB347" /> 
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
@@ -45,7 +44,7 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
       </head>
       <body className={`${poppins.variable} ${openSans.variable} font-sans antialiased flex flex-col min-h-screen bg-background text-foreground`}>
-        <ThemeProvider> {/* Wrap AuthProvider and everything else with ThemeProvider */}
+        <ThemeProvider>
           <AuthProvider>
             <Navbar />
             <main className="flex-1">{children}</main>
@@ -58,5 +57,3 @@ export default function RootLayout({
     </html>
   );
 }
-
-    

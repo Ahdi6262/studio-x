@@ -1,9 +1,8 @@
-
 import Image from 'next/image';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import type { BlogPost } from '@/types/blog'; // Create this type
+import type { BlogPost } from '@/types/blog'; 
 import { CalendarDays, UserCircle, Eye } from 'lucide-react';
 import React from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -25,7 +24,7 @@ export const BlogPostCard = React.memo(function BlogPostCard({ post }: BlogPostC
             layout="fill"
             objectFit="cover"
             className="transition-transform duration-500 group-hover:scale-105"
-            data-ai-hint="article cover blog"
+            data-ai-hint="article blog cover"
           />
         </Link>
       )}
@@ -44,7 +43,8 @@ export const BlogPostCard = React.memo(function BlogPostCard({ post }: BlogPostC
             <>
               <span className="mx-1.5">·</span>
               <CalendarDays className="h-4 w-4 mr-1.5" />
-              <span>{new Date(post.published_at.seconds * 1000).toLocaleDateString()}</span>
+              {/* API returns ISO string, new Date() parses it */}
+              <span>{new Date(post.published_at).toLocaleDateString()}</span> 
             </>
           )}
         </div>
@@ -83,3 +83,4 @@ export const BlogPostCardSkeleton = () => (
     </CardFooter>
   </Card>
 );
+

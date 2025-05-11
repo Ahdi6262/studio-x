@@ -21,7 +21,7 @@ export const CourseCard = React.memo(function CourseCard({ course }: CourseCardP
           layout="fill"
           objectFit="cover"
           className="transition-transform duration-500 group-hover:scale-105"
-          data-ai-hint="education learning online"
+          data-ai-hint="education learning"
         />
         <Badge variant="default" className="absolute top-3 right-3 text-sm">
           {course.category}
@@ -54,9 +54,9 @@ export const CourseCard = React.memo(function CourseCard({ course }: CourseCardP
       </CardContent>
       <CardFooter className="pt-0 flex justify-between items-center">
         <p className="text-xl font-bold text-primary">
-          {typeof course.price === 'number' ? `$${course.price}` : course.price}
+          {course.price === 'Free' ? 'Free' : (course.price_amount != null ? `$${Number(course.price_amount).toFixed(2)}` : 'N/A')}
         </p>
-        <Button size="sm" asChild>
+        <Button size="sm" asChild className="animate-fill">
           <Link href={`/courses/${course.id}`}>View Course</Link>
         </Button>
       </CardFooter>
@@ -64,3 +64,4 @@ export const CourseCard = React.memo(function CourseCard({ course }: CourseCardP
   );
 });
 CourseCard.displayName = 'CourseCard';
+

@@ -1,4 +1,3 @@
-
 "use client"; 
 
 import Image from 'next/image';
@@ -94,7 +93,7 @@ export default function ProjectDetailPage({ params }: { params: { projectId: str
             layout="fill"
             objectFit="cover"
             priority
-            data-ai-hint="project detail main"
+            data-ai-hint="project cover image"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent"></div>
           <div className="absolute bottom-0 left-0 p-6">
@@ -114,14 +113,14 @@ export default function ProjectDetailPage({ params }: { params: { projectId: str
                 </div>
                 <div className="mt-8 flex gap-4">
                   {project.project_link && (
-                      <Button asChild>
+                      <Button asChild className="animate-fill">
                           <a href={project.project_link} target="_blank" rel="noopener noreferrer">
                           Visit Project <ExternalLink className="ml-2 h-4 w-4" />
                           </a>
                       </Button>
                   )}
                   {isAuthor && (
-                      <Button variant="outline" asChild>
+                      <Button variant="outline" asChild className="animate-fill-outline">
                           <Link href={`/portfolio/${project.id}/edit`}> {/* Placeholder for edit page */}
                               <Edit className="mr-2 h-4 w-4" /> Edit Project
                           </Link>
@@ -186,3 +185,4 @@ export function ProjectDetailSkeleton() {
     </div>
   );
 }
+

@@ -1,24 +1,31 @@
-
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
 import { useAuth } from "@/contexts/auth-context";
 import { PageHeader } from "@/components/core/page-header";
 import { StatCard } from "@/components/dashboard/stat-card";
-import { QuickLinks } from "@/components/dashboard/quick-links";
-import { ActivityChart } from "@/components/dashboard/activity-chart";
-import { RecommendationsWidget } from "@/components/dashboard/recommendations-widget";
-import { ProgressTrackerWidget } from "@/components/dashboard/progress-tracker-widget";
-import { CommunityFeedWidget } from "@/components/dashboard/community-feed-widget";
-import { AchievementsWidget } from "@/components/dashboard/achievements-widget";
-import { DirectMessageWidget } from "@/components/dashboard/direct-message-widget";
+// import { QuickLinks } from "@/components/dashboard/quick-links"; // Keep if small/static or make dynamic
+// import { ActivityChart } from "@/components/dashboard/activity-chart";
+// import { RecommendationsWidget } from "@/components/dashboard/recommendations-widget";
+// import { ProgressTrackerWidget } from "@/components/dashboard/progress-tracker-widget";
+// import { CommunityFeedWidget } from "@/components/dashboard/community-feed-widget";
+// import { AchievementsWidget } from "@/components/dashboard/achievements-widget";
+// import { DirectMessageWidget } from "@/components/dashboard/direct-message-widget";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { BookOpen, FolderKanban, Settings, User, Trophy, Edit, LayoutGrid, type LucideIcon, Award } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
-// Firebase specific imports for data fetching are removed. Data will come via API.
-// import { doc, getDoc, collection, query, where, getCountFromServer } from "firebase/firestore";
-// import { db } from "@/lib/firebase";
+import { Button } from "@/components/ui/button";
+
+const QuickLinks = dynamic(() => import('@/components/dashboard/quick-links').then(mod => mod.QuickLinks));
+const ActivityChart = dynamic(() => import('@/components/dashboard/activity-chart').then(mod => mod.ActivityChart));
+const RecommendationsWidget = dynamic(() => import('@/components/dashboard/recommendations-widget').then(mod => mod.RecommendationsWidget));
+const ProgressTrackerWidget = dynamic(() => import('@/components/dashboard/progress-tracker-widget').then(mod => mod.ProgressTrackerWidget));
+const CommunityFeedWidget = dynamic(() => import('@/components/dashboard/community-feed-widget').then(mod => mod.CommunityFeedWidget));
+const AchievementsWidget = dynamic(() => import('@/components/dashboard/achievements-widget').then(mod => mod.AchievementsWidget));
+const DirectMessageWidget = dynamic(() => import('@/components/dashboard/direct-message-widget').then(mod => mod.DirectMessageWidget));
+
 
 interface UserStats {
   points: number;
@@ -189,7 +196,7 @@ export default function DashboardPage() {
         <div className="space-y-8">
             {quickLinksData.length > 0 && <QuickLinks title="Quick Links" links={quickLinksData} /> }
             <AchievementsWidget userId={user.uid} />
-            <CommunityFeedWidget userId={user.uid} /> {/* Pass userId if needed */}
+            <CommunityFeedWidget userId={user.uid} /> 
             <DirectMessageWidget userId={user.uid} />
             
              <Card>
@@ -213,3 +220,4 @@ export default function DashboardPage() {
     </div>
   );
 }
+

@@ -1,4 +1,3 @@
-
 import Image from 'next/image';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
@@ -10,9 +9,6 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { Separator } from '@/components/ui/separator';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-// Firebase imports removed
-// import { doc, getDoc, collection, getDocs, orderBy, query as firestoreQuery } from "firebase/firestore"; 
-// import { db } from "@/lib/firebase"; 
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
@@ -35,8 +31,6 @@ interface CourseLesson {
 async function getCourseDataFromAPI(courseId: string): Promise<(Course & { modules?: CourseModule[] }) | undefined> {
   console.log(`Fetching course data for ID: ${courseId} from API...`);
   try {
-    // Use NEXT_PUBLIC_APP_URL for server-side fetching if your app is deployed and API is external
-    // For local dev, relative path /api/courses/${courseId} might work if server and client are same origin
     const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || ''}/api/courses/${courseId}`);
     if (!response.ok) {
       if (response.status === 404) return undefined;
@@ -45,7 +39,6 @@ async function getCourseDataFromAPI(courseId: string): Promise<(Course & { modul
     }
     const courseData: Course & { modules?: CourseModule[] } = await response.json();
     
-    // Ensure price and imageUrl are correctly formatted for display, API should ideally provide this
     const displayPrice = courseData.is_free ? 'Free' : (courseData.price_amount != null ? `$${Number(courseData.price_amount).toFixed(2)}` : 'N/A');
     const displayImageUrl = courseData.cover_image_url || courseData.imageUrl || 'https://picsum.photos/seed/courseplaceholder/1280/720';
 
@@ -53,7 +46,6 @@ async function getCourseDataFromAPI(courseId: string): Promise<(Course & { modul
       ...courseData, 
       price: displayPrice, 
       imageUrl: displayImageUrl, 
-      // API should return modules with lessons already structured
     };
   } catch (error) {
     console.error("Error fetching course data from API:", error);
@@ -69,7 +61,7 @@ export default async function CourseDetailPage({ params }: { params: { courseId:
       <div className="container mx-auto px-4 py-12 text-center">
         <PageHeader title="Course Not Found" />
         <p className="text-muted-foreground mb-4">The course you are looking for does not exist.</p>
-        <Button asChild variant="outline">
+        <Button asChild variant="outline" className="animate-fill-outline">
           <Link href="/courses">
             <ArrowLeft className="mr-2 h-4 w-4" /> Back to Courses
           </Link>
@@ -78,13 +70,12 @@ export default async function CourseDetailPage({ params }: { params: { courseId:
     );
   }
   
-  // Instructor name should come from API response directly (joined in MySQL)
   const instructorName = course.instructor || "Expert Instructor"; 
 
   return (
     <div className="container mx-auto px-4 py-12">
        <div className="mb-8">
-        <Button variant="outline" size="sm" asChild>
+        <Button variant="outline" size="sm" asChild className="animate-fill-outline">
             <Link href="/courses">
                 <ArrowLeft className="mr-2 h-4 w-4" /> Back to Courses
             </Link>
@@ -118,6 +109,7 @@ export default async function CourseDetailPage({ params }: { params: { courseId:
               alt={`Promo image for ${course.title}`}
               layout="fill"
               objectFit="cover"
+              priority // LCP candidate
               data-ai-hint="course promo video"
             />
             <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
@@ -188,8 +180,8 @@ export default async function CourseDetailPage({ params }: { params: { courseId:
               { course.price !== 'Free' && <CardDescription>One-time payment</CardDescription> }
             </CardHeader>
             <CardContent className="space-y-3">
-              <Button size="lg" className="w-full">Enroll Now</Button>
-              <Button variant="outline" size="lg" className="w-full">Add to Cart</Button>
+              <Button size="lg" className="w-full animate-fill">Enroll Now</Button>
+              <Button variant="outline" size="lg" className="w-full animate-fill-outline">Add to Cart</Button>
               <p className="text-xs text-muted-foreground text-center">30-Day Money-Back Guarantee</p>
             </CardContent>
             <Separator className="my-4" />
@@ -228,3 +220,4 @@ export function CourseDetailSkeleton() {
     </div>
   );
 }
+

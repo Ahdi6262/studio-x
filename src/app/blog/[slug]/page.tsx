@@ -1,4 +1,3 @@
-
 import { PageHeader } from "@/components/core/page-header";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, CalendarDays, UserCircle, Tag } from "lucide-react";
@@ -16,7 +15,7 @@ import remarkGfm from 'remark-gfm';
 
 async function getPostBySlugFromAPI(slug: string): Promise<BlogPost | null> {
   try {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/blog/${slug}`); // Use absolute URL for server-side fetching in generateStaticParams/getStaticProps context
+    const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/blog/${slug}`); 
     if (!response.ok) {
       if (response.status === 404) return null;
       const errorData = await response.json().catch(() => ({ message: response.statusText }));
@@ -25,22 +24,14 @@ async function getPostBySlugFromAPI(slug: string): Promise<BlogPost | null> {
     const post: BlogPost = await response.json();
      return {
         ...post,
-        published_at: post.published_at ? new Date(post.published_at) : undefined,
+        // API returns ISO string, new Date() parses it for consistent client-side Date object
+        published_at: post.published_at ? new Date(post.published_at) : undefined, 
     };
   } catch (error) {
     console.error(`Error fetching post with slug ${slug} from API:`, error);
     return null;
   }
 }
-
-// export async function generateStaticParams() {
-//   // Fetch all slugs from your API for static generation
-//   // const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/blog/slugs`); // Create this API endpoint
-//   // const slugs = await response.json();
-//   // return slugs.map((slug: string) => ({ slug }));
-//   return []; // Temporarily disable static generation or implement slug fetching
-// }
-
 
 export default async function BlogPostPage({ params }: { params: { slug: string } }) {
   const post = await getPostBySlugFromAPI(params.slug);
@@ -50,7 +41,7 @@ export default async function BlogPostPage({ params }: { params: { slug: string 
       <div className="container mx-auto px-4 py-12 text-center">
         <PageHeader title="Post Not Found" />
         <p className="text-muted-foreground mb-4">The blog post you are looking for does not exist or has been moved.</p>
-        <Button asChild variant="outline">
+        <Button asChild variant="outline" className="animate-fill-outline">
           <Link href="/blog">
             <ArrowLeft className="mr-2 h-4 w-4" /> Back to Blog
           </Link>
@@ -64,7 +55,7 @@ export default async function BlogPostPage({ params }: { params: { slug: string 
   return (
     <div className="container mx-auto px-4 py-12 max-w-4xl">
       <div className="mb-8">
-        <Button variant="outline" size="sm" asChild>
+        <Button variant="outline" size="sm" asChild className="animate-fill-outline">
           <Link href="/blog">
             <ArrowLeft className="mr-2 h-4 w-4" /> Back to Blog
           </Link>
@@ -79,8 +70,8 @@ export default async function BlogPostPage({ params }: { params: { slug: string 
               alt={`Cover image for ${post.title}`}
               layout="fill"
               objectFit="cover"
-              priority
-              data-ai-hint="blog post cover"
+              priority // LCP candidate
+              data-ai-hint="blog article cover"
             />
           </div>
         )}
@@ -153,3 +144,4 @@ export function BlogPostSkeleton() {
     </div>
   );
 }
+

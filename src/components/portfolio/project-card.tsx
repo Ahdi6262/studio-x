@@ -41,13 +41,13 @@ export const ProjectCard = React.memo(function ProjectCard({ project }: ProjectC
           <span>By {project.author}</span>
         </div>
         <div className="flex flex-wrap gap-2">
-          {project.tags.map((tag) => (
+          {project.tags && project.tags.map((tag) => ( // Added check for project.tags
             <Badge key={tag} variant="secondary" className="text-xs">{tag}</Badge>
           ))}
         </div>
       </CardContent>
       <CardFooter className="pt-0">
-        <Button variant="outline" size="sm" asChild className="w-full">
+        <Button variant="outline" size="sm" asChild className="w-full animate-fill-outline">
           <Link href={`/portfolio/${project.id}`}>
             View Details <ExternalLink className="ml-2 h-4 w-4" />
           </Link>
@@ -57,3 +57,4 @@ export const ProjectCard = React.memo(function ProjectCard({ project }: ProjectC
   );
 });
 ProjectCard.displayName = 'ProjectCard';
+

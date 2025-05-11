@@ -28,10 +28,10 @@ export const HeroSection = memo(function HeroSection() {
         The ultimate platform for Web3 creators. Showcase your portfolio, learn new skills, connect with the community, and climb the leaderboard.
       </p>
       <div className="mt-10 flex flex-col sm:flex-row justify-center gap-4">
-        <Button size="lg" asChild>
+        <Button size="lg" asChild className="animate-fill">
           <Link href="/signup">Get Started <ArrowRight className="ml-2 h-5 w-5" /></Link>
         </Button>
-        <Button size="lg" variant="outline" asChild>
+        <Button size="lg" variant="outline" asChild className="animate-fill-outline">
           <Link href="/courses">Explore Courses</Link>
         </Button>
       </div>
@@ -43,7 +43,7 @@ export const HeroSection = memo(function HeroSection() {
           height={600}
           className="rounded-xl shadow-2xl mx-auto object-cover"
           data-ai-hint="futuristic digital abstract"
-          priority
+          priority // LCP candidate
         />
         <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent rounded-xl"></div>
       </div>
@@ -73,10 +73,10 @@ export const HeroSection = memo(function HeroSection() {
               className="mt-10 flex flex-col sm:flex-row justify-center gap-4 animate-fadeInUp" 
               style={{ animationDelay: '1.5s', opacity: 0 }} // Initial opacity 0 for animation
             >
-              <Button size="lg" asChild>
+              <Button size="lg" asChild className="animate-fill">
                 <Link href="/signup">Get Started <ArrowRight className="ml-2 h-5 w-5" /></Link>
               </Button>
-              <Button size="lg" variant="outline" asChild>
+              <Button size="lg" variant="outline" asChild className="animate-fill-outline">
                 <Link href="/courses">Explore Courses</Link>
               </Button>
             </div>
@@ -91,7 +91,7 @@ export const HeroSection = memo(function HeroSection() {
                 height={600}
                 className="rounded-xl shadow-2xl mx-auto object-cover"
                 data-ai-hint="futuristic digital abstract"
-                priority
+                priority // LCP candidate
               />
               <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent rounded-xl"></div>
             </div>
@@ -102,3 +102,4 @@ export const HeroSection = memo(function HeroSection() {
   );
 });
 HeroSection.displayName = 'HeroSection';
+

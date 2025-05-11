@@ -1,41 +1,60 @@
+
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { PageHeader } from "@/components/core/page-header";
 import { Button } from "@/components/ui/button";
 import { Rss, PlusCircle } from "lucide-react";
 import Link from "next/link";
-import { collection, query, where, orderBy, limit, getDocs } from "firebase/firestore";
-import { db } from "@/lib/firebase";
-import { BlogPostCard, BlogPostCardSkeleton } from "@/components/blog/blog-post-card"; // Assuming this new component
-import type { BlogPost } from '@/types/blog'; // Assuming this new type
+// Firebase imports removed
+// import { collection, query, where, orderBy, limit, getDocs } from "firebase/firestore";
+// import { db } from "@/lib/firebase";
+import { BlogPostCard, BlogPostCardSkeleton } from "@/components/blog/blog-post-card";
+import type { BlogPost } from '@/types/blog';
+import { Skeleton } from '@/components/ui/skeleton';
 
-async function fetchBlogPosts(): Promise<BlogPost[]> {
-  const postsCol = collection(db, 'blog_posts');
-  // Fetch published posts, ordered by published_at date descending
-  const q = query(postsCol, where("status", "==", "published"), orderBy("published_at", "desc"), limit(10));
-  const postsSnapshot = await getDocs(q);
-  return postsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as BlogPost));
+
+async function fetchBlogPostsFromAPI(limit: number = 10): Promise<BlogPost[]> {
+  console.log("Fetching blog posts from API with limit:", limit);
+  try {
+    const response = await fetch(`/api/blog?limit=${limit}`);
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({message: response.statusText}));
+      throw new Error(`Failed to fetch blog posts: ${errorData.message}`);
+    }
+    const posts: BlogPost[] = await response.json();
+    return posts.map(post => ({
+        ...post,
+        // API should return published_at as ISO string if it's a Date in DB
+        published_at: post.published_at ? new Date(post.published_at) : undefined, // Ensure it's a Date object for card
+        authorName: post.authorName || "HEX THE ADD HUB", // Ensure authorName if API provides it
+    }));
+  } catch (error) {
+    console.error("Error fetching blog posts from API:", error);
+    return [];
+  }
 }
+
 
 export default function BlogPage() {
   const [posts, setPosts] = useState<BlogPost[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    const loadPosts = async () => {
+  const loadPosts = useCallback(async () => {
       setIsLoading(true);
       try {
-        const fetchedPosts = await fetchBlogPosts();
+        const fetchedPosts = await fetchBlogPostsFromAPI();
         setPosts(fetchedPosts);
       } catch (error) {
         console.error("Failed to fetch blog posts:", error);
-        // Optionally, set an error state and display a message
+        setPosts([]);
       }
       setIsLoading(false);
-    };
+    }, []);
+
+  useEffect(() => {
     loadPosts();
-  }, []);
+  }, [loadPosts]);
 
   return (
     <div className="container mx-auto px-4 py-12">
@@ -78,4 +97,3 @@ export default function BlogPage() {
     </div>
   );
 }
-

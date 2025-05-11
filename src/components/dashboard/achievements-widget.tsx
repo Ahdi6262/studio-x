@@ -1,38 +1,38 @@
+
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Award, Star, ShieldCheck, Users, Zap, BookOpenText as BookIcon } from "lucide-react"; // Using BookOpenText for BookIcon
+import { Award, Star, BookOpenText as BookIcon, Users, ShieldCheck, Zap } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import type { LucideIcon } from "lucide-react";
-import { collection, query, where, getDocs, doc, getDoc } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+// Firebase imports removed
+// import { collection, query, where, getDocs, doc, getDoc } from "firebase/firestore";
+// import { db } from "@/lib/firebase";
 import { Skeleton } from "@/components/ui/skeleton";
 
-interface AchievementDefinition {
-  id: string; // key from achievement_definitions
+interface AchievementDefinitionAPI {
   name: string;
   description: string;
-  icon_name: string; // Lucide icon name string
-  points_value?: number;
+  icon_name: string; 
+  achieved_at: string; // ISO Date string from API
+  // points_value?: number; // If API returns this
 }
 
 interface UserAchievement {
-  id: string; // Document ID from user_achievements
-  definition: AchievementDefinition; // Enriched with definition details
-  achieved_at: Date; // Timestamp converted to Date
-  unlocked: boolean; // Always true if fetched from user_achievements
+  id: string; // Could be achievement name or a unique ID if API provides one
+  definition: AchievementDefinitionAPI;
+  unlocked: boolean; 
 }
 
 const iconMap: Record<string, LucideIcon> = {
   Star,
-  BookIcon, // Renamed from BookOpenText
+  BookIcon,
   Users,
   Award,
   ShieldCheck,
   Zap,
-  // Add other icons you use in achievement_definitions.icon_name
-  Default: Award, // Fallback icon
+  Default: Award, 
 };
 
 interface AchievementsWidgetProps {
@@ -43,51 +43,40 @@ export function AchievementsWidget({ userId }: AchievementsWidgetProps) {
   const [achievements, setAchievements] = useState<UserAchievement[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
+  const fetchAchievementsFromAPI = useCallback(async () => {
     if (!userId) {
       setIsLoading(false);
       return;
     }
-
-    const fetchAchievements = async () => {
-      setIsLoading(true);
-      try {
-        // 1. Fetch user's achieved achievement keys
-        const userAchievementsCol = collection(db, 'user_achievements');
-        const userAchievementsQuery = query(userAchievementsCol, where("user_id", "==", userId));
-        const userAchievementsSnap = await getDocs(userAchievementsQuery);
-
-        const fetchedAchievementsPromises = userAchievementsSnap.docs.map(async (achDoc) => {
-          const userAchData = achDoc.data();
-          const achievementKey = userAchData.achievement_key;
-
-          // 2. Fetch the definition for each achieved key
-          const achDefRef = doc(db, 'achievement_definitions', achievementKey);
-          const achDefSnap = await getDoc(achDefRef);
-
-          if (achDefSnap.exists()) {
-            const defData = achDefSnap.data() as Omit<AchievementDefinition, 'id'>;
-            return {
-              id: achDoc.id,
-              definition: { id: achievementKey, ...defData },
-              achieved_at: userAchData.achieved_at.toDate(), // Convert Firestore Timestamp to Date
-              unlocked: true,
-            };
-          }
-          return null; 
-        });
-        
-        const resolvedAchievements = (await Promise.all(fetchedAchievementsPromises)).filter(Boolean) as UserAchievement[];
-        setAchievements(resolvedAchievements.sort((a,b) => b.achieved_at.getTime() - a.achieved_at.getTime())); // Sort by most recent
-
-      } catch (error) {
-        console.error("Error fetching achievements:", error);
+    setIsLoading(true);
+    try {
+      const response = await fetch(`/api/users/${userId}/achievements`);
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({message: response.statusText}));
+        throw new Error(`Failed to fetch achievements: ${errorData.message}`);
       }
-      setIsLoading(false);
-    };
+      const apiAchievements: AchievementDefinitionAPI[] = await response.json();
+      
+      const userAchievements: UserAchievement[] = apiAchievements.map((ach, index) => ({
+        id: `${ach.name}-${index}`, // Create a simple unique ID
+        definition: ach,
+        unlocked: true, // All achievements from this API are unlocked
+      }));
+      
+      // Sort by achieved_at date, most recent first
+      userAchievements.sort((a,b) => new Date(b.definition.achieved_at).getTime() - new Date(a.definition.achieved_at).getTime());
+      setAchievements(userAchievements);
 
-    fetchAchievements();
+    } catch (error) {
+      console.error("Error fetching achievements from API:", error);
+      setAchievements([]);
+    }
+    setIsLoading(false);
   }, [userId]);
+
+  useEffect(() => {
+    fetchAchievementsFromAPI();
+  }, [fetchAchievementsFromAPI]);
 
 
   if (isLoading) {
@@ -133,7 +122,7 @@ export function AchievementsWidget({ userId }: AchievementsWidgetProps) {
                       <TooltipContent>
                         <p className="font-semibold">{ach.definition.name}</p>
                         <p className="text-xs">{ach.definition.description}</p>
-                        <p className="text-xs text-muted-foreground mt-1">Unlocked: {ach.achieved_at.toLocaleDateString()}</p>
+                        <p className="text-xs text-muted-foreground mt-1">Unlocked: {new Date(ach.definition.achieved_at).toLocaleDateString()}</p>
                       </TooltipContent>
                     </Tooltip>
                   );
@@ -146,9 +135,7 @@ export function AchievementsWidget({ userId }: AchievementsWidgetProps) {
             <p>Start your journey to unlock achievements!</p>
           </div>
         )}
-        {/* Placeholder for locked achievements if you implement that logic */}
       </CardContent>
     </Card>
   );
 }
-

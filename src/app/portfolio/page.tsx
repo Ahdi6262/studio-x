@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useCallback } from 'react';
@@ -9,49 +10,35 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { PlusCircle, FolderOpen } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { collection, getDocs, query, orderBy, where } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+// Firebase imports removed
+// import { collection, getDocs, query, orderBy, where } from "firebase/firestore";
+// import { db } from "@/lib/firebase";
 
-async function fetchProjectsFromDB(filters?: { searchTerm?: string; category?: string }): Promise<Project[]> {
-  console.log("Fetching projects from DB with filters:", filters);
-  const projectsCol = collection(db, 'projects');
+async function fetchProjectsFromAPI(filters?: { searchTerm?: string; category?: string }): Promise<Project[]> {
+  console.log("Fetching projects from API with filters:", filters);
+  const queryParams = new URLSearchParams();
+  if (filters?.searchTerm) queryParams.append('searchTerm', filters.searchTerm);
+  if (filters?.category && filters.category !== "All") queryParams.append('category', filters.category);
   
-  // Base query: fetch published projects, ordered by title (or published_at if available and preferred)
-  let q = query(projectsCol, where("status", "==", "published"), orderBy("title")); 
-
-  const projectSnapshot = await getDocs(q);
-  let projectList = projectSnapshot.docs.map(doc => {
-    const data = doc.data();
-    return { 
-      id: doc.id, 
-      ...data,
-      // Ensure date field compatibility if mock data 'date' is different from schema 'published_at'
-      date: data.published_at ? data.published_at.toDate().toLocaleDateString() : (data.date || 'N/A'),
-      imageUrl: data.image_url || data.imageUrl || 'https://picsum.photos/seed/default/600/400', // Fallback for imageUrl
-      tags: data.tags || [],
-      author: data.authorName || 'Unknown Creator' // Assuming authorName or similar, or fetch from user_id
-    } as Project;
-  });
-
-  // Client-side filtering for now. For production, consider server-side or Algolia/Typesense.
-  if (filters) {
-    if (filters.searchTerm) {
-      const lowerSearchTerm = filters.searchTerm.toLowerCase();
-      projectList = projectList.filter(project =>
-        project.title.toLowerCase().includes(lowerSearchTerm) ||
-        project.description.toLowerCase().includes(lowerSearchTerm) ||
-        (project.author &amp;&amp; project.author.toLowerCase().includes(lowerSearchTerm)) ||
-        (project.tags &amp;&amp; project.tags.some(tag => tag.toLowerCase().includes(lowerSearchTerm)))
-      );
+  try {
+    const response = await fetch(`/api/projects?${queryParams.toString()}`);
+    if (!response.ok) {
+      const errorData = await response.json().catch(()=>({message: response.statusText}));
+      throw new Error(`Failed to fetch projects: ${errorData.message}`);
     }
-    if (filters.category &amp;&amp; filters.category !== "All") {
-      projectList = projectList.filter(project => 
-        project.tags &amp;&amp; project.tags.includes(filters.category)
-      );
-    }
+    const projects: Project[] = await response.json();
+    return projects.map(project => ({
+      ...project,
+      // Ensure date format is consistent if API returns ISO string
+      date: project.published_at ? new Date(project.published_at).toLocaleDateString() : 'N/A',
+      imageUrl: project.imageUrl || 'https://picsum.photos/seed/defaultproject/600/400',
+    }));
+  } catch (error) {
+    console.error("Error fetching projects from API:", error);
+    return []; // Return empty array on error
   }
-  return projectList;
 }
+
 
 export default function PortfolioPage() {
   const [filteredProjects, setFilteredProjects] = useState<Project[]>([]);
@@ -61,10 +48,11 @@ export default function PortfolioPage() {
   const loadProjects = useCallback(async (currentFilters: typeof filters) => {
     setIsLoading(true);
     try {
-      const projects = await fetchProjectsFromDB(currentFilters);
-      setFilteredProjects(projects); // fetchProjectsFromDB now handles filtering
+      const projects = await fetchProjectsFromAPI(currentFilters);
+      setFilteredProjects(projects);
     } catch (error) {
-      console.error("Failed to fetch projects:", error);
+      console.error("Failed to load projects:", error);
+      setFilteredProjects([]);
     }
     setIsLoading(false);
   }, []);
@@ -133,4 +121,3 @@ const CardSkeleton = () => (
     <Skeleton className="h-9 w-full mt-2 bg-muted" />
   </div>
 );
-

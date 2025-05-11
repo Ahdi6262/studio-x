@@ -1,8 +1,8 @@
 
 import { initializeApp, getApps, type FirebaseApp } from "firebase/app";
 import { getAuth, type Auth } from "firebase/auth";
-// import { getFirestore, type Firestore } from "firebase/firestore"; // Commented out
-// import { getStorage, type FirebaseStorage } from "firebase/storage";
+// import { getFirestore, type Firestore } from "firebase/firestore"; // No longer needed
+import { getStorage, type FirebaseStorage } from "firebase/storage"; // Keep storage if used for files
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -36,10 +36,9 @@ if (!getApps().length) {
 }
 
 const auth: Auth = getAuth(app);
-// const db: Firestore = getFirestore(app); // Commented out: Firestore instance
-// const storage: FirebaseStorage = getStorage(app);
+// const db: Firestore = getFirestore(app); // Firestore instance removed
+const storage: FirebaseStorage = getStorage(app); // Firebase Storage for file uploads
 
-// Export db for now, but it should be phased out.
-// Components will fetch from API routes that query MySQL.
-// export { app, auth, db /*, storage */ }; // Original export
-export { app, auth /*, storage */ }; // Export without db for now
+// Firestore (db) is no longer exported.
+// Data will be managed via API routes interacting with MySQL and MongoDB.
+export { app, auth, storage };

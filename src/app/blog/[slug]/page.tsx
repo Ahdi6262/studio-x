@@ -1,3 +1,4 @@
+
 import { PageHeader } from "@/components/core/page-header";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, CalendarDays, UserCircle, Tag } from "lucide-react";
@@ -5,38 +6,44 @@ import Link from "next/link";
 import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { doc, getDocs, query, where, collection, limit } from "firebase/firestore";
-import { db } from "@/lib/firebase";
-import type { BlogPost } from '@/types/blog'; // Assuming type definition exists
+// Firebase imports removed
+// import { doc, getDocs, query, where, collection, limit } from "firebase/firestore";
+// import { db } from "@/lib/firebase";
+import type { BlogPost } from '@/types/blog'; 
 import { Skeleton } from "@/components/ui/skeleton";
-import ReactMarkdown from 'react-markdown'; // For rendering Markdown content
-import remarkGfm from 'remark-gfm'; // For GitHub Flavored Markdown
+import ReactMarkdown from 'react-markdown'; 
+import remarkGfm from 'remark-gfm'; 
 
-async function getPostBySlug(slug: string): Promise<BlogPost | null> {
-  const postsCol = collection(db, 'blog_posts');
-  const q = query(postsCol, where("slug", "==", slug), where("status", "==", "published"), limit(1));
-  const postSnapshot = await getDocs(q);
-
-  if (postSnapshot.empty) {
+async function getPostBySlugFromAPI(slug: string): Promise<BlogPost | null> {
+  try {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/blog/${slug}`); // Use absolute URL for server-side fetching in generateStaticParams/getStaticProps context
+    if (!response.ok) {
+      if (response.status === 404) return null;
+      const errorData = await response.json().catch(() => ({ message: response.statusText }));
+      throw new Error(`Failed to fetch blog post (${response.status}): ${errorData.message}`);
+    }
+    const post: BlogPost = await response.json();
+     return {
+        ...post,
+        published_at: post.published_at ? new Date(post.published_at) : undefined,
+    };
+  } catch (error) {
+    console.error(`Error fetching post with slug ${slug} from API:`, error);
     return null;
   }
-  const postDoc = postSnapshot.docs[0];
-  return { id: postDoc.id, ...postDoc.data() } as BlogPost;
 }
 
-// Optional: For generating static paths if you have many blog posts
 // export async function generateStaticParams() {
-//   const postsCol = collection(db, 'blog_posts');
-//   const q = query(postsCol, where("status", "==", "published"));
-//   const postsSnapshot = await getDocs(q);
-//   return postsSnapshot.docs.map(doc => ({
-//     slug: doc.data().slug,
-//   }));
+//   // Fetch all slugs from your API for static generation
+//   // const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/blog/slugs`); // Create this API endpoint
+//   // const slugs = await response.json();
+//   // return slugs.map((slug: string) => ({ slug }));
+//   return []; // Temporarily disable static generation or implement slug fetching
 // }
 
 
 export default async function BlogPostPage({ params }: { params: { slug: string } }) {
-  const post = await getPostBySlug(params.slug);
+  const post = await getPostBySlugFromAPI(params.slug);
 
   if (!post) {
     return (
@@ -52,7 +59,6 @@ export default async function BlogPostPage({ params }: { params: { slug: string 
     );
   }
   
-  // Placeholder for author details - in a real app, fetch from 'users' collection
   const authorName = post.authorName || "HEX THE ADD HUB Team"; 
 
   return (
@@ -66,7 +72,7 @@ export default async function BlogPostPage({ params }: { params: { slug: string 
       </div>
 
       <article className="bg-card p-6 sm:p-8 rounded-xl shadow-xl">
-        {post.cover_image_url &amp;&amp; (
+        {post.cover_image_url && (
           <div className="relative w-full h-64 md:h-80 rounded-lg overflow-hidden mb-8 shadow-inner">
             <Image
               src={post.cover_image_url}
@@ -84,13 +90,13 @@ export default async function BlogPostPage({ params }: { params: { slug: string 
             <div className="flex items-center">
               <UserCircle className="h-4 w-4 mr-1.5" /> {authorName}
             </div>
-            {post.published_at &amp;&amp; (
+            {post.published_at && (
               <div className="flex items-center">
                 <CalendarDays className="h-4 w-4 mr-1.5" />
-                {new Date(post.published_at.seconds * 1000).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+                {new Date(post.published_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
               </div>
             )}
-            {post.category &amp;&amp; (
+            {post.category && (
                 <Badge variant="secondary">{post.category}</Badge>
             )}
           </div>
@@ -99,14 +105,12 @@ export default async function BlogPostPage({ params }: { params: { slug: string 
         <Separator className="my-6" />
 
         <div className="prose prose-lg dark:prose-invert max-w-none prose-p:text-foreground/90 prose-headings:text-primary prose-a:text-primary hover:prose-a:underline">
-          {/* Ensure content_markdown is properly sanitized if it can contain user-generated HTML */}
-          {/* For pure Markdown, ReactMarkdown is safe */}
           <ReactMarkdown remarkPlugins={[remarkGfm]}>
             {post.content_markdown}
           </ReactMarkdown>
         </div>
 
-        {post.tags &amp;&amp; post.tags.length > 0 &amp;&amp; (
+        {post.tags && post.tags.length > 0 && (
           <>
             <Separator className="my-8" />
             <footer className="mt-6">
@@ -126,8 +130,7 @@ export default async function BlogPostPage({ params }: { params: { slug: string 
   );
 }
 
-
-export function BlogPostSkeleton() { // For potential use with Suspense
+export function BlogPostSkeleton() { 
   return (
     <div className="container mx-auto px-4 py-12 max-w-4xl">
       <Skeleton className="h-8 w-32 mb-8" />
@@ -150,4 +153,3 @@ export function BlogPostSkeleton() { // For potential use with Suspense
     </div>
   );
 }
-

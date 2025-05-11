@@ -1,30 +1,31 @@
+
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Users, FileText, BookOpen, MessageCircle, Rss } from "lucide-react"; // Added Rss as default
+import { Users, FileText, BookOpen, MessageCircle, Rss } from "lucide-react";
 import Link from "next/link";
-import { collection, query, orderBy, limit, getDocs, doc, getDoc } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+// Firebase imports removed
+// import { collection, query, orderBy, limit, getDocs, doc, getDoc } from "firebase/firestore";
+// import { db } from "@/lib/firebase";
 import { Skeleton } from "@/components/ui/skeleton";
 
-interface FeedItem {
-  id: string;
-  user_id: string; // User who performed the action
-  user_name?: string; // Denormalized or fetched
-  user_avatar_url?: string; // Denormalized or fetched
-  event_type: string; // e.g., 'course_enrollment', 'project_created'
-  event_data: { // Contextual data
-    course_id?: string;
-    course_title?: string;
-    project_id?: string;
-    project_title?: string;
-    forum_post_title?: string; // Example for forum
-    // Add other relevant fields based on event_type
-  };
-  timestamp: any; // Firestore Timestamp
+// This structure matches the formatted output of /api/users/[userId]/activity-events
+interface FormattedActivityEvent {
+  type: string;
+  data: Record<string, any>;
+  timestamp: string; // ISO String
 }
+
+// This will be the internal structure after fetching user details
+interface EnrichedFeedItem extends FormattedActivityEvent {
+  id: string; // We'll use a unique key, perhaps combining user_id and timestamp or using _id from MongoDB if available
+  user_id?: string; // Extracted if event_data contains it or if API provides it separately
+  user_name?: string;
+  user_avatar_url?: string;
+}
+
 
 const getIconForType = (type: string) => {
   switch (type) {
@@ -34,40 +35,38 @@ const getIconForType = (type: string) => {
     case "course_enrollment":
     case "lesson_completed":
       return <BookOpen className="h-4 w-4 text-green-500" />;
-    case "forum_post": // Assuming this event_type
+    case "forum_post":
       return <MessageCircle className="h-4 w-4 text-blue-500" />;
     default:
-      return <Rss className="h-4 w-4 text-muted-foreground" />; // Generic feed icon
+      return <Rss className="h-4 w-4 text-muted-foreground" />;
   }
 };
 
-const getLinkForEvent = (item: FeedItem): string => {
-    switch (item.event_type) {
+const getLinkForEvent = (item: EnrichedFeedItem): string => {
+    switch (item.type) {
         case "project_created":
         case "project_contribution":
-            return item.event_data.project_id ? `/portfolio/${item.event_data.project_id}` : "#";
+            return item.data.project_id ? `/portfolio/${item.data.project_id}` : "#";
         case "course_enrollment":
         case "lesson_completed":
-            return item.event_data.course_id ? `/courses/${item.event_data.course_id}` : "#";
-        // Add cases for other event types like forum posts
+            return item.data.course_id ? `/courses/${item.data.course_id}` : "#";
         default:
             return "#";
     }
 }
 
-const formatEventTitle = (item: FeedItem): string => {
-    switch (item.event_type) {
+const formatEventTitle = (item: EnrichedFeedItem): string => {
+    switch (item.type) {
         case "project_created":
-            return item.event_data.project_title || "a new project";
+            return item.data.project_title || "a new project";
         case "project_contribution":
-            return `contribution to ${item.event_data.project_title || "a project"}`;
+            return `contribution to ${item.data.project_title || "a project"}`;
         case "course_enrollment":
-            return item.event_data.course_title || "a new course";
+            return item.data.course_title || "a new course";
         case "lesson_completed":
-            return `lesson in ${item.event_data.course_title || "a course"}`;
-        // Add cases for other event types
+            return `lesson in ${item.data.course_title || "a course"}`;
         default:
-            return "an activity";
+             return item.data.summary || "an activity"; // Generic fallback
     }
 }
 
@@ -81,55 +80,83 @@ const getEventActionText = (type: string): string => {
     }
 }
 
+interface CommunityFeedWidgetProps {
+  userId: string; // For fetching global feed, not specific user's feed (unless that's the intent)
+                  // For a "global" feed, this prop might not be used in fetch, or API ignores it.
+}
 
-export function CommunityFeedWidget() {
-  const [feedItems, setFeedItems] = useState<FeedItem[]>([]);
+
+export function CommunityFeedWidget({ userId }: CommunityFeedWidgetProps) {
+  const [feedItems, setFeedItems] = useState<EnrichedFeedItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchFeedItems = async () => {
-      setIsLoading(true);
-      try {
-        const activityCol = collection(db, 'user_activity_events');
-        // Fetch recent 5-10 items, ordered by timestamp
-        const q = query(activityCol, orderBy("timestamp", "desc"), limit(5));
-        const activitySnapshot = await getDocs(q);
+  // For a community feed, you'd typically fetch global activities, not just for one user.
+  // The /api/users/[userId]/activity-events is for a specific user.
+  // Let's assume for now we want a specific user's feed, or a generic one.
+  // If it's a generic community feed, the API endpoint should be different (e.g., /api/activity-events)
 
-        const itemsPromises = activitySnapshot.docs.map(async (activityDoc) => {
-          const data = activityDoc.data() as Omit<FeedItem, 'id' | 'user_name' | 'user_avatar_url'>;
-          
-          // Fetch user details for avatar and name
-          let userName = "User";
-          let userAvatar = "";
-          if (data.user_id) {
-            const userRef = doc(db, 'users', data.user_id);
-            const userSnap = await getDoc(userRef);
-            if (userSnap.exists()) {
-              userName = userSnap.data().name || "User";
-              userAvatar = userSnap.data().avatar_url || "";
-            }
-          }
-          
-          return {
-            id: activityDoc.id,
-            ...data,
-            user_name: userName,
-            user_avatar_url: userAvatar,
-            timestamp: data.timestamp.toDate() // Convert Firestore Timestamp to JS Date
-          } as FeedItem;
-        });
-
-        const resolvedItems = await Promise.all(itemsPromises);
-        setFeedItems(resolvedItems);
-
-      } catch (error) {
-        console.error("Error fetching community feed:", error);
+  const fetchFeedItemsFromAPI = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      // If it's a global feed, the API should not require userId or should handle it
+      // For now, using the user-specific one as per current setup.
+      const response = await fetch(`/api/users/${userId}/activity-events?limit=5`); 
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({message: response.statusText}));
+        throw new Error(`Failed to fetch activity feed: ${errorData.message}`);
       }
-      setIsLoading(false);
-    };
+      const rawEvents: FormattedActivityEvent[] = await response.json();
 
-    fetchFeedItems();
-  }, []);
+      // Enrich events with user details if necessary (API should ideally provide this)
+      // This is a simplified enrichment. In a real scenario, the API would join user data.
+      const enrichedItems: EnrichedFeedItem[] = await Promise.all(rawEvents.map(async (event, index) => {
+        let userName = "User";
+        let userAvatar = "";
+        let eventUserId = event.data.user_id || userId; // Prioritize user_id from event_data if available
+
+        // This part is a placeholder for fetching user data if your activity API doesn't provide it.
+        // Ideally, /api/activity-events (if global) would return events already enriched.
+        if (eventUserId) {
+            // Example: const userProfile = await fetchUserProfileFromAPI(eventUserId);
+            // userName = userProfile?.name || "User"; userAvatar = userProfile?.avatar_url || "";
+            // For now, we'll use the current dashboard user's info as a placeholder for actor if not in event
+            if (eventUserId === userId && feedItems.find(fi => fi.user_id === userId)) { // Assuming this user has an entry
+                const currentUserData = feedItems.find(fi => fi.user_id === userId);
+                userName = currentUserData?.user_name || "User";
+                userAvatar = currentUserData?.user_avatar_url || "";
+            } else {
+                // If it's a different user's activity, you'd fetch their profile.
+                // This part is complex for a simple widget and usually handled by backend.
+                // Let's assume for now, event.data might have actor_name, actor_avatar.
+                 userName = event.data.actor_name || "Another User";
+                 userAvatar = event.data.actor_avatar_url || "";
+            }
+        }
+
+        return {
+          ...event,
+          id: `${eventUserId}-${event.timestamp}-${index}`, // Basic unique ID
+          user_id: eventUserId,
+          user_name: userName,
+          user_avatar_url: userAvatar,
+          timestamp: event.timestamp, // Already ISO string
+        };
+      }));
+      
+      setFeedItems(enrichedItems);
+
+    } catch (error) {
+      console.error("Error fetching community feed from API:", error);
+      setFeedItems([]);
+    }
+    setIsLoading(false);
+  }, [userId, feedItems]); // Added feedItems to deps for placeholder name logic, might cause loop if not careful
+
+  useEffect(() => {
+    fetchFeedItemsFromAPI();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId]); // Fetch only when userId changes, or use a different trigger for global feed
+
 
   if (isLoading) {
     return (
@@ -174,14 +201,14 @@ export function CommunityFeedWidget() {
                 <div className="flex-1">
                   <p className="text-sm">
                     <span className="font-semibold text-foreground">{item.user_name || 'A user'}</span>
-                    {` ${getEventActionText(item.event_type)} `}
+                    {` ${getEventActionText(item.type)} `}
                     <Link href={getLinkForEvent(item)} className="text-primary hover:underline">
                       {formatEventTitle(item)}
                     </Link>
                   </p>
                   <p className="text-xs text-muted-foreground flex items-center">
-                    {getIconForType(item.event_type)}
-                    <span className="ml-1">{item.timestamp.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} - {item.timestamp.toLocaleDateString()}</span>
+                    {getIconForType(item.type)}
+                    <span className="ml-1">{new Date(item.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} - {new Date(item.timestamp).toLocaleDateString()}</span>
                   </p>
                 </div>
               </li>
@@ -196,4 +223,3 @@ export function CommunityFeedWidget() {
     </Card>
   );
 }
-

@@ -1,4 +1,5 @@
-"use client"; // Add use client for useAuth hook
+
+"use client"; 
 
 import Image from 'next/image';
 import Link from 'next/link';
@@ -7,58 +8,60 @@ import { Button } from '@/components/ui/button';
 import type { Project } from '@/lib/mock-data'; 
 import { PageHeader } from "@/components/core/page-header";
 import { ArrowLeft, ExternalLink, CalendarDays, UserCircle, Edit } from 'lucide-react';
-import { doc, getDoc } from "firebase/firestore"; 
-import { db } from "@/lib/firebase";
+// Firebase imports removed
+// import { doc, getDoc } from "firebase/firestore"; 
+// import { db } from "@/lib/firebase";
 import { Skeleton } from '@/components/ui/skeleton';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { useAuth } from '@/contexts/auth-context'; 
 import { useEffect, useState } from 'react';
 
-async function getProjectData(projectId: string): Promise<Project | undefined> {
-  console.log(`Fetching project data for ID: ${projectId} from Firebase...`);
-  const projectRef = doc(db, 'projects', projectId);
-  const projectSnap = await getDoc(projectRef);
-  if (projectSnap.exists()) {
-    const data = projectSnap.data();
-    let authorName = data.authorName || data.author; // Use authorName from schema, fallback to author
-    if (data.user_id &amp;&amp; !authorName) { // If no authorName, try to fetch from users collection
-        const userRef = doc(db, 'users', data.user_id);
-        const userSnap = await getDoc(userRef);
-        if (userSnap.exists()) {
-            authorName = userSnap.data().name || 'Unknown Author';
-        }
+async function fetchProjectFromAPI(projectId: string): Promise<Project | null> {
+  console.log(`Fetching project data for ID: ${projectId} from API...`);
+  try {
+    const response = await fetch(`/api/projects/${projectId}`);
+    if (!response.ok) {
+      if (response.status === 404) return null;
+      const errorData = await response.json().catch(() => ({ message: response.statusText }));
+      throw new Error(`Failed to fetch project (${response.status}): ${errorData.message}`);
     }
-    return { 
-        id: projectSnap.id, 
-        ...data, 
-        authorName: authorName || 'Unknown Author',
-        // Ensure date field compatibility
-        date: data.published_at ? data.published_at.toDate().toLocaleDateString() : (data.date || 'N/A'),
-        imageUrl: data.image_url || data.imageUrl || 'https://picsum.photos/seed/projectplaceholder/1200/800',
-     } as Project;
+    const project: Project = await response.json();
+    return {
+        ...project,
+        date: project.published_at ? new Date(project.published_at).toLocaleDateString() : 'N/A',
+        imageUrl: project.imageUrl || 'https://picsum.photos/seed/projectplaceholder/1200/800',
+        author: project.author || 'Unknown Creator' // author should be part of Project type from API
+    };
+  } catch (error) {
+    console.error("Error fetching project from API:", error);
+    return null;
   }
-  return undefined;
 }
 
+
 export default function ProjectDetailPage({ params }: { params: { projectId: string } }) {
-  const [project, setProject] = useState<Project | undefined | null>(undefined); // null for not found
+  const [project, setProject] = useState<Project | undefined | null>(undefined); // undefined: loading, null: not found
   const { user } = useAuth();
   
   useEffect(() => {
     async function loadData() {
-        const data = await getProjectData(params.projectId);
-        setProject(data || null); // Set to null if not found
+        if (params.projectId) {
+            const data = await fetchProjectFromAPI(params.projectId);
+            setProject(data); 
+        } else {
+            setProject(null); // No projectId, so not found
+        }
     }
     loadData();
   }, [params.projectId]);
 
 
-  if (project === undefined) { // Still loading
+  if (project === undefined) { 
     return <ProjectDetailSkeleton />;
   }
 
-  if (project === null) { // Not found
+  if (project === null) { 
     return (
       <div className="container mx-auto px-4 py-12 text-center">
         <PageHeader title="Project Not Found" />
@@ -72,7 +75,7 @@ export default function ProjectDetailPage({ params }: { params: { projectId: str
     );
   }
 
-  const isAuthor = user &amp;&amp; user.uid === project.user_id;
+  const isAuthor = user && user.uid === project.user_id;
 
   return (
     <div className="container mx-auto px-4 py-12">
@@ -110,14 +113,14 @@ export default function ProjectDetailPage({ params }: { params: { projectId: str
                     )}
                 </div>
                 <div className="mt-8 flex gap-4">
-                  {project.project_link &amp;&amp; (
+                  {project.project_link && (
                       <Button asChild>
                           <a href={project.project_link} target="_blank" rel="noopener noreferrer">
                           Visit Project <ExternalLink className="ml-2 h-4 w-4" />
                           </a>
                       </Button>
                   )}
-                  {isAuthor &amp;&amp; (
+                  {isAuthor && (
                       <Button variant="outline" asChild>
                           <Link href={`/portfolio/${project.id}/edit`}> {/* Placeholder for edit page */}
                               <Edit className="mr-2 h-4 w-4" /> Edit Project
@@ -132,13 +135,13 @@ export default function ProjectDetailPage({ params }: { params: { projectId: str
                     <div className="space-y-2 text-sm">
                         <div className="flex items-center">
                             <UserCircle className="h-4 w-4 mr-2 text-muted-foreground" />
-                            <span><strong>Author:</strong> {project.authorName}</span>
+                            <span><strong>Author:</strong> {project.author}</span>
                         </div>
                         <div className="flex items-center">
                             <CalendarDays className="h-4 w-4 mr-2 text-muted-foreground" />
                             <span><strong>Published:</strong> {project.date}</span>
                         </div>
-                        {project.status &amp;&amp; (
+                        {project.status && (
                           <div className="flex items-center">
                               <Badge variant={project.status === 'published' ? 'default' : 'secondary'} className="capitalize">{project.status}</Badge>
                           </div>
@@ -148,7 +151,7 @@ export default function ProjectDetailPage({ params }: { params: { projectId: str
                 <div className="p-4 bg-secondary/50 rounded-lg">
                     <h3 className="text-lg font-semibold mb-3 text-primary">Technologies Used</h3>
                     <div className="flex flex-wrap gap-2">
-                    {(project.tags &amp;&amp; project.tags.length > 0) ? project.tags.map((tag) => (
+                    {(project.tags && project.tags.length > 0) ? project.tags.map((tag) => (
                         <Badge key={tag} variant="default">{tag}</Badge>
                     )) : <p className="text-sm text-muted-foreground">No tags specified.</p>}
                     </div>
@@ -183,4 +186,3 @@ export function ProjectDetailSkeleton() {
     </div>
   );
 }
-

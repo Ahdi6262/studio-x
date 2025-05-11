@@ -1,3 +1,4 @@
+
 'use client'; 
 
 import { PageHeader } from "@/components/core/page-header";
@@ -5,63 +6,28 @@ import { LeaderboardItem } from "@/components/leaderboard/leaderboard-item";
 import type { LeaderboardUser } from "@/lib/mock-data";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { RefreshCw, Trophy } from "lucide-react"; // Added Trophy
+import { RefreshCw, Trophy } from "lucide-react";
 import { useEffect, useState, useCallback } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/contexts/auth-context";
-import { collection, getDocs, query, orderBy, limit, doc, getDoc, where } from "firebase/firestore"; 
-import { db } from "@/lib/firebase"; 
+// Firebase imports removed
+// import { collection, getDocs, query, orderBy, limit, doc, getDoc, where } from "firebase/firestore"; 
+// import { db } from "@/lib/firebase"; 
 
-// Function to fetch leaderboard data from user_points and enrich with user details
-async function fetchLeaderboardDataFromDB(period: 'all-time' | 'monthly' | 'weekly' = 'all-time'): Promise<LeaderboardUser[]> {
-  console.log(`Fetching ${period} leaderboard data from DB...`);
-  
-  const userPointsCol = collection(db, 'user_points');
-  let pointsField = "total_points";
-  if (period === 'monthly') pointsField = "monthly_points";
-  else if (period === 'weekly') pointsField = "weekly_points";
-
-  const q = query(userPointsCol, orderBy(pointsField, "desc"), limit(50)); 
-  const userPointsSnapshot = await getDocs(q);
-
-  const leaderboardListPromises = userPointsSnapshot.docs.map(async (pointDoc, index) => {
-    const pointData = pointDoc.data();
-    const userId = pointDoc.id;
-
-    const userRef = doc(db, 'users', userId);
-    const userSnap = await getDoc(userRef);
-    
-    let userName = 'Anonymous User';
-    let userAvatarUrl = ''; // Default or placeholder
-    let userAchievements: string[] = []; // Placeholder for achievements
-
-    if (userSnap.exists()) {
-      const userData = userSnap.data();
-      userName = userData.name || 'Anonymous User';
-      userAvatarUrl = userData.avatar_url || '';
-      // Fetch user_achievements (simplified: get first few achievement names)
-      const achievementsCol = collection(db, 'user_achievements');
-      const achievementsQuery = query(achievementsCol, where("user_id", "==", userId), limit(2));
-      const achievementsSnap = await getDocs(achievementsQuery);
-      userAchievements = await Promise.all(achievementsSnap.docs.map(async (achDoc) => {
-        const achDefRef = doc(db, 'achievement_definitions', achDoc.data().achievement_key);
-        const achDefSnap = await getDoc(achDefRef);
-        return achDefSnap.exists() ? achDefSnap.data().name : "Achievement";
-      }));
+async function fetchLeaderboardDataFromAPI(period: 'all-time' | 'monthly' | 'weekly' = 'all-time'): Promise<LeaderboardUser[]> {
+  console.log(`Fetching ${period} leaderboard data from API...`);
+  try {
+    const response = await fetch(`/api/leaderboard?period=${period}`);
+    if (!response.ok) {
+      const errorData = await response.json().catch(()=>({message: response.statusText}));
+      throw new Error(`Failed to fetch leaderboard: ${errorData.message}`);
     }
-    
-    return {
-      id: userId,
-      rank: index + 1,
-      name: userName,
-      avatarUrl: userAvatarUrl,
-      points: pointData[pointsField] || 0,
-      achievements: userAchievements,
-    } as LeaderboardUser;
-  });
-
-  const leaderboardList = await Promise.all(leaderboardListPromises);
-  return leaderboardList;
+    const data: LeaderboardUser[] = await response.json();
+    return data;
+  } catch (error) {
+    console.error("Error fetching leaderboard data from API:", error);
+    return [];
+  }
 }
 
 
@@ -81,10 +47,11 @@ export default function LeaderboardPage() {
   const loadLeaderboard = useCallback(async (period: 'all-time' | 'monthly' | 'weekly') => {
     setIsLoading(true);
     try {
-      const data = await fetchLeaderboardDataFromDB(period);
+      const data = await fetchLeaderboardDataFromAPI(period);
       setLeaderboardData(data);
     } catch (error) {
       console.error("Failed to fetch leaderboard data:", error);
+      setLeaderboardData([]);
     }
     setIsLoading(false);
   }, []);
@@ -162,4 +129,3 @@ const LeaderboardItemSkeleton = () => (
     </div>
   </div>
 );
-

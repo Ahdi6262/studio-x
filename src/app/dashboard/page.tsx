@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/auth-context";
 import { PageHeader } from "@/components/core/page-header";
@@ -14,10 +14,11 @@ import { CommunityFeedWidget } from "@/components/dashboard/community-feed-widge
 import { AchievementsWidget } from "@/components/dashboard/achievements-widget";
 import { DirectMessageWidget } from "@/components/dashboard/direct-message-widget";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { BookOpen, FolderKanban, Settings, User, Trophy, Edit, LayoutGrid, type LucideIcon, Award } from "lucide-react"; // Added Award
+import { BookOpen, FolderKanban, Settings, User, Trophy, Edit, LayoutGrid, type LucideIcon, Award } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { doc, getDoc, collection, query, where, getCountFromServer } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+// Firebase specific imports for data fetching are removed. Data will come via API.
+// import { doc, getDoc, collection, query, where, getCountFromServer } from "firebase/firestore";
+// import { db } from "@/lib/firebase";
 
 interface UserStats {
   points: number;
@@ -32,42 +33,42 @@ interface QuickLinkItemData {
   icon: LucideIcon;
 }
 
-async function fetchDashboardData(userId: string): Promise<{ stats: UserStats, quickLinks: QuickLinkItemData[] }> {
-  console.log(`Fetching dashboard data for user: ${userId} from Firebase...`);
-
-  let userStats: UserStats = {
+async function fetchDashboardStatsFromAPI(userId: string): Promise<UserStats> {
+  console.log(`Fetching dashboard stats for user: ${userId} from API...`);
+  let stats: UserStats = {
     points: 0,
     leaderboardRank: 'N/A',
     coursesEnrolled: 0,
     projectsCreated: 0,
   };
 
-  const userPointsRef = doc(db, 'user_points', userId);
-  const userPointsSnap = await getDoc(userPointsRef);
-  if (userPointsSnap.exists()) {
-    const data = userPointsSnap.data();
-    userStats.points = data.total_points || 0;
-    userStats.leaderboardRank = data.rank_all_time ? `#${data.rank_all_time}` : (data.total_points > 0 ? 'Calculating...' : 'N/A');
+  try {
+    // Fetch points and rank
+    const pointsResponse = await fetch(`/api/users/${userId}/points`);
+    if (pointsResponse.ok) {
+      const pointsData = await pointsResponse.json();
+      stats.points = pointsData.total_points || 0;
+      stats.leaderboardRank = pointsData.rank_all_time ? `#${pointsData.rank_all_time}` : (stats.points > 0 ? 'Calculating...' : 'N/A');
+    }
+
+    // Fetch enrolled courses count (simplified, could get from /api/users/[userId]/enrolled-courses length)
+    const enrollmentsResponse = await fetch(`/api/users/${userId}/enrolled-courses`);
+    if (enrollmentsResponse.ok) {
+      const enrolledCourses = await enrollmentsResponse.json();
+      stats.coursesEnrolled = enrolledCourses.length;
+    }
+
+    // Fetch created projects count (simplified, could get from /api/users/[userId]/projects length)
+    const projectsResponse = await fetch(`/api/users/${userId}/projects?role=creator`); // Assuming API can filter by role
+    if (projectsResponse.ok) {
+      const createdProjects = await projectsResponse.json();
+      stats.projectsCreated = createdProjects.length;
+    }
+  } catch (error) {
+    console.error("Error fetching dashboard stats from API:", error);
+    // Return default/empty stats on error
   }
-
-  const enrollmentsCol = collection(db, 'course_enrollments');
-  const enrollmentsQuery = query(enrollmentsCol, where("user_id", "==", userId));
-  const enrollmentsSnap = await getCountFromServer(enrollmentsQuery);
-  userStats.coursesEnrolled = enrollmentsSnap.data().count;
-
-  const projectsCol = collection(db, 'projects');
-  const projectsQuery = query(projectsCol, where("user_id", "==", userId), where("status", "==", "published"));
-  const projectsSnap = await getCountFromServer(projectsQuery);
-  userStats.projectsCreated = projectsSnap.data().count;
-  
-  const quickLinks: QuickLinkItemData[] = [
-    { href: "/profile", label: "My Profile", icon: User },
-    { href: "/courses", label: "My Courses", icon: BookOpen }, // Assuming this page shows enrolled courses
-    { href: "/portfolio", label: "My Portfolio", icon: FolderKanban }, // Changed from My Projects for consistency
-    { href: "/settings", label: "Account Settings", icon: Settings },
-  ];
-  
-  return { stats: userStats, quickLinks };
+  return stats;
 }
 
 
@@ -84,24 +85,35 @@ export default function DashboardPage() {
     }
   }, [isAuthenticated, authIsLoading, router]);
 
-  useEffect(() => {
+  const loadDashboardData = useCallback(async () => {
     if (isAuthenticated && user?.uid) {
-      const loadData = async () => {
-        setIsDashboardLoading(true);
-        try {
-          const data = await fetchDashboardData(user.uid);
-          setDashboardStats(data.stats);
-          setQuickLinksData(data.quickLinks);
-        } catch (error) {
-            console.error("Failed to load dashboard data:", error);
-        }
-        setIsDashboardLoading(false);
-      };
-      loadData();
+      setIsDashboardLoading(true);
+      try {
+        const stats = await fetchDashboardStatsFromAPI(user.uid);
+        setDashboardStats(stats);
+        
+        // Quick links are static for now, can be dynamic later
+        setQuickLinksData([
+          { href: "/profile", label: "My Profile", icon: User },
+          { href: "/courses", label: "My Courses", icon: BookOpen },
+          { href: "/portfolio", label: "My Portfolio", icon: FolderKanban },
+          { href: "/settings", label: "Account Settings", icon: Settings },
+        ]);
+
+      } catch (error) {
+          console.error("Failed to load dashboard data:", error);
+          // Set to default error state if needed
+      }
+      setIsDashboardLoading(false);
     } else if (!authIsLoading && !isAuthenticated) {
-        setIsDashboardLoading(false);
+        setIsDashboardLoading(false); // Not logged in, stop loading
     }
   }, [isAuthenticated, user, authIsLoading]);
+
+  useEffect(() => {
+    loadDashboardData();
+  }, [loadDashboardData]);
+
 
   if (authIsLoading || isDashboardLoading || !user) {
     return (
@@ -111,10 +123,10 @@ export default function DashboardPage() {
           {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-32 rounded-lg bg-card" />)}
         </div>
         <div className="grid gap-6 lg:grid-cols-3">
-            <Skeleton className="h-80 lg:col-span-2 rounded-lg bg-card" /> {/* Increased height for ActivityChart */}
+            <Skeleton className="h-80 lg:col-span-2 rounded-lg bg-card" />
             <div className="space-y-6">
-                <Skeleton className="h-48 rounded-lg bg-card" /> {/* QuickLinks placeholder */}
-                <Skeleton className="h-48 rounded-lg bg-card" /> {/* Another widget placeholder */}
+                <Skeleton className="h-48 rounded-lg bg-card" />
+                <Skeleton className="h-48 rounded-lg bg-card" />
             </div>
         </div>
          <div className="grid gap-6 mt-8 md:grid-cols-2 lg:grid-cols-3">
@@ -143,7 +155,7 @@ export default function DashboardPage() {
             <StatCard
                 title="Total Points"
                 value={dashboardStats.points.toLocaleString()}
-                icon={Award} // Changed from Star
+                icon={Award}
                 description="Earned from contributions"
             />
             <StatCard
@@ -177,7 +189,7 @@ export default function DashboardPage() {
         <div className="space-y-8">
             {quickLinksData.length > 0 && <QuickLinks title="Quick Links" links={quickLinksData} /> }
             <AchievementsWidget userId={user.uid} />
-            <CommunityFeedWidget />
+            <CommunityFeedWidget userId={user.uid} /> {/* Pass userId if needed */}
             <DirectMessageWidget userId={user.uid} />
             
              <Card>
@@ -201,4 +213,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-

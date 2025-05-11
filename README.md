@@ -50,17 +50,23 @@ HEX THE ADD HUB is a comprehensive platform designed for Web3 creators, educator
 *   Analytics and reporting.
 *   Notification system (in-app and email).
 
-## Technology Stack (Planned)
+## Technology Stack (Current & Planned)
 
 *   **Frontend:** Next.js (App Router), React, TypeScript, Tailwind CSS, ShadCN UI
-*   **Backend:** Next.js API Routes / Potentially a separate Go backend (as per user exploration)
-*   **Database:** Firebase Firestore
-*   **Authentication:** Firebase Authentication
+*   **Backend (Current - Next.js API Routes):** Next.js API Routes serve as the primary backend.
+*   **Backend (Potential Separate Services - Conceptual):**
+    *   **Django (Python):** Could be used for complex business logic, data processing, or admin interfaces if preferred. Next.js would interact via REST APIs.
+    *   **FastAPI (Python):** Ideal for high-performance, specialized microservices (e.g., ML model serving, complex calculations). Next.js would interact via REST APIs.
+*   **Database:**
+    *   **MySQL:** Primary relational database for structured data (users, courses, projects, etc.).
+    *   **MongoDB:** For flexible, document-based data (e.g., user activity logs, cached recommendations).
+    *   **Firebase Firestore (Phasing out):** Previously used, now migrating data to MySQL/MongoDB.
+*   **Authentication:** Firebase Authentication (for Web2 user management & social logins). Custom logic for Web3 signature authentication.
 *   **AI/GenAI:** Genkit with Google AI (Gemini)
 *   **Web3:** Ethers.js, WalletConnect
 *   **Smart Contracts:** Solidity
-*   **Storage:** Firebase Storage (for general uploads), potentially IPFS/Arweave for decentralized content.
-*   **Deployment:** Self-hosted (Electron for desktop, standard web deployment).
+*   **Storage:** Firebase Storage (for general uploads like avatars), potentially IPFS/Arweave for decentralized content.
+*   **Deployment:** Self-hosted (Electron for desktop, standard web deployment for Next.js app).
 
 ## Getting Started
 
@@ -81,14 +87,61 @@ npm run electron:dev
 
 ## Project Structure
 
-*   `src/app/`: Next.js App Router pages.
+*   `src/app/`: Next.js App Router pages and API routes.
 *   `src/components/`: Reusable UI components.
 *   `src/contexts/`: React Context providers (Auth, Theme).
-*   `src/lib/`: Utility functions, Firebase configuration.
+*   `src/lib/`: Utility functions, Firebase configuration, MySQL & MongoDB connection utilities.
 *   `src/ai/`: Genkit flows and AI-related code.
 *   `src/hooks/`: Custom React hooks.
 *   `docs/`: Project documentation, including database schema.
 *   `electron/`: Electron main process code.
+
+## Conceptual Backend Integration (Django/FastAPI)
+
+If you choose to implement parts of your backend using Django or FastAPI, these would run as separate services. Your Next.js application (both client-side components and API routes) would interact with them via HTTP requests.
+
+**Example: Fetching data from a hypothetical Django API endpoint in Next.js:**
+```javascript
+// In a Next.js Server Component or API Route
+async function getDjangoData() {
+  try {
+    const response = await fetch('https://your-django-api.example.com/api/some-data/', {
+      headers: {
+        // Add authorization headers if needed
+      }
+    });
+    if (!response.ok) {
+      throw new Error('Failed to fetch data from Django API');
+    }
+    return await response.json();
+  } catch (error) {
+    console.error(error);
+    return null;
+  }
+}
+```
+
+**Example: Fetching data from a hypothetical FastAPI endpoint in Next.js:**
+```javascript
+// In a Next.js Server Component or API Route
+async function getFastApiData() {
+  try {
+    const response = await fetch('https://your-fastapi.example.com/items/some-item', {
+      headers: {
+        // Add authorization headers if needed
+      }
+    });
+    if (!response.ok) {
+      throw new Error('Failed to fetch data from FastAPI');
+    }
+    return await response.json();
+  } catch (error) {
+    console.error(error);
+    return null;
+  }
+}
+```
+Ensure CORS is properly configured on your Django/FastAPI backends to allow requests from your Next.js application's domain.
 
 ## Advanced Web3 & Community Features (Phase 6 - Planned)
 
@@ -134,3 +187,4 @@ Ensuring the platform is robust, secure, and maintainable for self-hosting.
     *   **Documentation:** Detailed documentation of the infrastructure, deployment process, and maintenance procedures.
     *   **Maintenance Plan:** Schedule for regular updates, security checks, and potential downtime.
     *   **Incident Response Plan:** Procedures for handling outages, security breaches, or critical bugs.
+```

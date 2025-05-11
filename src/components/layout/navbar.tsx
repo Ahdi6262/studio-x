@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from 'next/link';
@@ -14,6 +15,7 @@ const navItems = [
   { label: 'Courses', href: '/courses' },
   { label: 'Leaderboard', href: '/leaderboard' },
   { label: 'Blog', href: '/blog' },
+  { label: 'Cool Dude', href: '/cool-dude' }, // Added new link
 ];
 
 export function Navbar() {

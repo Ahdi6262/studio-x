@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import React from 'react';
 
 interface PageHeaderProps {
   title: string;
@@ -6,7 +7,7 @@ interface PageHeaderProps {
   actions?: ReactNode;
 }
 
-export function PageHeader({ title, description, actions }: PageHeaderProps) {
+export const PageHeader = React.memo(function PageHeader({ title, description, actions }: PageHeaderProps) {
   return (
     <div className="mb-10 border-b border-border/40 pb-8">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -24,4 +25,6 @@ export function PageHeader({ title, description, actions }: PageHeaderProps) {
       </div>
     </div>
   );
-}
+});
+
+PageHeader.displayName = 'PageHeader';

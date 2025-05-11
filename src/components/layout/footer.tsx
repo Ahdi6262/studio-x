@@ -1,4 +1,6 @@
-export function Footer() {
+import React from 'react';
+
+export const Footer = React.memo(function Footer() {
   return (
     <footer className="py-8 border-t border-border/40">
       <div className="container flex flex-col items-center justify-center gap-4 md:h-20 md:flex-row md:justify-between">
@@ -11,4 +13,5 @@ export function Footer() {
       </div>
     </footer>
   );
-}
+});
+Footer.displayName = 'Footer';

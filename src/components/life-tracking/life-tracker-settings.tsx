@@ -2,7 +2,7 @@
 "use client";
 
 import type { FormEvent } from 'react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, memo } from 'react';
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -29,7 +29,7 @@ interface LifeTrackerSettingsDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
-export function LifeTrackerSettingsDialog({ currentSettings, onSave, onOpenChange }: LifeTrackerSettingsDialogProps) {
+export const LifeTrackerSettingsDialog = memo(function LifeTrackerSettingsDialog({ currentSettings, onSave, onOpenChange }: LifeTrackerSettingsDialogProps) {
   const [birthDate, setBirthDate] = useState<Date | undefined>(
     currentSettings.birthDate ? parseISO(currentSettings.birthDate) : undefined
   );
@@ -139,4 +139,5 @@ export function LifeTrackerSettingsDialog({ currentSettings, onSave, onOpenChang
       </DialogContent>
     </Dialog>
   );
-}
+});
+LifeTrackerSettingsDialog.displayName = 'LifeTrackerSettingsDialog';

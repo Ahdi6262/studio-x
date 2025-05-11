@@ -5,12 +5,13 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import type { Course } from '@/lib/mock-data';
 import { Star, Users, Clock, BookOpen } from 'lucide-react';
+import React from 'react';
 
 interface CourseCardProps {
   course: Course;
 }
 
-export function CourseCard({ course }: CourseCardProps) {
+export const CourseCard = React.memo(function CourseCard({ course }: CourseCardProps) {
   return (
     <Card className="flex flex-col h-full overflow-hidden shadow-lg hover:shadow-primary/20 transition-all duration-300 ease-in-out transform hover:-translate-y-1">
       <div className="relative w-full h-48 md:h-56">
@@ -61,4 +62,5 @@ export function CourseCard({ course }: CourseCardProps) {
       </CardFooter>
     </Card>
   );
-}
+});
+CourseCard.displayName = 'CourseCard';

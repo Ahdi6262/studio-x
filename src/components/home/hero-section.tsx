@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, memo } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
@@ -8,7 +8,7 @@ import { ArrowRight } from 'lucide-react';
 import { GeometricFluidAnimation } from '@/components/animations/geometric-fluid-animation';
 import { AnimatedTextWord, AnimatedTextCharacter } from '@/components/home/animated-text';
 
-export function HeroSection() {
+export const HeroSection = memo(function HeroSection() {
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
@@ -100,4 +100,5 @@ export function HeroSection() {
       </div>
     </section>
   );
-}
+});
+HeroSection.displayName = 'HeroSection';

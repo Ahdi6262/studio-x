@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, memo } from 'react';
 
 const shapesData = [
   { id: 1, size: 'w-40 h-40 md:w-60 md:h-60 lg:w-72 lg:h-72', color: 'bg-primary/10', animationClass: 'animate-float-1', top: '10%', left: '15%' },
@@ -11,7 +11,7 @@ const shapesData = [
   { id: 6, size: 'w-28 h-28 md:w-40 md:h-40 lg:w-48 lg:h-48', color: 'bg-accent/10', animationClass: 'animate-float-2', top: '40%', left: '5%', animationDelay: '6s' },
 ];
 
-export function GeometricFluidAnimation() {
+export const GeometricFluidAnimation = memo(function GeometricFluidAnimation() {
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
@@ -37,4 +37,6 @@ export function GeometricFluidAnimation() {
       ))}
     </div>
   );
-}
+});
+
+GeometricFluidAnimation.displayName = 'GeometricFluidAnimation';

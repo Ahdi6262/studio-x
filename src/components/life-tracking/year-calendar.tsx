@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo, useState, useEffect, memo } from 'react';
 import { differenceInWeeks, getYear, addYears, parseISO, format } from 'date-fns';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
@@ -13,7 +13,7 @@ interface YearCalendarProps {
 
 const WEEKS_IN_YEAR_DISPLAY = 52; // Typically 52 weeks displayed
 
-export function YearCalendar({ birthDate }: YearCalendarProps) {
+export const YearCalendar = memo(function YearCalendar({ birthDate }: YearCalendarProps) {
   const [currentDate, setCurrentDate] = useState<Date | null>(null);
 
   useEffect(() => {
@@ -27,9 +27,9 @@ export function YearCalendar({ birthDate }: YearCalendarProps) {
     }
 
     const dob = parseISO(birthDate);
-    const currentYear = getYear(currentDate);
+    const currentYearVal = getYear(currentDate);
     
-    let nextBday = new Date(currentYear, dob.getMonth(), dob.getDate());
+    let nextBday = new Date(currentYearVal, dob.getMonth(), dob.getDate());
     if (nextBday < currentDate) {
       nextBday = addYears(nextBday, 1);
     }
@@ -109,4 +109,5 @@ export function YearCalendar({ birthDate }: YearCalendarProps) {
       </CardContent>
     </Card>
   );
-}
+});
+YearCalendar.displayName = 'YearCalendar';

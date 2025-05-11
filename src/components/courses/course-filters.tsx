@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, memo } from "react";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -21,7 +21,7 @@ interface CourseFiltersProps {
   onFilterChange: (filters: { searchTerm: string; category: string; level: string }) => void;
 }
 
-export function CourseFilters({ onFilterChange }: CourseFiltersProps) {
+export const CourseFilters = memo(function CourseFilters({ onFilterChange }: CourseFiltersProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [category, setCategory] = useState("All");
   const [level, setLevel] = useState("All");
@@ -76,5 +76,6 @@ export function CourseFilters({ onFilterChange }: CourseFiltersProps) {
       </div>
     </div>
   );
-}
+});
+CourseFilters.displayName = 'CourseFilters';
 

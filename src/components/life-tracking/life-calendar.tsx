@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo, useState, useEffect, memo } from 'react';
 import { differenceInWeeks, parseISO, getYear } from 'date-fns';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -25,7 +25,7 @@ const getLifeStageColor = (ageInYears: number): string => {
   return 'bg-purple-500/70 hover:bg-purple-500'; // Late Adult (60+)
 };
 
-export function LifeCalendar({ birthDate, lifeExpectancyYears }: LifeCalendarProps) {
+export const LifeCalendar = memo(function LifeCalendar({ birthDate, lifeExpectancyYears }: LifeCalendarProps) {
   const [currentDate, setCurrentDate] = useState<Date | null>(null);
 
   useEffect(() => {
@@ -144,4 +144,5 @@ export function LifeCalendar({ birthDate, lifeExpectancyYears }: LifeCalendarPro
       </CardContent>
     </Card>
   );
-}
+});
+LifeCalendar.displayName = 'LifeCalendar';

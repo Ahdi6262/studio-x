@@ -5,12 +5,13 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import type { Project } from '@/lib/mock-data';
 import { ExternalLink, CalendarDays } from 'lucide-react';
+import React from 'react';
 
 interface ProjectCardProps {
   project: Project;
 }
 
-export function ProjectCard({ project }: ProjectCardProps) {
+export const ProjectCard = React.memo(function ProjectCard({ project }: ProjectCardProps) {
   return (
     <Card className="flex flex-col h-full overflow-hidden shadow-lg hover:shadow-primary/20 transition-all duration-300 ease-in-out transform hover:-translate-y-1">
       <div className="relative w-full h-48 md:h-56">
@@ -54,4 +55,5 @@ export function ProjectCard({ project }: ProjectCardProps) {
       </CardFooter>
     </Card>
   );
-}
+});
+ProjectCard.displayName = 'ProjectCard';

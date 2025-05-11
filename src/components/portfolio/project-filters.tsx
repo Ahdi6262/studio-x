@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, memo } from "react";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -21,7 +21,7 @@ interface ProjectFiltersProps {
   onFilterChange: (filters: { searchTerm: string; category: string }) => void;
 }
 
-export function ProjectFilters({ onFilterChange }: ProjectFiltersProps) {
+export const ProjectFilters = memo(function ProjectFilters({ onFilterChange }: ProjectFiltersProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [category, setCategory] = useState("All");
 
@@ -62,5 +62,6 @@ export function ProjectFilters({ onFilterChange }: ProjectFiltersProps) {
       </div>
     </div>
   );
-}
+});
+ProjectFilters.displayName = 'ProjectFilters';
 

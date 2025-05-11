@@ -1,6 +1,7 @@
 'use client';
 
 import type { HTMLAttributes } from 'react';
+import React from 'react';
 
 interface AnimatedTextProps extends HTMLAttributes<HTMLElement> {
   text: string;
@@ -10,14 +11,14 @@ interface AnimatedTextProps extends HTMLAttributes<HTMLElement> {
   delay?: number; // Overall delay for the component's animation start
 }
 
-export const AnimatedTextWord: React.FC<AnimatedTextProps> = ({
+export const AnimatedTextWord: React.FC<AnimatedTextProps> = React.memo(function AnimatedTextWord({
   text,
   el: Wrapper = 'span',
   className,
   stagger = 0.08,
   delay = 0,
   ...rest
-}) => {
+}) {
   const words = text.split(' ');
 
   return (
@@ -35,16 +36,17 @@ export const AnimatedTextWord: React.FC<AnimatedTextProps> = ({
       ))}
     </Wrapper>
   );
-};
+});
+AnimatedTextWord.displayName = 'AnimatedTextWord';
 
-export const AnimatedTextCharacter: React.FC<AnimatedTextProps> = ({
+export const AnimatedTextCharacter: React.FC<AnimatedTextProps> = React.memo(function AnimatedTextCharacter({
   text,
   el: Wrapper = 'span',
   className,
   stagger = 0.025,
   delay = 0,
   ...rest
-}) => {
+}) {
   const letters = Array.from(text); // Handles unicode characters better than split('')
 
   return (
@@ -61,4 +63,5 @@ export const AnimatedTextCharacter: React.FC<AnimatedTextProps> = ({
       ))}
     </Wrapper>
   );
-};
+});
+AnimatedTextCharacter.displayName = 'AnimatedTextCharacter';

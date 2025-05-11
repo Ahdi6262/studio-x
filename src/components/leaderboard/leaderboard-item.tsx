@@ -3,13 +3,14 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import type { LeaderboardUser } from '@/lib/mock-data';
 import { Trophy, Award, Sparkles } from 'lucide-react';
+import React from 'react';
 
 interface LeaderboardItemProps {
   user: LeaderboardUser;
   isCurrentUser?: boolean;
 }
 
-export function LeaderboardItem({ user, isCurrentUser = false }: LeaderboardItemProps) {
+export const LeaderboardItem = React.memo(function LeaderboardItem({ user, isCurrentUser = false }: LeaderboardItemProps) {
   const rankColor = () => {
     if (user.rank === 1) return 'text-yellow-400';
     if (user.rank === 2) return 'text-gray-400';
@@ -51,4 +52,6 @@ export function LeaderboardItem({ user, isCurrentUser = false }: LeaderboardItem
       </div>
     </div>
   );
-}
+});
+
+LeaderboardItem.displayName = 'LeaderboardItem';

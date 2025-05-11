@@ -6,6 +6,7 @@ import { Navbar } from '@/components/layout/navbar';
 import { Footer } from '@/components/layout/footer';
 import { Toaster } from "@/components/ui/toaster";
 import { AuthProvider } from '@/contexts/auth-context';
+import { ThemeProvider } from '@/contexts/theme-context'; // Import ThemeProvider
 import { ServiceWorkerRegistrar } from '@/components/core/service-worker-registrar';
 
 const poppins = Poppins({
@@ -25,7 +26,7 @@ const openSans = Open_Sans({
 export const metadata: Metadata = {
   title: 'HEX THE ADD HUB',
   description: 'The central hub for creators on the chain.',
-  manifest: '/manifest.json', // Added manifest link to metadata
+  manifest: '/manifest.json',
 };
 
 export default function RootLayout({
@@ -34,27 +35,28 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark">
+    <html lang="en" suppressHydrationWarning> {/* Let ThemeProvider handle class, suppressHydrationWarning for theme changes */}
       <head>
-        <meta name="theme-color" content="#FFB347" />
+        {/* theme-color will be dynamically set by ThemeProvider if needed, or keep a default */}
+        <meta name="theme-color" content="#FFB347" /> 
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="apple-mobile-web-app-title" content="HEX THE ADD HUB" />
         <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
-        {/* Ensure manifest.json is linked if not handled by metadata object above,
-            but Next.js metadata object is the preferred way.
-            <link rel="manifest" href="/manifest.json" /> 
-        */}
       </head>
       <body className={`${poppins.variable} ${openSans.variable} font-sans antialiased flex flex-col min-h-screen bg-background text-foreground`}>
-        <AuthProvider>
-          <Navbar />
-          <main className="flex-1">{children}</main>
-          <Footer />
-          <Toaster />
-          <ServiceWorkerRegistrar />
-        </AuthProvider>
+        <ThemeProvider> {/* Wrap AuthProvider and everything else with ThemeProvider */}
+          <AuthProvider>
+            <Navbar />
+            <main className="flex-1">{children}</main>
+            <Footer />
+            <Toaster />
+            <ServiceWorkerRegistrar />
+          </AuthProvider>
+        </ThemeProvider>
       </body>
     </html>
   );
 }
+
+    

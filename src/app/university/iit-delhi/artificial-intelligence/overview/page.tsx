@@ -86,9 +86,7 @@ export default function AIOverviewPage() {
                         </ul>
                         {secondaryAiBooks.length > 0 && (
                            <>
-                            {/* You can add a sub-heading here if desired, e.g.,
-                            <h4 className="text-md font-medium mt-4 mb-2 text-primary/80">Further Reading:</h4> 
-                            */}
+                            <h4 className="text-md font-semibold mt-6 mb-2 text-primary">Philosophical Books Representing Future</h4>
                             <ul className="list-disc list-inside space-y-1.5 text-foreground/90">
                               {secondaryAiBooks.map((bookTitle, index) => (
                                 <li key={`secondary-ai-${index}`}>{bookTitle}</li>
@@ -119,3 +117,4 @@ export default function AIOverviewPage() {
     </div>
   );
 }
+

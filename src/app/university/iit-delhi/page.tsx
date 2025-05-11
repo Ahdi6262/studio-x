@@ -24,7 +24,7 @@ export default function UniversityIITDelhiPage() {
     {
       title: "Quantitative Finance",
       description: "Delve into the intersection of finance, mathematics, and computational techniques to model and manage risk.",
-      href: "#", // No specific page for this topic yet
+      href: "#", 
       icon: DollarSign,
       actionText: "Learn More"
     },
@@ -38,7 +38,7 @@ export default function UniversityIITDelhiPage() {
     {
       title: "Programming Languages",
       description: "I have learned C++, Rust, Python, R, and their respected libraries.",
-      href: "/university/iit-delhi/academics/minor-degrees", 
+      href: "/university/iit-delhi/programming-languages", 
       icon: Code,
       actionText: "Learn More"
     },

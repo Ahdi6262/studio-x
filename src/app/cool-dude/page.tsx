@@ -2,7 +2,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { BookOpen } from 'lucide-react'; // Icon for the new button
+// BookOpen icon is no longer used for the modified button.
 
 export default function CoolDudePage() {
   return (
@@ -50,16 +50,14 @@ export default function CoolDudePage() {
             </p>
           </div>
 
-          {/* Button to Academics Page */}
-          <div className="mt-4">
+          {/* Button to Academics Page, styled as IIT Delhi | Mathematics box */}
+          <div className="mt-8">
             <Button
               asChild
-              size="lg"
-              className="bg-primary/80 hover:bg-primary text-primary-foreground"
+              className="bg-[#f8f8f8]/80 dark:bg-neutral-800/80 backdrop-blur-lg rounded-full py-4 px-8 shadow-xl text-md md:text-lg font-semibold text-neutral-700 dark:text-neutral-300 hover:opacity-90 transition-opacity"
             >
               <Link href="/academics">
-                <BookOpen className="mr-2 h-5 w-5" />
-                Explore Academic Offerings
+                IIT Delhi | Mathematics
               </Link>
             </Button>
           </div>
@@ -69,3 +67,4 @@ export default function CoolDudePage() {
     </div>
   );
 }
+

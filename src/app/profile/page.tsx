@@ -6,14 +6,19 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageHeader } from "@/components/core/page-header";
-import { Edit3, Mail, User, Shield } from "lucide-react";
+import { Edit3, Mail, User, Shield, UploadCloud } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
-import { Icons } from "@/components/icons"; 
+import { useEffect, useRef, type ChangeEvent } from "react";
+import { Icons } from "@/components/icons";
+import { useToast } from "@/hooks/use-toast";
+import { Input } from "@/components/ui/input";
+
 
 export default function ProfilePage() {
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, updateAvatar } = useAuth();
   const router = useRouter();
+  const { toast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -25,6 +30,9 @@ export default function ProfilePage() {
     return (
       <div className="container mx-auto px-4 py-12">
         <PageHeader title="Profile" description="Loading profile..." />
+         <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-primary"></div>
+        </div>
       </div>
     );
   }
@@ -32,11 +40,63 @@ export default function ProfilePage() {
   const fallbackName = user.name ? user.name.substring(0, 2).toUpperCase() : 'U';
 
   const handleConnectFacebook = () => {
-    // Placeholder for connecting Facebook account
     console.log("Attempting to connect Facebook account...");
-    // Example: window.location.href = '/api/auth/facebook/connect';
     alert("Connect Facebook functionality coming soon!");
   };
+
+  const handleConnectGoogle = () => {
+    console.log("Attempting to connect Google account...");
+    alert("Connect Google functionality coming soon!");
+  };
+
+  const handleConnectGithub = () => {
+    console.log("Attempting to connect Github account...");
+    alert("Connect Github functionality coming soon!");
+  };
+  
+  const handleConnectMetamask = () => {
+    console.log("Attempting to connect Metamask wallet...");
+    alert("Connect Metamask wallet functionality coming soon!");
+  };
+
+  const handleAvatarUploadClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      if (file.size > 2 * 1024 * 1024) { // 2MB limit
+        toast({
+          title: "File too large",
+          description: "Please select an image smaller than 2MB.",
+          variant: "destructive",
+        });
+        return;
+      }
+      if (!['image/png', 'image/jpeg', 'image/gif'].includes(file.type)) {
+        toast({
+          title: "Invalid file type",
+          description: "Please select a PNG, JPG, or GIF image.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const dataUrl = reader.result as string;
+        // Simulate upload and update context
+        updateAvatar(dataUrl); 
+        toast({
+          title: "Avatar Updated",
+          description: "Your new avatar has been set.",
+        });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
 
   return (
     <div className="container mx-auto px-4 py-12">
@@ -54,14 +114,23 @@ export default function ProfilePage() {
         <Card className="md:col-span-1">
           <CardHeader className="items-center text-center">
             <Avatar className="h-32 w-32 mb-4 border-4 border-primary shadow-lg">
-              <AvatarImage src={user.avatar || `https://avatar.vercel.sh/${user.email}.png`} alt={user.name} />
+              <AvatarImage src={user.avatar || `https://avatar.vercel.sh/${user.email}.png?size=128`} alt={user.name} />
               <AvatarFallback className="text-4xl">{fallbackName}</AvatarFallback>
             </Avatar>
             <CardTitle className="text-2xl">{user.name}</CardTitle>
             <CardDescription>{user.email}</CardDescription>
           </CardHeader>
           <CardContent>
-            <Button className="w-full mt-2">Change Avatar</Button>
+            <Input 
+              type="file" 
+              ref={fileInputRef} 
+              className="hidden" 
+              accept="image/png, image/jpeg, image/gif"
+              onChange={handleFileChange} 
+            />
+            <Button className="w-full mt-2" onClick={handleAvatarUploadClick}>
+              <UploadCloud className="mr-2 h-4 w-4" /> Change Avatar
+            </Button>
           </CardContent>
         </Card>
 
@@ -95,16 +164,16 @@ export default function ProfilePage() {
             <div>
               <h3 className="text-lg font-semibold mb-2">Connected Accounts</h3>
               <div className="space-y-3">
-                <Button variant="outline" className="w-full justify-start">
+                <Button variant="outline" className="w-full justify-start" onClick={handleConnectGoogle}>
                   <Icons.Google className="mr-2 h-4 w-4" /> Connect Google Account
                 </Button>
-                 <Button variant="outline" className="w-full justify-start">
+                 <Button variant="outline" className="w-full justify-start" onClick={handleConnectGithub}>
                   <Icons.Github className="mr-2 h-4 w-4" /> Connect GitHub Account
                 </Button>
                 <Button variant="outline" className="w-full justify-start" onClick={handleConnectFacebook}>
                   <Icons.Facebook className="mr-2 h-4 w-4" /> Connect Facebook Account
                 </Button>
-                 <Button variant="outline" className="w-full justify-start">
+                 <Button variant="outline" className="w-full justify-start" onClick={handleConnectMetamask}>
                   <Icons.Metamask className="mr-2 h-5 w-5" /> Link Web3 Wallet
                 </Button>
               </div>

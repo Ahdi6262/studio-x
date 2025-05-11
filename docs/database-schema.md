@@ -11,7 +11,7 @@ Stores information about registered users.
 - `name`: VARCHAR(255)
 - `email`: VARCHAR(255) (Unique, Indexed)
 - `password_hash`: VARCHAR(255) (For traditional email/password login)
-- `avatar_url`: VARCHAR(2048) (Optional)
+- `avatar_url`: VARCHAR(2048) (Optional, URL to avatar image - can be data URI or link to stored file)
 - `created_at`: TIMESTAMP (Default: CURRENT_TIMESTAMP)
 - `updated_at`: TIMESTAMP (Default: CURRENT_TIMESTAMP)
 
@@ -275,3 +275,5 @@ A global table for tags that can be used across different features (projects, bl
 This schema is a starting point and can be further refined based on specific query patterns, performance needs, and feature evolution. Normalization and denormalization trade-offs should be considered during implementation.
 Using a UUID for primary keys is generally a good practice for distributed systems and to avoid ID collisions if data is merged from different sources. Timestamps help in tracking data changes.
 Consider using an ORM (Object-Relational Mapper) like Prisma or TypeORM to manage database interactions and migrations in a Next.js application.
+
+```

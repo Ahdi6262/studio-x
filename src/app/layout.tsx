@@ -1,4 +1,3 @@
-
 import type { Metadata } from 'next';
 import { Poppins, Open_Sans } from 'next/font/google';
 import './globals.css';

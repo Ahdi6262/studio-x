@@ -1,4 +1,3 @@
-
 "use client";
 
 import type { ReactNode, Dispatch, SetStateAction } from 'react';
@@ -31,7 +30,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     if (storedTheme && ["light", "dark", "system"].includes(storedTheme)) {
       initialUserPreference = storedTheme;
     } else {
-      initialUserPreference = "system"; // Default to system if nothing stored
+      initialUserPreference = "system"; // Default to system if nothing stored or invalid
     }
     
     setThemeState(initialUserPreference); // Set the theme preference state
@@ -69,14 +68,24 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       setResolvedThemeState(newResolved);
     };
     
-    applyAndStorePreference(theme); // Apply when theme state changes
+    // Only apply if theme is not the initial "system" (which is handled by the first useEffect)
+    // or if it's explicitly changed.
+    // The first useEffect handles the very first application. This one handles changes.
+    if (typeof window !== 'undefined') { // Ensure this only runs client-side
+        applyAndStorePreference(theme); 
+    }
+
 
     // Listener for system theme changes
     const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
     const handleSystemChange = () => {
-      if (theme === "system") { // Only re-apply if current preference is "system"
-        applyAndStorePreference("system");
-      }
+      // Check the 'theme' state directly from the closure, not a stale 'currentThemePreference'
+      setThemeState(currentTheme => {
+        if (currentTheme === "system") { 
+          applyAndStorePreference("system");
+        }
+        return currentTheme; // Return currentTheme to satisfy type, actual change done by applyAndStorePreference if needed
+      });
     };
 
     mediaQuery.addEventListener("change", handleSystemChange);

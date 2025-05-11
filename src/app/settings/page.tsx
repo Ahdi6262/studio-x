@@ -1,7 +1,6 @@
-
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { PageHeader } from "@/components/core/page-header";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -13,86 +12,124 @@ import { Shield, Bell, Palette, Languages, UserCircle, Save } from "lucide-react
 import { useTheme } from '@/contexts/theme-context';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/auth-context'; // For username/email
+import { Skeleton } from '@/components/ui/skeleton';
 
-// Mock initial settings - in a real app, this would come from user data/API
-const initialUserSettings = {
-  email: "user@example.com", // This would typically come from auth context
-  username: "TestUser", // This would typically come from auth context
+interface UserSettings {
+  username: string;
+  email: string;
+  notifications: {
+    emailUpdates: boolean;
+    newCourseAlerts: boolean;
+    communityMentions: boolean;
+  };
+  preferences: {
+    language: string;
+  };
+}
+
+const defaultSettings: UserSettings = {
+  username: "",
+  email: "",
   notifications: {
     emailUpdates: true,
     newCourseAlerts: false,
     communityMentions: true,
   },
-  privacy: {
-    profileVisibility: "public", // public, members, private
-  },
   preferences: {
-    language: "en", // en, es, fr
+    language: "en",
   },
 };
 
 export default function SettingsPage() {
-  const { theme, setTheme } = useTheme();
+  const { theme: currentAppliedTheme, setTheme: applyThemePreference } = useTheme();
   const { toast } = useToast();
+  const { user, isLoading: authIsLoading } = useAuth();
 
-  // Profile Info State
-  const [username, setUsername] = useState(initialUserSettings.username);
-  const [email, setEmail] = useState(initialUserSettings.email); // Consider making this read-only or fetched from auth
-
-  // Notification Preferences State
-  const [emailUpdates, setEmailUpdates] = useState(initialUserSettings.notifications.emailUpdates);
-  const [newCourseAlerts, setNewCourseAlerts] = useState(initialUserSettings.notifications.newCourseAlerts);
-  const [communityMentions, setCommunityMentions] = useState(initialUserSettings.notifications.communityMentions);
-  
-  // Language Preference State
-  const [selectedLanguage, setSelectedLanguage] = useState(initialUserSettings.preferences.language);
+  const [settings, setSettings] = useState<UserSettings>(defaultSettings);
+  const [isPageLoading, setIsPageLoading] = useState(true);
 
   // Load settings from localStorage on mount
   useEffect(() => {
     const storedSettings = localStorage.getItem('userSettings');
+    let initialSettings = defaultSettings;
     if (storedSettings) {
-      const parsed = JSON.parse(storedSettings);
-      setUsername(parsed.username || initialUserSettings.username);
-      setEmail(parsed.email || initialUserSettings.email);
-      setEmailUpdates(parsed.notifications?.emailUpdates ?? initialUserSettings.notifications.emailUpdates);
-      setNewCourseAlerts(parsed.notifications?.newCourseAlerts ?? initialUserSettings.notifications.newCourseAlerts);
-      setCommunityMentions(parsed.notifications?.communityMentions ?? initialUserSettings.notifications.communityMentions);
-      setSelectedLanguage(parsed.preferences?.language || initialUserSettings.preferences.language);
+      try {
+        initialSettings = { ...defaultSettings, ...JSON.parse(storedSettings) };
+      } catch (e) {
+        console.error("Failed to parse stored settings:", e);
+      }
     }
-  }, []);
+    
+    if (user && !authIsLoading) {
+      initialSettings.username = user.name || "";
+      initialSettings.email = user.email || "";
+      setSettings(initialSettings);
+      setIsPageLoading(false);
+    } else if (!authIsLoading) {
+      // User not loaded or not authenticated, use defaults or stored non-auth data
+      setSettings(initialSettings);
+      setIsPageLoading(false);
+    }
 
-  const saveToLocalStorage = (updatedSettings: Partial<typeof initialUserSettings>) => {
-    const currentSettings = JSON.parse(localStorage.getItem('userSettings') || '{}');
-    const newSettings = { ...initialUserSettings, ...currentSettings, ...updatedSettings };
-    localStorage.setItem('userSettings', JSON.stringify(newSettings));
+  }, [user, authIsLoading]);
+
+  const updateSetting = <K extends keyof UserSettings>(key: K, value: UserSettings[K]) => {
+    setSettings(prev => {
+      const newSettings = { ...prev, [key]: value };
+      localStorage.setItem('userSettings', JSON.stringify(newSettings));
+      return newSettings;
+    });
+  };
+  
+  const updateNotificationSetting = <K extends keyof UserSettings["notifications"]>(key: K, value: UserSettings["notifications"][K]) => {
+    setSettings(prev => {
+      const newNotifications = { ...prev.notifications, [key]: value };
+      const newSettings = { ...prev, notifications: newNotifications };
+      localStorage.setItem('userSettings', JSON.stringify(newSettings));
+      return newSettings;
+    });
   };
 
+
   const handleSaveProfile = () => {
-    saveToLocalStorage({ username });
-    toast({ title: "Profile Updated", description: "Your profile information has been saved." });
+    // Profile info (username, email) is primarily managed via AuthContext and profile page
+    // This could be used for other profile-related settings if any
+    toast({ title: "Profile Settings Saved", description: "Your profile related preferences have been updated." });
   };
 
   const handleSaveNotifications = () => {
-     saveToLocalStorage({ 
-        notifications: { 
-            emailUpdates, 
-            newCourseAlerts, 
-            communityMentions 
-        }
-    });
+    // Settings are already saved on change by updateNotificationSetting
     toast({ title: "Notifications Updated", description: "Your notification preferences have been saved." });
   };
 
-  const handleThemeChange = (newTheme: string) => {
-    setTheme(newTheme as 'light' | 'dark' | 'system');
-    toast({ title: "Appearance Updated", description: `Theme set to ${newTheme}.` });
+  const handleThemeChange = (newThemePreference: string) => {
+    applyThemePreference(newThemePreference as 'light' | 'dark' | 'system');
+    toast({ title: "Appearance Updated", description: `Theme set to ${newThemePreference}.` });
   };
   
   const handleLanguageChange = (newLanguage: string) => {
-    setSelectedLanguage(newLanguage);
-    saveToLocalStorage({ preferences: { ...initialUserSettings.preferences, language: newLanguage } });
-    toast({ title: "Language Updated", description: `Language set to ${newLanguage === 'en' ? 'English' : newLanguage === 'es' ? 'Español' : 'Français'}. Full translation coming soon.` });
+    updateSetting('preferences', { ...settings.preferences, language: newLanguage });
+    // Here you might trigger i18n library to change language
+    toast({ title: "Language Updated", description: `Language preference set to ${newLanguage === 'en' ? 'English' : newLanguage === 'es' ? 'Español' : 'Français'}. Full translation coming soon.` });
   };
+
+  if (isPageLoading || authIsLoading) {
+    return (
+      <div className="container mx-auto px-4 py-12">
+        <PageHeader title="Account Settings" description="Loading your preferences..." />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <aside className="md:col-span-1 hidden md:block">
+            <Skeleton className="h-40 w-full" />
+          </aside>
+          <div className="md:col-span-2 space-y-8">
+            {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-48 w-full" />)}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
 
   return (
     <div className="container mx-auto px-4 py-12">
@@ -125,19 +162,18 @@ export default function SettingsPage() {
           <Card>
             <CardHeader>
               <CardTitle>Profile Information</CardTitle>
-              <CardDescription>Update your public profile details.</CardDescription>
+              <CardDescription>Basic account details. For full profile editing, visit your Profile page.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-1">
                 <Label htmlFor="username">Username</Label>
-                <Input id="username" value={username} onChange={(e) => setUsername(e.target.value)} />
+                <Input id="username" value={settings.username} disabled />
               </div>
               <div className="space-y-1">
                 <Label htmlFor="email">Email Address</Label>
-                <Input id="email" type="email" value={email} disabled />
-                <p className="text-xs text-muted-foreground">Email cannot be changed here. Contact support for assistance.</p>
+                <Input id="email" type="email" value={settings.email} disabled />
               </div>
-              <Button onClick={handleSaveProfile}><Save className="mr-2 h-4 w-4" />Save Profile Changes</Button>
+              {/* <Button onClick={handleSaveProfile}><Save className="mr-2 h-4 w-4" />Save Profile Changes</Button> */}
             </CardContent>
           </Card>
 
@@ -149,13 +185,17 @@ export default function SettingsPage() {
               <CardDescription>Manage your account security preferences.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <Button variant="outline">Change Password</Button>
+              <Button variant="outline" onClick={() => toast({title: "Coming Soon", description: "Password change functionality will be available here."})}>
+                Change Password (Placeholder)
+              </Button>
               <div className="flex items-center justify-between rounded-lg border p-3 shadow-sm">
                 <div>
                   <p className="font-medium">Two-Factor Authentication (2FA)</p>
                   <p className="text-sm text-muted-foreground">Add an extra layer of security to your account.</p>
                 </div>
-                <Button variant="outline" size="sm">Enable 2FA</Button>
+                <Button variant="outline" size="sm" onClick={() => toast({title: "Coming Soon", description: "2FA setup will be available here."})}>
+                    Enable 2FA (Placeholder)
+                </Button>
               </div>
             </CardContent>
           </Card>
@@ -169,7 +209,7 @@ export default function SettingsPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center justify-between">
-                <Label htmlFor="emailUpdates" className="flex flex-col space-y-1 flex-grow">
+                <Label htmlFor="emailUpdates" className="flex flex-col space-y-1 flex-grow cursor-pointer">
                   <span>Email Updates</span>
                   <span className="font-normal leading-snug text-muted-foreground">
                     Receive important news and updates via email.
@@ -177,13 +217,13 @@ export default function SettingsPage() {
                 </Label>
                 <Switch
                   id="emailUpdates"
-                  checked={emailUpdates}
-                  onCheckedChange={setEmailUpdates}
+                  checked={settings.notifications.emailUpdates}
+                  onCheckedChange={(checked) => updateNotificationSetting('emailUpdates', checked)}
                   aria-label="Email updates"
                 />
               </div>
               <div className="flex items-center justify-between">
-                <Label htmlFor="newCourseAlerts" className="flex flex-col space-y-1 flex-grow">
+                <Label htmlFor="newCourseAlerts" className="flex flex-col space-y-1 flex-grow cursor-pointer">
                   <span>New Course Alerts</span>
                   <span className="font-normal leading-snug text-muted-foreground">
                     Get notified when new courses are published.
@@ -191,13 +231,13 @@ export default function SettingsPage() {
                 </Label>
                 <Switch
                   id="newCourseAlerts"
-                  checked={newCourseAlerts}
-                  onCheckedChange={setNewCourseAlerts}
+                  checked={settings.notifications.newCourseAlerts}
+                  onCheckedChange={(checked) => updateNotificationSetting('newCourseAlerts', checked)}
                   aria-label="New course alerts"
                 />
               </div>
               <div className="flex items-center justify-between">
-                <Label htmlFor="communityMentions" className="flex flex-col space-y-1 flex-grow">
+                <Label htmlFor="communityMentions" className="flex flex-col space-y-1 flex-grow cursor-pointer">
                   <span>Community Mentions</span>
                   <span className="font-normal leading-snug text-muted-foreground">
                     Receive notifications for mentions in the community.
@@ -205,8 +245,8 @@ export default function SettingsPage() {
                 </Label>
                 <Switch
                   id="communityMentions"
-                  checked={communityMentions}
-                  onCheckedChange={setCommunityMentions}
+                  checked={settings.notifications.communityMentions}
+                  onCheckedChange={(checked) => updateNotificationSetting('communityMentions', checked)}
                   aria-label="Community mentions"
                 />
               </div>
@@ -224,7 +264,7 @@ export default function SettingsPage() {
             <CardContent className="space-y-4">
               <div className="space-y-1">
                 <Label htmlFor="theme">Theme</Label>
-                <Select value={theme} onValueChange={handleThemeChange}>
+                <Select value={currentAppliedTheme} onValueChange={handleThemeChange}>
                   <SelectTrigger id="theme">
                     <SelectValue placeholder="Select theme" />
                   </SelectTrigger>
@@ -248,18 +288,17 @@ export default function SettingsPage() {
             <CardContent className="space-y-4">
               <div className="space-y-1">
                 <Label htmlFor="language">Language</Label>
-                 <Select value={selectedLanguage} onValueChange={handleLanguageChange}>
+                 <Select value={settings.preferences.language} onValueChange={handleLanguageChange}>
                   <SelectTrigger id="language">
                     <SelectValue placeholder="Select language" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="en">English</SelectItem>
-                    <SelectItem value="es">Español (Spanish - Coming Soon)</SelectItem>
-                    <SelectItem value="fr">Français (French - Coming Soon)</SelectItem>
+                    <SelectItem value="es">Español (Spanish - Basic)</SelectItem>
+                    <SelectItem value="fr">Français (French - Basic)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
-              {/* Add more regional settings like timezone if needed later */}
             </CardContent>
           </Card>
 
@@ -268,5 +307,3 @@ export default function SettingsPage() {
     </div>
   );
 }
-
-    

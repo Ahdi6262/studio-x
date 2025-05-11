@@ -1,8 +1,7 @@
-
 "use client";
 
 import Link from 'next/link';
-import { Menu, Settings as SettingsIcon, Link2 } from 'lucide-react';
+import { Menu, Settings as SettingsIcon, Link2, Search, Bell } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Icons } from '@/components/icons';
@@ -12,12 +11,13 @@ import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { useState, useEffect, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
+import { Input } from '@/components/ui/input';
 
 const mainNavItems = [
   { label: 'Home', href: '/' },
   { label: 'Portfolio', href: '/portfolio' },
   { label: 'Courses', href: '/courses' },
-  { label: 'My Knowledge', href: '/university/iit-delhi' }, 
+  { label: 'My Knowledge', href: '/university/iit-delhi' },
   { label: 'Dashboard', href: '/dashboard', requiresAuth: true },
 ];
 
@@ -30,7 +30,7 @@ const utilityNavItems = [
   { label: 'Leaderboard', href: '/leaderboard' },
   { label: 'Blog', href: '/blog' },
   { label: 'Life Tracking', href: '/life-tracking'},
-  { label: 'Settings', href: '/settings', requiresAuth: true },
+  // Settings is now part of user dropdown or a dedicated icon if preferred
 ];
 
 
@@ -45,11 +45,24 @@ export function Navbar() {
 
   useEffect(() => {
     setIsMounted(true);
-    // Check if a wallet is already connected (e.g., from a previous session if using localStorage)
-    // This is a simplified check; a more robust solution might use a library like wagmi or web3modal
     if (typeof window !== 'undefined' && window.ethereum && window.ethereum.selectedAddress) {
       setConnectedWalletAddress(window.ethereum.selectedAddress);
     }
+    // Listen for account changes
+    if (window.ethereum) {
+      const handleAccountsChanged = (accounts: string[]) => {
+        if (accounts.length > 0) {
+          setConnectedWalletAddress(accounts[0]);
+        } else {
+          setConnectedWalletAddress(null);
+        }
+      };
+      window.ethereum.on('accountsChanged', handleAccountsChanged);
+      return () => {
+        window.ethereum.removeListener('accountsChanged', handleAccountsChanged);
+      };
+    }
+
   }, []);
 
   const closeSheet = useCallback(() => setIsSheetOpen(false), []);
@@ -62,7 +75,7 @@ export function Navbar() {
         if (accounts && accounts.length > 0) {
           const address = accounts[0];
           setConnectedWalletAddress(address);
-          if (user) { // If user is logged in, link wallet to their profile
+          if (user) {
             const chainId = await window.ethereum.request({ method: 'eth_chainId' });
             await connectWalletContext(address, chainId);
             toast({ title: "Wallet Connected", description: `Address: ${address.substring(0,6)}...${address.substring(address.length - 4)} linked to your profile.` });
@@ -83,16 +96,16 @@ export function Navbar() {
 
 
   const renderNavItems = useCallback((items: {label: string, href: string, requiresAuth?: boolean}[]) => items.map((item) => {
-    if (item.requiresAuth && !isAuthenticated && !authIsLoading) { // Hide auth-required if not authenticated and auth check is done
+    if (item.requiresAuth && !isAuthenticated && !authIsLoading) {
       return null;
     }
-    if (item.requiresAuth && authIsLoading) { // Show skeleton/placeholder while auth is loading
+    if (item.requiresAuth && authIsLoading) {
         return <div key={item.label} className="h-6 w-20 bg-muted/50 rounded-md animate-pulse px-3 py-1.5"></div>;
     }
     const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href));
     return (
       <Link
-        key={item.label} 
+        key={item.label}
         href={item.href}
         className={cn(
           "text-sm font-medium transition-colors hover:text-primary",
@@ -105,8 +118,11 @@ export function Navbar() {
   }), [pathname, isAuthenticated, authIsLoading]);
 
   const renderMobileNavItems = useCallback((items: {label: string, href: string, requiresAuth?: boolean}[], closeSheetFn: () => void ) => items.map((item) => {
-     if (item.requiresAuth && !isAuthenticated) {
+     if (item.requiresAuth && !isAuthenticated && !authIsLoading) { // Check authIsLoading here too
       return null;
+    }
+     if (item.requiresAuth && authIsLoading) { // Show skeleton/placeholder while auth is loading
+        return <div key={item.label} className="h-10 bg-muted/50 rounded-md animate-pulse w-full"></div>;
     }
     const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href));
     return (
@@ -122,7 +138,7 @@ export function Navbar() {
         {item.label}
       </Link>
     );
-  }), [pathname, isAuthenticated]);
+  }), [pathname, isAuthenticated, authIsLoading]);
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -141,19 +157,27 @@ export function Navbar() {
         </nav>
 
         <div className="flex flex-1 items-center justify-end space-x-2">
+           <div className="hidden md:flex items-center space-x-2">
+            <div className="relative">
+              <Input type="search" placeholder="Search..." className="h-9 pl-8 pr-2 w-40 lg:w-64 text-sm peer" />
+              <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground peer-focus:text-primary" />
+            </div>
+            <Button variant="ghost" size="icon" aria-label="Notifications">
+              <Bell className="h-5 w-5" />
+            </Button>
            {isMounted && (
-            <Button 
-              variant="outline" 
-              size="sm" 
+            <Button
+              variant="outline"
+              size="sm"
               onClick={handleConnectWallet}
               disabled={isConnectingWallet || !!connectedWalletAddress}
-              className="hidden md:inline-flex"
             >
               <Link2 className="mr-2 h-4 w-4" />
               {isConnectingWallet ? "Connecting..." : connectedWalletAddress ? `${connectedWalletAddress.substring(0,6)}...${connectedWalletAddress.substring(connectedWalletAddress.length - 4)}` : "Connect Wallet"}
             </Button>
           )}
-          {isMounted && !authIsLoading ? ( 
+          </div>
+          {isMounted && !authIsLoading ? (
             isAuthenticated && user ? (
               <UserAvatarDropdown />
             ) : (
@@ -168,8 +192,7 @@ export function Navbar() {
             )
           ) : (
             <nav className="hidden md:flex items-center space-x-2">
-              <div className="h-9 w-[60px] bg-muted/50 rounded-md animate-pulse"></div>
-              <div className="h-10 w-[88px] bg-muted/50 rounded-md animate-pulse"></div>
+              <div className="h-8 w-8 bg-muted/50 rounded-full animate-pulse"></div> {/* Avatar placeholder */}
             </nav>
           )}
           
@@ -191,6 +214,10 @@ export function Navbar() {
                     HEX THE ADD HUB
                   </span>
                 </Link>
+                <div className="relative my-4">
+                  <Input type="search" placeholder="Search..." className="h-10 pl-10 pr-3 w-full text-base peer" />
+                  <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground peer-focus:text-primary" />
+                </div>
                 <nav className="flex flex-col space-y-2 mt-6">
                   {renderMobileNavItems(mainNavItems, closeSheet)}
                   {renderMobileNavItems(otherNavItems, closeSheet)}
@@ -199,9 +226,9 @@ export function Navbar() {
                   <hr className="my-4 border-border" />
                   
                   {isMounted && (
-                    <Button 
-                      variant="outline" 
-                      className="w-full justify-start" 
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start py-2"
                       onClick={() => { handleConnectWallet(); closeSheet(); }}
                       disabled={isConnectingWallet || !!connectedWalletAddress}
                     >
@@ -210,15 +237,15 @@ export function Navbar() {
                     </Button>
                   )}
 
-                  {isMounted && !authIsLoading ? ( 
+                  {isMounted && !authIsLoading ? (
                     isAuthenticated && user ? (
                      <UserAvatarDropdown isMobile={true} />
                     ) : (
                       <>
-                       <Button variant="outline" className="w-full" asChild>
+                       <Button variant="outline" className="w-full py-2" asChild>
                         <Link href="/login" onClick={closeSheet}>Login</Link>
                       </Button>
-                      <Button className="w-full" asChild>
+                      <Button className="w-full py-2" asChild>
                         <Link href="/signup" onClick={closeSheet}>Sign Up</Link>
                       </Button>
                       </>

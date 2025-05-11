@@ -3,7 +3,7 @@ import React from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowRight, Zap, Users, BookOpen } from 'lucide-react';
+import { ArrowRight, Zap, Users, BookOpen, Library, Users2, CalendarDays, Rss, Activity } from 'lucide-react';
 import { HeroSection } from '@/components/home/hero-section';
 
 export default function Home() {
@@ -15,7 +15,7 @@ export default function Home() {
       {/* Features Section */}
       <section className="py-16 md:py-24">
         <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">Why HEX THE ADD HUB?</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           <Link href="/portfolio" className="block hover:no-underline group">
             <Card className="shadow-lg group-hover:shadow-primary/20 transition-shadow duration-300 h-full flex flex-col">
               <CardHeader className="items-center text-center">
@@ -74,6 +74,111 @@ export default function Home() {
               <CardFooter className="justify-center pt-0">
                 <div className="mt-4 text-primary font-medium text-sm group-hover:underline">
                   See Leaderboard <ArrowRight className="ml-1 h-4 w-4 inline" />
+                </div>
+              </CardFooter>
+            </Card>
+          </Link>
+
+          <Link href="/university/iit-delhi" className="block hover:no-underline group">
+            <Card className="shadow-lg group-hover:shadow-primary/20 transition-shadow duration-300 h-full flex flex-col">
+              <CardHeader className="items-center text-center">
+                <div className="p-4 bg-primary/10 rounded-full mb-4">
+                  <Library className="h-10 w-10 text-primary" />
+                </div>
+                <CardTitle className="text-2xl">My Knowledge</CardTitle>
+              </CardHeader>
+              <CardContent className="text-center flex-grow">
+                <CardDescription>
+                  Explore a structured overview of academic knowledge, research areas, and programming skills.
+                </CardDescription>
+              </CardContent>
+              <CardFooter className="justify-center pt-0">
+                <div className="mt-4 text-primary font-medium text-sm group-hover:underline">
+                  Explore Knowledge <ArrowRight className="ml-1 h-4 w-4 inline" />
+                </div>
+              </CardFooter>
+            </Card>
+          </Link>
+
+          <Link href="/people" className="block hover:no-underline group">
+            <Card className="shadow-lg group-hover:shadow-primary/20 transition-shadow duration-300 h-full flex flex-col">
+              <CardHeader className="items-center text-center">
+                <div className="p-4 bg-primary/10 rounded-full mb-4">
+                  <Users2 className="h-10 w-10 text-primary" />
+                </div>
+                <CardTitle className="text-2xl">People</CardTitle>
+              </CardHeader>
+              <CardContent className="text-center flex-grow">
+                <CardDescription>
+                  Meet the talented individuals who form our community, from instructors to creators and contributors.
+                </CardDescription>
+              </CardContent>
+              <CardFooter className="justify-center pt-0">
+                <div className="mt-4 text-primary font-medium text-sm group-hover:underline">
+                  Meet the Team <ArrowRight className="ml-1 h-4 w-4 inline" />
+                </div>
+              </CardFooter>
+            </Card>
+          </Link>
+
+          <Link href="/events" className="block hover:no-underline group">
+            <Card className="shadow-lg group-hover:shadow-primary/20 transition-shadow duration-300 h-full flex flex-col">
+              <CardHeader className="items-center text-center">
+                <div className="p-4 bg-primary/10 rounded-full mb-4">
+                  <CalendarDays className="h-10 w-10 text-primary" />
+                </div>
+                <CardTitle className="text-2xl">Events</CardTitle>
+              </CardHeader>
+              <CardContent className="text-center flex-grow">
+                <CardDescription>
+                  Stay updated with our upcoming workshops, seminars, conferences, and community gatherings.
+                </CardDescription>
+              </CardContent>
+              <CardFooter className="justify-center pt-0">
+                <div className="mt-4 text-primary font-medium text-sm group-hover:underline">
+                  View Events Calendar <ArrowRight className="ml-1 h-4 w-4 inline" />
+                </div>
+              </CardFooter>
+            </Card>
+          </Link>
+
+          <Link href="/blog" className="block hover:no-underline group">
+            <Card className="shadow-lg group-hover:shadow-primary/20 transition-shadow duration-300 h-full flex flex-col">
+              <CardHeader className="items-center text-center">
+                <div className="p-4 bg-primary/10 rounded-full mb-4">
+                  <Rss className="h-10 w-10 text-primary" />
+                </div>
+                <CardTitle className="text-2xl">Blog</CardTitle>
+              </CardHeader>
+              <CardContent className="text-center flex-grow">
+                <CardDescription>
+                  Read the latest news, insights, tutorials, and creator spotlights from the Web3 ecosystem.
+                </CardDescription>
+              </CardContent>
+              <CardFooter className="justify-center pt-0">
+                <div className="mt-4 text-primary font-medium text-sm group-hover:underline">
+                  Read Our Blog <ArrowRight className="ml-1 h-4 w-4 inline" />
+                </div>
+              </CardFooter>
+            </Card>
+          </Link>
+
+          <Link href="/life-tracking" className="block hover:no-underline group">
+            <Card className="shadow-lg group-hover:shadow-primary/20 transition-shadow duration-300 h-full flex flex-col">
+              <CardHeader className="items-center text-center">
+                <div className="p-4 bg-primary/10 rounded-full mb-4">
+                  <Activity className="h-10 w-10 text-primary" />
+                </div>
+                <CardTitle className="text-2xl">Life Tracking</CardTitle>
+              </CardHeader>
+              <CardContent className="text-center flex-grow">
+                <CardDescription>
+                  Visualize your journey and track your life progress, one week at a time.
+                </CardDescription>
+              </CardContent>
+              <CardFooter className="justify-center pt-0">
+                <div className="mt-4 text-primary font-medium text-sm group-hover:underline">
+                  Track Your Life <ArrowRight className="ml-1 h-4 w-4 inline" />
                 </div>
               </CardFooter>
             </Card>

@@ -43,13 +43,6 @@ export default function CoolDudePage() {
             </Button>
           </div>
 
-          {/* Box Under the Fold - Circular Glass Frame */}
-          <div className="bg-[#f8f8f8]/80 dark:bg-neutral-800/80 backdrop-blur-lg rounded-full py-4 px-8 shadow-xl mb-8">
-            <p className="text-md md:text-lg font-semibold text-neutral-700 dark:text-neutral-300">
-              IIT Delhi | Mathematics
-            </p>
-          </div>
-
           {/* Button to Academics Page, styled as IIT Delhi | Mathematics box */}
           <div className="mt-8">
             <Button

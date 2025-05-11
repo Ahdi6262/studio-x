@@ -16,15 +16,16 @@ import {
   FacebookAuthProvider,
   signInWithPopup
 } from 'firebase/auth';
-import { auth, db } from '@/lib/firebase'; // Assuming db might be used later for user profiles
-import { doc, setDoc, getDoc } from "firebase/firestore"; 
-import type { MockRegisteredUser } from '@/types/auth'; // Keep for structure, but adapt
+import { auth, db } from '@/lib/firebase';
+import { doc, setDoc, getDoc, serverTimestamp } from "firebase/firestore"; 
 
-interface UserData {
+export interface UserData { // Exporting for use elsewhere, e.g., ProfilePage
   uid: string;
   name: string | null;
   email: string | null;
   avatar?: string | null;
+  bio?: string | null; // Added bio
+  dashboard_layout_preferences?: Record<string, any>; // Added dashboard preferences
 }
 
 interface AuthContextType {
@@ -35,7 +36,7 @@ interface AuthContextType {
   signupUser: (name: string, email: string, password: string) => Promise<FirebaseUser>;
   logoutUser: () => Promise<void>;
   updateUserAvatar: (avatarUrl: string) => Promise<void>;
-  updateUserProfile: (displayName: string) => Promise<void>;
+  updateUserProfile: (displayName: string, bio?: string) => Promise<void>; // Added bio to signature
   sendPasswordReset: (email: string) => Promise<void>;
   signInWithGoogle: () => Promise<FirebaseUser>;
   signInWithGithub: () => Promise<FirebaseUser>;
@@ -44,7 +45,7 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const USER_DATA_STORAGE_KEY = 'authUser'; // Unified key
+const USER_DATA_STORAGE_KEY = 'authUser';
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<UserData | null>(null);
@@ -52,42 +53,44 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      setIsLoading(true); // Set loading true at the start of auth state change
       if (firebaseUser) {
-        // Attempt to load additional user data from localStorage/sessionStorage or Firestore
-        let storedUserData = null;
-        try {
-            const localData = localStorage.getItem(USER_DATA_STORAGE_KEY);
-            if (localData) storedUserData = JSON.parse(localData);
-        } catch (e) { console.error("Error reading user data from storage", e); }
-
-        if (storedUserData && storedUserData.uid === firebaseUser.uid) {
-            setUser(storedUserData);
+        const userDocRef = doc(db, "users", firebaseUser.uid);
+        const userDocSnap = await getDoc(userDocRef);
+        
+        if (userDocSnap.exists()) {
+          const firestoreUser = userDocSnap.data() as UserData; // Assume UserData includes all fields like name, email, avatar_url, bio
+          setUser({
+            uid: firebaseUser.uid,
+            name: firestoreUser.name || firebaseUser.displayName,
+            email: firestoreUser.email || firebaseUser.email,
+            avatar: firestoreUser.avatar_url || firebaseUser.photoURL, // Use avatar_url from schema
+            bio: firestoreUser.bio, // Get bio from Firestore
+            dashboard_layout_preferences: firestoreUser.dashboard_layout_preferences,
+          });
+          localStorage.setItem(USER_DATA_STORAGE_KEY, JSON.stringify(userDocSnap.data()));
         } else {
-            // Fetch from Firestore if not in local storage or UID mismatch
-            const userDocRef = doc(db, "users", firebaseUser.uid);
-            const userDocSnap = await getDoc(userDocRef);
-            if (userDocSnap.exists()) {
-                const firestoreUser = userDocSnap.data() as UserData;
-                setUser(firestoreUser);
-                localStorage.setItem(USER_DATA_STORAGE_KEY, JSON.stringify(firestoreUser)); // Cache it
-            } else {
-                // Basic user data if not in Firestore yet
-                const newUser: UserData = {
-                    uid: firebaseUser.uid,
-                    email: firebaseUser.email,
-                    name: firebaseUser.displayName,
-                    avatar: firebaseUser.photoURL,
-                };
-                setUser(newUser);
-                // Optionally save this basic profile to Firestore
-                await setDoc(doc(db, "users", firebaseUser.uid), {
-                    email: firebaseUser.email,
-                    name: firebaseUser.displayName,
-                    avatar_url: firebaseUser.photoURL,
-                    created_at: new Date().toISOString(),
-                }, { merge: true });
-                localStorage.setItem(USER_DATA_STORAGE_KEY, JSON.stringify(newUser));
-            }
+          // New user or user not in Firestore yet, create a basic profile
+          const newUserProfile: UserData = {
+            uid: firebaseUser.uid,
+            email: firebaseUser.email,
+            name: firebaseUser.displayName,
+            avatar: firebaseUser.photoURL,
+            bio: '', // Initialize bio as empty
+            dashboard_layout_preferences: {}, // Default empty preferences
+          };
+          await setDoc(doc(db, "users", firebaseUser.uid), {
+            uid: firebaseUser.uid, // Storing uid in the document itself for easier querying if needed
+            email: firebaseUser.email,
+            name: firebaseUser.displayName,
+            avatar_url: firebaseUser.photoURL,
+            bio: '',
+            dashboard_layout_preferences: {},
+            created_at: serverTimestamp(),
+            updated_at: serverTimestamp(),
+          }, { merge: true });
+          setUser(newUserProfile);
+          localStorage.setItem(USER_DATA_STORAGE_KEY, JSON.stringify(newUserProfile));
         }
       } else {
         setUser(null);
@@ -98,26 +101,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => unsubscribe();
   }, []);
 
-  const mapFirebaseUserToUserData = (firebaseUser: FirebaseUser): UserData => {
-    return {
-      uid: firebaseUser.uid,
-      email: firebaseUser.email,
-      name: firebaseUser.displayName,
-      avatar: firebaseUser.photoURL,
-    };
-  };
 
   const loginUser = async (email: string, password: string, keepLoggedIn: boolean = false): Promise<FirebaseUser> => {
     setIsLoading(true);
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
-    const userData = mapFirebaseUserToUserData(userCredential.user);
-    setUser(userData);
-    if (keepLoggedIn) {
-        localStorage.setItem(USER_DATA_STORAGE_KEY, JSON.stringify(userData));
-    } else {
-        sessionStorage.setItem(USER_DATA_STORAGE_KEY, JSON.stringify(userData));
-        localStorage.removeItem(USER_DATA_STORAGE_KEY); // Ensure only one storage method is active
-    }
+    // Auth state change will handle fetching from Firestore and setting user state
+    // No need to manually set localStorage here as onAuthStateChanged will do it.
     setIsLoading(false);
     return userCredential.user;
   };
@@ -127,55 +116,76 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     await firebaseUpdateProfile(userCredential.user, { displayName: name });
     
-    const newUser: UserData = {
+    const newUserProfile: UserData = {
         uid: userCredential.user.uid,
-        email: userCredential.user.email,
-        name: name, // Use provided name
-        avatar: userCredential.user.photoURL,
+        email: email,
+        name: name,
+        avatar: userCredential.user.photoURL, // Usually null initially
+        bio: '',
+        dashboard_layout_preferences: {},
     };
-    // Save to Firestore
     await setDoc(doc(db, "users", userCredential.user.uid), {
+        uid: userCredential.user.uid,
         name: name,
         email: email,
-        avatar_url: userCredential.user.photoURL || '',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
+        avatar_url: userCredential.user.photoURL || null,
+        bio: '',
+        dashboard_layout_preferences: {},
+        created_at: serverTimestamp(),
+        updated_at: serverTimestamp(),
     });
 
-    setUser(newUser);
-    localStorage.setItem(USER_DATA_STORAGE_KEY, JSON.stringify(newUser)); // Persist by default on signup
+    // setUser(newUserProfile); // Let onAuthStateChanged handle this
+    // localStorage.setItem(USER_DATA_STORAGE_KEY, JSON.stringify(newUserProfile));
     setIsLoading(false);
     return userCredential.user;
   };
 
   const logoutUser = async (): Promise<void> => {
-    setIsLoading(true);
+    // setIsLoading(true); // No need, onAuthStateChanged handles loading state
     await signOut(auth);
-    setUser(null);
-    localStorage.removeItem(USER_DATA_STORAGE_KEY);
-    sessionStorage.removeItem(USER_DATA_STORAGE_KEY);
-    setIsLoading(false);
+    // setUser(null); // onAuthStateChanged handles this
+    // localStorage.removeItem(USER_DATA_STORAGE_KEY);
+    // sessionStorage.removeItem(USER_DATA_STORAGE_KEY);
+    // setIsLoading(false);
   };
 
   const updateUserAvatar = async (avatarUrl: string): Promise<void> => {
     if (auth.currentUser) {
       await firebaseUpdateProfile(auth.currentUser, { photoURL: avatarUrl });
-      const updatedUser = { ...user!, avatar: avatarUrl };
-      setUser(updatedUser);
-      localStorage.setItem(USER_DATA_STORAGE_KEY, JSON.stringify(updatedUser));
-      // Update Firestore
-      await setDoc(doc(db, "users", auth.currentUser.uid), { avatar_url: avatarUrl, updated_at: new Date().toISOString() }, { merge: true });
+      const userDocRef = doc(db, "users", auth.currentUser.uid);
+      await setDoc(userDocRef, { avatar_url: avatarUrl, updated_at: serverTimestamp() }, { merge: true });
+      // Refresh user state from Firestore via onAuthStateChanged or by manually updating user state
+      if (user) {
+        const updatedUser = { ...user, avatar: avatarUrl };
+        setUser(updatedUser);
+        localStorage.setItem(USER_DATA_STORAGE_KEY, JSON.stringify(updatedUser));
+      }
+    } else {
+      throw new Error("No user is currently signed in.");
     }
   };
 
-  const updateUserProfile = async (displayName: string): Promise<void> => {
+  const updateUserProfile = async (displayName: string, bio?: string): Promise<void> => {
     if (auth.currentUser) {
         await firebaseUpdateProfile(auth.currentUser, { displayName });
-        const updatedUser = { ...user!, name: displayName };
-        setUser(updatedUser);
-        localStorage.setItem(USER_DATA_STORAGE_KEY, JSON.stringify(updatedUser));
-         // Update Firestore
-        await setDoc(doc(db, "users", auth.currentUser.uid), { name: displayName, updated_at: new Date().toISOString() }, { merge: true });
+        const updates: Partial<UserData & { updated_at: any }> = { 
+          name: displayName, 
+          updated_at: serverTimestamp() 
+        };
+        if (bio !== undefined) {
+          updates.bio = bio;
+        }
+        const userDocRef = doc(db, "users", auth.currentUser.uid);
+        await setDoc(userDocRef, updates, { merge: true });
+        
+        if (user) {
+          const updatedUser = { ...user, name: displayName, bio: bio !== undefined ? bio : user.bio };
+          setUser(updatedUser);
+          localStorage.setItem(USER_DATA_STORAGE_KEY, JSON.stringify(updatedUser));
+        }
+    } else {
+      throw new Error("No user is currently signed in.");
     }
   };
 
@@ -188,32 +198,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
         const result = await signInWithPopup(auth, provider);
         const firebaseUser = result.user;
-        const userData = mapFirebaseUserToUserData(firebaseUser);
-
-        // Check if user exists in Firestore, if not, create them
         const userDocRef = doc(db, "users", firebaseUser.uid);
         const userDocSnap = await getDoc(userDocRef);
+
+        const providerData = { provider_name: provider.providerId, provider_user_id: firebaseUser.uid };
+
         if (!userDocSnap.exists()) {
             await setDoc(userDocRef, {
+                uid: firebaseUser.uid,
                 name: firebaseUser.displayName,
                 email: firebaseUser.email,
                 avatar_url: firebaseUser.photoURL,
-                created_at: new Date().toISOString(),
-                updated_at: new Date().toISOString(),
-                auth_providers: [ // Example of storing provider info
-                    { provider_name: provider.providerId, provider_user_id: firebaseUser.uid }
-                ]
+                bio: '',
+                dashboard_layout_preferences: {},
+                auth_providers: [providerData],
+                created_at: serverTimestamp(),
+                updated_at: serverTimestamp(),
             }, { merge: true });
         } else {
-             await setDoc(userDocRef, { updated_at: new Date().toISOString() }, { merge: true });
+            // User exists, update timestamp and ensure provider info is there if needed
+            const existingData = userDocSnap.data();
+            const authProviders = existingData.auth_providers || [];
+            if (!authProviders.some((p:any) => p.provider_name === provider.providerId)) {
+                authProviders.push(providerData);
+            }
+            await setDoc(userDocRef, { 
+              updated_at: serverTimestamp(), 
+              // Update avatar/name if different from provider, could be optional
+              name: firebaseUser.displayName || existingData.name, 
+              avatar_url: firebaseUser.photoURL || existingData.avatar_url,
+              auth_providers: authProviders
+            }, { merge: true });
         }
-
-        setUser(userData);
-        localStorage.setItem(USER_DATA_STORAGE_KEY, JSON.stringify(userData)); // Persist by default
+        // onAuthStateChanged will update the user state and localStorage
         return firebaseUser;
     } catch (error) {
         console.error("Social sign-in error:", error);
-        throw error; // Re-throw to be caught by the form
+        throw error;
     } finally {
         setIsLoading(false);
     }
@@ -225,7 +246,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   return (
     <AuthContext.Provider value={{ 
-        isAuthenticated: !!user, 
+        isAuthenticated: !!user && !isLoading, // Ensure not loading before confirming auth
         user, 
         isLoading, 
         loginUser, 

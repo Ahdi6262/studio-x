@@ -3,32 +3,63 @@
 
 import { PageHeader } from "@/components/core/page-header";
 import { LeaderboardItem } from "@/components/leaderboard/leaderboard-item";
-import { mockLeaderboard as fallbackLeaderboardData, type LeaderboardUser } from "@/lib/mock-data"; // Keep mock as fallback
+import type { LeaderboardUser } from "@/lib/mock-data";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { RefreshCw } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/contexts/auth-context";
-// import { collection, getDocs, query, orderBy, limit } from "firebase/firestore"; // Example for Firebase
-// import { db } from "@/lib/firebase"; // Example for Firebase
+import { collection, getDocs, query, orderBy, limit, doc, getDoc } from "firebase/firestore"; 
+import { db } from "@/lib/firebase"; 
 
-
-// Simulate fetching leaderboard data (replace with actual Firebase call)
+// Function to fetch leaderboard data from user_points and enrich with user details
 async function fetchLeaderboardDataFromDB(): Promise<LeaderboardUser[]> {
-  console.log("Fetching leaderboard data from DB (simulated)...");
-  await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate network delay
-  // In a real app:
-  // const leaderboardCol = collection(db, 'leaderboard'); // Assuming a 'leaderboard' collection
-  // const q = query(leaderboardCol, orderBy("points", "desc"), limit(50)); // Example: top 50
-  // const leaderboardSnapshot = await getDocs(q);
-  // const leaderboardList = leaderboardSnapshot.docs.map((doc, index) => ({
-  //   id: doc.id,
-  //   rank: index + 1, // Assign rank based on order
-  //   ...doc.data()
-  // } as LeaderboardUser));
-  // return leaderboardList;
-  return fallbackLeaderboardData; // Return mock data for now
+  console.log("Fetching leaderboard data from DB...");
+  
+  // Fetch top users from 'user_points' collection, ordered by total_points
+  const userPointsCol = collection(db, 'user_points');
+  // Fetching top 50 for example. Adjust 'limit' as needed.
+  const q = query(userPointsCol, orderBy("total_points", "desc"), limit(50)); 
+  const userPointsSnapshot = await getDocs(q);
+
+  const leaderboardListPromises = userPointsSnapshot.docs.map(async (pointDoc, index) => {
+    const pointData = pointDoc.data();
+    const userId = pointDoc.id;
+
+    // Fetch user details from 'users' collection
+    const userRef = doc(db, 'users', userId);
+    const userSnap = await getDoc(userRef);
+    
+    let userName = 'Anonymous User';
+    let userAvatarUrl = ''; // Default avatar or placeholder
+    let achievements: string[] = []; // Placeholder for achievements
+
+    if (userSnap.exists()) {
+      const userData = userSnap.data();
+      userName = userData.name || 'Anonymous User';
+      userAvatarUrl = userData.avatar_url || ''; // Use avatar_url from your schema
+      // If you store achievements directly on the user document or have a subcollection, fetch here.
+      // For simplicity, achievements are mocked or can be fetched from user_achievements
+    }
+    
+    // Simulate achievements for now as schema is complex
+    const mockAchievementsList = ["Top Contributor", "Early Bird", "Course Completer"];
+    achievements = mockAchievementsList.slice(0, Math.floor(Math.random() * mockAchievementsList.length) +1);
+
+
+    return {
+      id: userId,
+      rank: index + 1, // Assign rank based on order from query
+      name: userName,
+      avatarUrl: userAvatarUrl,
+      points: pointData.total_points || 0,
+      achievements: achievements, // Replace with actual achievements if fetched
+    } as LeaderboardUser;
+  });
+
+  const leaderboardList = await Promise.all(leaderboardListPromises);
+  return leaderboardList;
 }
 
 
@@ -44,19 +75,26 @@ export default function LeaderboardPage() {
     }
   }, [user]);
 
-  useEffect(() => {
-    const loadLeaderboard = async () => {
-      setIsLoading(true);
-      try {
-        const data = await fetchLeaderboardDataFromDB();
-        setLeaderboardData(data.sort((a,b) => a.rank - b.rank));
-      } catch (error) {
-        console.error("Failed to fetch leaderboard data:", error);
-      }
-      setIsLoading(false);
-    };
-    loadLeaderboard();
+  const loadLeaderboard = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const data = await fetchLeaderboardDataFromDB();
+      // Sorting is already done by Firestore query (orderBy total_points)
+      setLeaderboardData(data);
+    } catch (error) {
+      console.error("Failed to fetch leaderboard data:", error);
+    }
+    setIsLoading(false);
   }, []);
+
+
+  useEffect(() => {
+    loadLeaderboard();
+  }, [loadLeaderboard]);
+
+  const handleRefresh = () => {
+    loadLeaderboard();
+  }
 
   return (
     <div className="container mx-auto px-4 py-12">
@@ -64,7 +102,7 @@ export default function LeaderboardPage() {
         title="Creator Leaderboard"
         description="See who's making waves in the HEX THE ADD HUB! Points are awarded for contributions, course completions, and community engagement."
         actions={
-            <Button variant="outline" onClick={() => { /* Implement refresh logic */ }} disabled={isLoading}>
+            <Button variant="outline" onClick={handleRefresh} disabled={isLoading}>
                 <RefreshCw className={`mr-2 h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} /> Refresh Leaderboard
             </Button>
         }
@@ -73,8 +111,8 @@ export default function LeaderboardPage() {
       <Tabs defaultValue="all-time" className="w-full mb-8">
         <TabsList className="grid w-full grid-cols-3 md:w-auto md:inline-flex">
           <TabsTrigger value="all-time">All Time</TabsTrigger>
-          <TabsTrigger value="monthly" disabled>Monthly</TabsTrigger>
-          <TabsTrigger value="weekly" disabled>Weekly</TabsTrigger>
+          <TabsTrigger value="monthly" disabled>Monthly (Soon)</TabsTrigger>
+          <TabsTrigger value="weekly" disabled>Weekly (Soon)</TabsTrigger>
         </TabsList>
         <TabsContent value="all-time">
           {isLoading ? (
@@ -96,12 +134,12 @@ export default function LeaderboardPage() {
         </TabsContent>
         <TabsContent value="monthly">
           <div className="text-center py-12 text-muted-foreground">
-            Monthly leaderboard coming soon!
+            Monthly leaderboard coming soon! This requires tracking points over specific time periods.
           </div>
         </TabsContent>
         <TabsContent value="weekly">
           <div className="text-center py-12 text-muted-foreground">
-            Weekly leaderboard coming soon!
+            Weekly leaderboard coming soon! Similar to monthly, requires periodic point tracking.
           </div>
         </TabsContent>
       </Tabs>
@@ -119,3 +157,4 @@ const LeaderboardItemSkeleton = () => (
     <Skeleton className="h-6 w-16" />
   </div>
 );
+

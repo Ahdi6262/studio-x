@@ -5,24 +5,41 @@ import { useState, useEffect, useCallback } from 'react';
 import { PageHeader } from "@/components/core/page-header";
 import { ProjectCard } from "@/components/portfolio/project-card";
 import { ProjectFilters } from "@/components/portfolio/project-filters";
-import { mockProjects as fallbackProjects, type Project } from "@/lib/mock-data"; // Keep mock as fallback
+import type { Project } from "@/lib/mock-data"; 
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { PlusCircle } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
-// import { collection, getDocs } from "firebase/firestore"; // Example for Firebase
-// import { db } from "@/lib/firebase"; // Example for Firebase
+import { collection, getDocs, query, orderBy } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 
-// Simulate fetching projects (replace with actual Firebase call)
-async function fetchProjectsFromDB(): Promise<Project[]> {
-  console.log("Fetching projects from DB (simulated)...");
-  await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate network delay
-  // In a real app:
-  // const projectsCol = collection(db, 'projects');
-  // const projectSnapshot = await getDocs(projectsCol);
-  // const projectList = projectSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Project));
-  // return projectList;
-  return fallbackProjects; // Return mock data for now
+async function fetchProjectsFromDB(filters?: { searchTerm?: string; category?: string }): Promise<Project[]> {
+  console.log("Fetching projects from DB with filters:", filters);
+  const projectsCol = collection(db, 'projects');
+  // Add orderBy('published_date', 'desc') or similar if you have such a field and want to sort
+  const q = query(projectsCol, orderBy("title")); 
+
+  const projectSnapshot = await getDocs(q);
+  let projectList = projectSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Project));
+
+  // Simplified client-side filtering. For production, consider server-side or Algolia.
+  if (filters) {
+    if (filters.searchTerm) {
+      const lowerSearchTerm = filters.searchTerm.toLowerCase();
+      projectList = projectList.filter(project =>
+        project.title.toLowerCase().includes(lowerSearchTerm) ||
+        project.description.toLowerCase().includes(lowerSearchTerm) ||
+        (project.author && project.author.toLowerCase().includes(lowerSearchTerm)) ||
+        (project.tags && project.tags.some(tag => tag.toLowerCase().includes(lowerSearchTerm)))
+      );
+    }
+    if (filters.category && filters.category !== "All") {
+      projectList = projectList.filter(project => 
+        project.tags && project.tags.includes(filters.category)
+      );
+    }
+  }
+  return projectList;
 }
 
 export default function PortfolioPage() {
@@ -31,46 +48,41 @@ export default function PortfolioPage() {
   const [filters, setFilters] = useState({ searchTerm: "", category: "All" });
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    const loadProjects = async () => {
-      setIsLoading(true);
-      try {
-        const projects = await fetchProjectsFromDB();
-        setAllProjects(projects);
-        setFilteredProjects(projects);
-      } catch (error) {
-        console.error("Failed to fetch projects:", error);
+  const loadProjects = useCallback(async (currentFilters: typeof filters) => {
+    setIsLoading(true);
+    try {
+      const projects = await fetchProjectsFromDB(currentFilters);
+      setAllProjects(projects);
+      // Apply initial filtering based on currentFilters
+      let projectsToFilter = [...projects];
+      if (currentFilters.searchTerm) {
+        const lowerSearchTerm = currentFilters.searchTerm.toLowerCase();
+        projectsToFilter = projectsToFilter.filter(project =>
+          project.title.toLowerCase().includes(lowerSearchTerm) ||
+          project.description.toLowerCase().includes(lowerSearchTerm) ||
+          (project.author && project.author.toLowerCase().includes(lowerSearchTerm)) ||
+          (project.tags && project.tags.some(tag => tag.toLowerCase().includes(lowerSearchTerm)))
+        );
       }
-      setIsLoading(false);
-    };
-    loadProjects();
+      if (currentFilters.category !== "All") {
+        projectsToFilter = projectsToFilter.filter(project => 
+          project.tags && project.tags.includes(currentFilters.category)
+        );
+      }
+      setFilteredProjects(projectsToFilter);
+    } catch (error) {
+      console.error("Failed to fetch projects:", error);
+    }
+    setIsLoading(false);
   }, []);
+
+  useEffect(() => {
+    loadProjects(filters);
+  }, [loadProjects, filters]);
 
   const handleFilterChange = useCallback((newFilters: { searchTerm: string; category: string }) => {
     setFilters(newFilters);
   }, []);
-
-  useEffect(() => {
-    let projectsToFilter = [...allProjects];
-
-    if (filters.searchTerm) {
-      const lowerSearchTerm = filters.searchTerm.toLowerCase();
-      projectsToFilter = projectsToFilter.filter(project =>
-        project.title.toLowerCase().includes(lowerSearchTerm) ||
-        project.description.toLowerCase().includes(lowerSearchTerm) ||
-        project.author.toLowerCase().includes(lowerSearchTerm) ||
-        project.tags.some(tag => tag.toLowerCase().includes(lowerSearchTerm))
-      );
-    }
-
-    if (filters.category !== "All") {
-      projectsToFilter = projectsToFilter.filter(project => 
-        project.tags.includes(filters.category)
-      );
-    }
-
-    setFilteredProjects(projectsToFilter);
-  }, [filters, allProjects]);
 
   return (
     <div className="container mx-auto px-4 py-12">
@@ -119,3 +131,4 @@ const CardSkeleton = () => (
     </div>
   </div>
 );
+

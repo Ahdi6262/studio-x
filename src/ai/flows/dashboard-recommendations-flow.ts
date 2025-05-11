@@ -10,12 +10,14 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
+import { collection, query, where, getDocs, limit, doc, getDoc } from "firebase/firestore";
+import { db } from '@/lib/firebase'; // Assuming db is your initialized Firestore instance
 
 // Mock data types for user activity - in a real app, these would be more detailed
 const UserCourseActivitySchema = z.object({
   courseId: z.string(),
   title: z.string(),
-  category: z.string(),
+  category: z.string().optional(),
   progress: z.number().min(0).max(100),
   lastAccessed: z.string().datetime({ precision: 3 }).optional(),
 });
@@ -23,7 +25,7 @@ const UserCourseActivitySchema = z.object({
 const UserProjectActivitySchema = z.object({
   projectId: z.string(),
   title: z.string(),
-  tags: z.array(z.string()),
+  tags: z.array(z.string()).optional(),
   role: z.string().optional(), // e.g., 'creator', 'contributor'
   lastContribution: z.string().datetime({ precision: 3 }).optional(),
 });
@@ -62,33 +64,83 @@ export const DashboardRecommendationsOutputSchema = z.object({
 export type DashboardRecommendationsOutput = z.infer<typeof DashboardRecommendationsOutputSchema>;
 
 
-// This is a placeholder function. In a real application, you would fetch actual user data from Firebase/DB.
-// For now, it returns mock data for demonstration purposes.
-async function getMockUserInputForFlow(userId: string): Promise<DashboardRecommendationsInput> {
-  // Simulate fetching user data related to courses, projects, etc.
-  // Replace this with actual database queries in a real app.
-  return {
-    userId,
-    enrolledCourses: [
-      { courseId: 'mock-course-1', title: 'Intro to Web3', category: 'Blockchain', progress: 60, lastAccessed: new Date(Date.now() - 86400000 * 2).toISOString() }, // 2 days ago
-      { courseId: 'mock-course-2', title: 'AI for Creators', category: 'AI', progress: 25, lastAccessed: new Date(Date.now() - 86400000 * 5).toISOString() }, // 5 days ago
-    ],
-    createdProjects: [
-      { projectId: 'mock-project-1', title: 'My First DApp', tags: ['Solidity', 'React'], role: 'creator', lastContribution: new Date(Date.now() - 86400000 * 7).toISOString() }, // 7 days ago
-    ],
-    communityEngagement: { forumPosts: 3, commentsMade: 10 },
-    leaderboardRank: 15,
-    achievements: ['Early Bird', 'First Course Started'],
-    recentActivityEvents: [
-        { type: 'course_enrollment', data: { courseId: 'mock-course-2', courseTitle: 'AI for Creators' }, timestamp: new Date(Date.now() - 86400000 * 1).toISOString() }, // 1 day ago
-        { type: 'project_update', data: { projectId: 'mock-project-1', update: 'Pushed new commit' }, timestamp: new Date(Date.now() - 86400000 * 3).toISOString() } // 3 days ago
-    ]
-  };
+// Fetches real user data from Firestore based on userId
+async function getUserInputForFlow(userId: string): Promise<DashboardRecommendationsInput> {
+  let input: DashboardRecommendationsInput = { userId };
+
+  // Fetch enrolled courses
+  const enrollmentsCol = collection(db, 'course_enrollments');
+  const enrollmentsQuery = query(enrollmentsCol, where("user_id", "==", userId), limit(5));
+  const enrollmentsSnap = await getDocs(enrollmentsQuery);
+  input.enrolledCourses = await Promise.all(enrollmentsSnap.docs.map(async (enrollDoc) => {
+    const enrollment = enrollDoc.data();
+    const courseRef = doc(db, 'courses', enrollment.course_id);
+    const courseSnap = await getDoc(courseRef);
+    const courseData = courseSnap.exists() ? courseSnap.data() : { title: "Unknown Course", category: "N/A" };
+    return {
+      courseId: enrollment.course_id,
+      title: courseData.title,
+      category: courseData.category,
+      progress: enrollment.progress_percentage || 0,
+      lastAccessed: enrollment.last_accessed_lesson_id ? new Date().toISOString() : undefined, // Placeholder for actual last_accessed
+    };
+  }));
+
+  // Fetch created projects
+  const projectsCol = collection(db, 'projects');
+  const projectsQuery = query(projectsCol, where("user_id", "==", userId), limit(5));
+  const projectsSnap = await getDocs(projectsQuery);
+  input.createdProjects = projectsSnap.docs.map(doc => {
+    const project = doc.data();
+    return {
+      projectId: doc.id,
+      title: project.title,
+      tags: project.tags || [],
+      role: 'creator', // Assuming, could be more complex
+      lastContribution: project.updated_at?.toDate().toISOString(),
+    };
+  });
+  
+  // Fetch community engagement (simplified - sum from user_activity_events or dedicated collection)
+  // This is a placeholder, real implementation would require more complex aggregation
+  input.communityEngagement = { forumPosts: Math.floor(Math.random() * 5), commentsMade: Math.floor(Math.random() * 20) };
+
+  // Fetch recent activity events
+  const activityCol = collection(db, 'user_activity_events');
+  const activityQuery = query(activityCol, where("user_id", "==", userId), orderBy("timestamp", "desc"), limit(5));
+  const activitySnap = await getDocs(activityQuery);
+  input.recentActivityEvents = activitySnap.docs.map(doc => {
+    const event = doc.data();
+    return {
+      type: event.event_type,
+      data: event.event_data,
+      timestamp: event.timestamp.toDate().toISOString(),
+    };
+  });
+  
+  // Fetch leaderboard rank
+  const userPointsRef = doc(db, 'user_points', userId);
+  const userPointsSnap = await getDoc(userPointsRef);
+  if (userPointsSnap.exists()) {
+    // Rank calculation is complex. For now, using a placeholder or if rank is stored directly.
+    input.leaderboardRank = userPointsSnap.data().rank || Math.floor(Math.random() * 100) + 1; 
+  }
+
+  // Fetch achievements
+  const userAchievementsCol = collection(db, 'user_achievements');
+  const userAchievementsQuery = query(userAchievementsCol, where("user_id", "==", userId));
+  const userAchievementsSnap = await getDocs(userAchievementsQuery);
+  input.achievements = await Promise.all(userAchievementsSnap.docs.map(async (achDoc) => {
+      const achDefRef = doc(db, 'achievement_definitions', achDoc.data().achievement_key);
+      const achDefSnap = await getDoc(achDefRef);
+      return achDefSnap.exists() ? achDefSnap.data().name : "Unlocked Achievement";
+  }));
+
+  return input;
 }
 
 export async function getDashboardRecommendations(userId: string): Promise<DashboardRecommendationsOutput> {
-  // In a real app, you'd fetch real user data here instead of getMockUserInputForFlow
-  const userInput = await getMockUserInputForFlow(userId);
+  const userInput = await getUserInputForFlow(userId);
   try {
     const result = await dashboardRecommendationsFlow(userInput);
     return result;
@@ -110,50 +162,67 @@ Your goal is to provide personalized and actionable recommendations for the user
 
 User Profile and Activity:
 - User ID: {{{userId}}}
-{{#if enrolledCourses}}
+{{#if enrolledCourses.length}}
 - Enrolled Courses:
   {{#each enrolledCourses}}
   - "{{title}}" ({{category}}): Progress {{progress}}%{{#if lastAccessed}}, Last Accessed: {{lastAccessed}}{{/if}}
   {{/each}}
+{{else}}
+- No courses enrolled yet.
 {{/if}}
-{{#if createdProjects}}
+
+{{#if createdProjects.length}}
 - Projects:
   {{#each createdProjects}}
-  - "{{title}}" (Tags: {{#each tags}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}){{#if role}}, Role: {{role}}{{/if}}{{#if lastContribution}}, Last Contribution: {{lastContribution}}{{/if}}
+  - "{{title}}" (Tags: {{#if tags}}{{#each tags}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}{{else}}N/A{{/if}}){{#if role}}, Role: {{role}}{{/if}}{{#if lastContribution}}, Last Contribution: {{lastContribution}}{{/if}}
   {{/each}}
+{{else}}
+- No projects created yet.
 {{/if}}
+
 {{#if communityEngagement}}
 - Community Engagement:
-  {{#if communityEngagement.forumPosts}}Forum Posts: {{communityEngagement.forumPosts}}{{/if}}
-  {{#if communityEngagement.commentsMade}}Comments Made: {{communityEngagement.commentsMade}}{{/if}}
-  {{#if communityEngagement.upvotesGiven}}Upvotes Given: {{communityEngagement.upvotesGiven}}{{/if}}
+  {{#if communityEngagement.forumPosts}}Forum Posts: {{communityEngagement.forumPosts}}{{else}}No forum posts.{{/if}}
+  {{#if communityEngagement.commentsMade}}Comments Made: {{communityEngagement.commentsMade}}{{else}}No comments made.{{/if}}
+  {{#if communityEngagement.upvotesGiven}}Upvotes Given: {{communityEngagement.upvotesGiven}}{{else}}No upvotes given.{{/if}}
+{{else}}
+- No community engagement data.
 {{/if}}
+
 {{#if leaderboardRank}}
 - Leaderboard Rank: #{{leaderboardRank}}
+{{else}}
+- Not ranked on leaderboard yet.
 {{/if}}
-{{#if achievements}}
+
+{{#if achievements.length}}
 - Achievements: {{#each achievements}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}
+{{else}}
+- No achievements unlocked yet.
 {{/if}}
-{{#if recentActivityEvents}}
+
+{{#if recentActivityEvents.length}}
 - Recent Activities:
   {{#each recentActivityEvents}}
   - Type: {{type}}, Data: {{jsonStringify data}}, Timestamp: {{timestamp}}
   {{/each}}
+{{else}}
+- No recent activities recorded.
 {{/if}}
 
 Based on this information, generate a diverse list of 3-5 recommendations.
 Types of recommendations can include:
 - 'course': Suggest a new course or a next step in an existing course.
 - 'project': Suggest a project to start, contribute to, or a skill to apply from a project.
-- 'user_to_connect': Suggest another user to connect with based on shared interests or skills.
-- 'community_content': Highlight a relevant forum discussion, blog post, or event.
+- 'user_to_connect': Suggest another user to connect with based on shared interests or skills (use placeholder names if actual users cannot be queried).
+- 'community_content': Highlight a relevant forum discussion, blog post, or event (use placeholder titles if actual content cannot be queried).
 - 'feature_tip': Suggest exploring a platform feature they might find useful.
 
 For each recommendation:
 - Provide a clear 'title'.
 - Optionally, an 'itemId' (like course ID, project ID, user ID).
 - Optionally, a 'description' for more context.
-- Optionally, a 'link' to the relevant page.
+- Optionally, a 'link' to the relevant page (use placeholder links if needed, e.g., /courses/explore).
 - Optionally, a 'reason' explaining why this is recommended for THIS user.
 - Optionally, a 'relevanceScore' (0-1).
 
@@ -162,6 +231,7 @@ Try to provide varied types of recommendations.
 If suggesting a course, consider their current progress in other courses or related project skills.
 If suggesting a project, align it with their existing skills or learning goals.
 If suggesting a user to connect, find users with complementary skills or shared project interests.
+If user data is sparse (e.g., new user), provide general recommendations to get started on the platform.
 
 Output the recommendations in the specified JSON format.
 Also, provide a brief overall 'explanation' of how these recommendations were derived.
@@ -175,23 +245,20 @@ const dashboardRecommendationsFlow = ai.defineFlow(
     outputSchema: DashboardRecommendationsOutputSchema,
   },
   async (input) => {
-    // In a real scenario, you might fetch more dynamic data here based on input.userId
-    // e.g., query a database for all available courses, projects, users.
-    // For now, the prompt assumes it has enough context from the input.
-
     console.log("dashboardRecommendationsFlow called with input:", JSON.stringify(input, null, 2));
+
+    // The prompt now handles sparse data. Additional logic to fetch all available courses/projects
+    // could be added here if the LLM needs a broader context of what's available to recommend from.
+    // For now, the prompt relies on the user's specific activity.
 
     const { output, errors } = await dashboardRecommendationsPrompt(input);
 
     if (errors && errors.length > 0) {
         console.error("Errors from dashboardRecommendationsPrompt:", errors);
-        // Consider how to handle partial errors or if any error means failure
-        // For now, if any error, return empty recommendations
         return { recommendations: [], explanation: `Could not generate recommendations. Errors: ${errors.map(e => e.message).join(', ')}` };
     }
 
     if (!output) {
-        // Handle cases where the prompt might not return an output, e.g., due to safety filters or other issues.
         console.warn("dashboardRecommendationsPrompt returned no output.");
         return { recommendations: [], explanation: "Could not generate recommendations at this time (no output from AI)." };
     }
@@ -199,12 +266,18 @@ const dashboardRecommendationsFlow = ai.defineFlow(
   }
 );
 
-// Handlebars helper (if needed for complex objects in prompt)
-// genkit may automatically handle basic JSON.stringify, but for explicit control:
 ai.handlebars.registerHelper('jsonStringify', function(context) {
   try {
     return JSON.stringify(context);
   } catch (e) {
     return "[Unserializable Data]";
   }
+});
+
+// Helper to check if an array is empty (useful in Handlebars)
+ai.handlebars.registerHelper('ifNotEmpty', function(array, options) {
+  if (array && array.length > 0) {
+    return options.fn(this);
+  }
+  return options.inverse(this);
 });

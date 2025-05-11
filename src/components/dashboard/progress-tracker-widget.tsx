@@ -1,27 +1,123 @@
 
 "use client";
 
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { BookOpenText, FolderGit2 } from "lucide-react";
+import { BookOpenText, FolderGit2, Activity } from "lucide-react"; // Added Activity as a generic icon
+import { collection, query, where, getDocs, limit } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+import { Skeleton } from "@/components/ui/skeleton";
 
-// Mock data for progress
-const mockCourseProgress = [
-  { id: "course-1", title: "Introduction to Solidity", progress: 75 },
-  { id: "course-2", title: "Advanced Next.js", progress: 40 },
-];
+interface CourseProgress {
+  id: string;
+  title: string;
+  progress: number; // Percentage 0-100
+}
 
-const mockProjectProgress = [
-  { id: "project-1", title: "DeFi Lending Protocol", progress: 60, status: "In Progress" },
-  { id: "project-2", title: "NFT Marketplace V2", progress: 20, status: "Planning" },
-];
+interface ProjectProgress {
+  id: string;
+  title: string;
+  progress: number; // Percentage 0-100, or a status string
+  status?: string; // e.g., 'Planning', 'In Progress', 'Completed'
+}
 
-export function ProgressTrackerWidget() {
+interface ProgressTrackerWidgetProps {
+  userId: string;
+}
+
+export function ProgressTrackerWidget({ userId }: ProgressTrackerWidgetProps) {
+  const [courseProgress, setCourseProgress] = useState<CourseProgress[]>([]);
+  const [projectProgress, setProjectProgress] = useState<ProjectProgress[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    if (!userId) {
+      setIsLoading(false);
+      return;
+    }
+
+    const fetchProgressData = async () => {
+      setIsLoading(true);
+      try {
+        // Fetch Course Progress
+        const enrollmentsCol = collection(db, 'course_enrollments');
+        const enrollmentsQuery = query(enrollmentsCol, where("user_id", "==", userId), limit(5)); // Limit for display
+        const enrollmentsSnap = await getDocs(enrollmentsQuery);
+        
+        const coursesDataPromises = enrollmentsSnap.docs.map(async (enrollDoc) => {
+          const enrollment = enrollDoc.data();
+          // To get course title, you'd ideally fetch from 'courses' collection using enrollment.course_id
+          // For simplicity here, we'll use a placeholder title or assume it's on enrollment doc
+          return {
+            id: enrollment.course_id,
+            title: enrollment.course_title || `Course ${enrollment.course_id.substring(0,5)}...`, // Placeholder
+            progress: enrollment.progress_percentage || 0,
+          };
+        });
+        const courses = await Promise.all(coursesDataPromises);
+        setCourseProgress(courses);
+
+        // Fetch Project Progress (Simplified: assuming projects have a 'progress' field)
+        // This might need more complex logic based on your `project_contributions` schema
+        const projectsCol = collection(db, 'projects');
+        const projectsQuery = query(projectsCol, where("user_id", "==", userId), limit(5)); // Limit for display
+        const projectsSnap = await getDocs(projectsQuery);
+        const projectsData = projectsSnap.docs.map(doc => {
+          const project = doc.data();
+          return {
+            id: doc.id,
+            title: project.title,
+            // Assuming 'progress' field exists. If not, calculate from contributions or set default.
+            progress: project.progress || Math.floor(Math.random() * 100), // Placeholder progress
+            status: project.status || 'In Progress', // From schema
+          };
+        });
+        setProjectProgress(projectsData);
+
+      } catch (error) {
+        console.error("Error fetching progress data:", error);
+      }
+      setIsLoading(false);
+    };
+
+    fetchProgressData();
+  }, [userId]);
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center">
+            <Activity className="mr-2 h-5 w-5 text-primary" /> Your Progress
+          </CardTitle>
+          <CardDescription>Loading your learning and project development...</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div>
+            <h3 className="text-lg font-semibold mb-2 flex items-center">
+              <BookOpenText className="mr-2 h-5 w-5 text-primary/80" /> Course Progress
+            </h3>
+            <Skeleton className="h-8 w-full mb-2" />
+            <Skeleton className="h-8 w-full" />
+          </div>
+          <div>
+            <h3 className="text-lg font-semibold mb-2 flex items-center">
+              <FolderGit2 className="mr-2 h-5 w-5 text-primary/80" /> Project Progress
+            </h3>
+            <Skeleton className="h-8 w-full mb-2" />
+            <Skeleton className="h-8 w-full" />
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center">
-          <FolderGit2 className="mr-2 h-5 w-5 text-primary" /> {/* Changed icon */}
+          <Activity className="mr-2 h-5 w-5 text-primary" /> {/* Using Activity as a generic progress icon */}
           Your Progress
         </CardTitle>
         <CardDescription>Keep track of your learning and project development.</CardDescription>
@@ -32,9 +128,9 @@ export function ProgressTrackerWidget() {
             <BookOpenText className="mr-2 h-5 w-5 text-primary/80" />
             Course Progress
           </h3>
-          {mockCourseProgress.length > 0 ? (
+          {courseProgress.length > 0 ? (
             <ul className="space-y-3">
-              {mockCourseProgress.map(course => (
+              {courseProgress.map(course => (
                 <li key={course.id}>
                   <div className="flex justify-between items-center mb-1">
                     <span className="text-sm font-medium text-foreground">{course.title}</span>
@@ -54,9 +150,9 @@ export function ProgressTrackerWidget() {
             <FolderGit2 className="mr-2 h-5 w-5 text-primary/80" />
             Project Progress
           </h3>
-          {mockProjectProgress.length > 0 ? (
+          {projectProgress.length > 0 ? (
              <ul className="space-y-3">
-              {mockProjectProgress.map(project => (
+              {projectProgress.map(project => (
                 <li key={project.id}>
                   <div className="flex justify-between items-center mb-1">
                     <span className="text-sm font-medium text-foreground">{project.title}</span>

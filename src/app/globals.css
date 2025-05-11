@@ -80,6 +80,11 @@
   }
   body {
     @apply bg-background text-foreground;
+    @apply font-urw; /* Apply URW Gothic L, sans-serif to body */
     @apply leading-relaxed; /* Increased line height */
   }
+  h1 {
+    @apply font-sans; /* Apply Geist font to H1 tags */
+  }
+  /* Other text elements like h2-h6, p, etc., will inherit font-urw from body */
 }

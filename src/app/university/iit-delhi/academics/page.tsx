@@ -2,7 +2,7 @@
 import { PageHeader } from "@/components/core/page-header";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { BookHeart, BookMarked, Layers, Library, BookCopy, ListPlus, GraduationCap, Lightbulb, NotebookPen } from "lucide-react"; 
+import { BookHeart, BookMarked, Layers, Library, BookCopy, ListPlus, GraduationCap, Lightbulb, NotebookPen, Layers3 } from "lucide-react"; 
 
 export default function AcademicsPage() {
   const academicSubItems = [
@@ -15,26 +15,20 @@ export default function AcademicsPage() {
     { 
       label: 'Department (B.Tech)', 
       href: '/university/iit-delhi/academics/department-btech',
-      icon: NotebookPen, // Using a new icon for combined department courses
+      icon: NotebookPen,
       description: "Explore core and elective courses specific to B.Tech departmental studies."
+    },
+    { 
+      label: 'Programme (M.Tech)', 
+      href: '/university/iit-delhi/academics/programme-mtech',
+      icon: Layers3, 
+      description: "Delve into the core and elective courses for various M.Tech specializations."
     },
     { 
       label: 'Minor Degrees', 
       href: '/university/iit-delhi/academics/minor-degrees',
       icon: BookMarked,
       description: "Discover options to specialize in an additional field of study alongside your main degree."
-    },
-    { 
-      label: 'Programme Core (M.Tech)', 
-      href: '/university/iit-delhi/academics/programme-core-mtech',
-      icon: BookCopy, 
-      description: "Delve into the core courses for various M.Tech specializations."
-    },
-    { 
-      label: 'Programme Electives (M.Tech)', 
-      href: '/university/iit-delhi/academics/programme-electives-mtech',
-      icon: ListPlus, 
-      description: "Explore elective options available for M.Tech programmes to deepen your expertise."
     },
     {
       label: 'Open Courses',

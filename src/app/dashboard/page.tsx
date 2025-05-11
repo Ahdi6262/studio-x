@@ -9,8 +9,9 @@ import { StatCard } from "@/components/dashboard/stat-card";
 import { QuickLinks } from "@/components/dashboard/quick-links";
 import { ActivityChart } from "@/components/dashboard/activity-chart";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { BookOpen, FolderKanban, CalendarClock, Award, MessageSquare, Settings, User } from "lucide-react";
+import { BookOpen, FolderKanban, CalendarClock, Award, MessageSquare, Settings, User, Trophy } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { mockLeaderboard, type LeaderboardUser } from '@/lib/mock-data';
 
 export default function DashboardPage() {
   const { user, isAuthenticated, isLoading: authIsLoading } = useAuth();
@@ -40,19 +41,27 @@ export default function DashboardPage() {
     );
   }
 
-  // Mock data - replace with actual data fetching
+  let currentUserBoardData: LeaderboardUser | undefined = undefined;
+  if (mockLeaderboard.length > 0) {
+    // For demo purposes, we'll assume the authenticated user is the first one in the mock leaderboard.
+    // In a real application, you would find the user based on their actual ID or a matching property (e.g., user.name).
+    // currentUserBoardData = mockLeaderboard.find(lbUser => lbUser.name === user.name);
+    // If not found by name, or for simpler demo:
+    currentUserBoardData = mockLeaderboard[0];
+  }
+
   const userStats = {
-    points: 1250, // Example from mockLeaderboard or user profile
-    coursesEnrolled: 3,
-    projectsCreated: 2,
-    upcomingEvents: 1,
+    points: currentUserBoardData ? currentUserBoardData.points : 0,
+    coursesEnrolled: 3, // Placeholder - replace with actual data
+    projectsCreated: 2, // Placeholder - replace with actual data
+    upcomingEvents: 1,  // Placeholder - replace with actual data
   };
 
   const quickLinksData = [
     { href: "/profile", label: "My Profile", icon: User },
-    { href: "/courses", label: "My Courses", icon: BookOpen }, // Assuming a "My Courses" page or filter
-    { href: "/portfolio", label: "My Projects", icon: FolderKanban }, // Assuming a "My Projects" page or filter
-    { href: "/settings", label: "Account Settings", icon: Settings }, // Assuming a general settings page
+    { href: "/courses", label: "My Courses", icon: BookOpen },
+    { href: "/portfolio", label: "My Projects", icon: FolderKanban },
+    { href: "/settings", label: "Account Settings", icon: Settings },
   ];
 
   return (
@@ -69,6 +78,21 @@ export default function DashboardPage() {
           icon={Award}
           description="Earned from contributions"
         />
+        {currentUserBoardData ? (
+          <StatCard
+            title="Leaderboard Rank"
+            value={`#${currentUserBoardData.rank}`}
+            icon={Trophy}
+            description="Keep climbing!"
+          />
+        ) : (
+          <StatCard
+            title="Leaderboard Rank"
+            value="N/A"
+            icon={Trophy}
+            description="Get started to rank up!"
+          />
+        )}
         <StatCard
           title="Courses Enrolled"
           value={userStats.coursesEnrolled.toString()}

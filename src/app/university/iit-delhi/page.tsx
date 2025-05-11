@@ -31,21 +31,21 @@ export default function UniversityIITDelhiPage() {
     {
       title: "Artificial Intelligence",
       description: "Explore the fascinating world of AI, including machine learning, deep learning, and natural language processing. Relevant courses can be found within Minor Degrees.",
-      href: "/university/iit-delhi/academics/minor-degrees", // CS Minor includes AI/ML courses
+      href: "/university/iit-delhi/academics/minor-degrees", 
       icon: Brain,
       actionText: "Learn More"
     },
     {
       title: "Programming Languages",
-      description: "Master various programming paradigms and languages. Relevant courses can be found within Minor Degrees and Institute Courses.",
-      href: "/university/iit-delhi/academics/minor-degrees", // CS Minor includes Programming Languages course
+      description: "I have learned C++, Rust, Python, R, and their respected libraries.",
+      href: "/university/iit-delhi/academics/minor-degrees", 
       icon: Code,
       actionText: "Learn More"
     },
     {
       title: "Mathematics",
       description: "Deepen your understanding of core mathematical concepts. Many foundational and advanced math courses are part of the B.Tech departmental curriculum.",
-      href: "/university/iit-delhi/academics/department-btech", // B.Tech Departmental courses are math-heavy
+      href: "/university/iit-delhi/academics/department-btech", 
       icon: Sigma,
       actionText: "Learn More"
     }

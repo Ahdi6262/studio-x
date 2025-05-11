@@ -54,8 +54,8 @@ export default function UniversityIITDelhiPage() {
   return (
     <div className="container mx-auto px-4 py-12">
       <PageHeader
-        title="My knowledge"
-        description="This section outlines the diverse sources of my learning, including foundational academic knowledge from institutions like IIT Delhi, and ongoing exploration of various research areas."
+        title="My Knowledge"
+        description="This section showcases my learning journey, highlighting knowledge gained from formal education at institutions like IIT Delhi, complemented by continuous exploration and self-study through open-source resources and various research areas."
       />
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {knowledgeAreas.map((area) => (

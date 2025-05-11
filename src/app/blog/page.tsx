@@ -7,7 +7,7 @@ export default function BlogPage() {
   return (
     <div className="container mx-auto px-4 py-12">
       <PageHeader
-        title="CreatorChain Hub Blog"
+        title="ad the add hub Blog"
         description="Stay updated with the latest news, insights, tutorials, and creator spotlights from the Web3 ecosystem."
         actions={
           <Button variant="outline">

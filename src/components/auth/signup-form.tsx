@@ -33,7 +33,7 @@ export function SignupForm() {
     
     // Mock signup logic - typically you'd call your backend here
     login({ name, email }); // Auto-login after signup
-    toast({ title: "Signup Successful", description: "Welcome to CreatorChain Hub!" });
+    toast({ title: "Signup Successful", description: "Welcome to ad the add hub!" });
     router.push('/profile'); // Redirect to profile or dashboard
     
     setIsLoading(false);
@@ -43,7 +43,7 @@ export function SignupForm() {
     <Card className="w-full max-w-md shadow-xl">
       <CardHeader className="text-center">
         <CardTitle className="text-3xl font-bold">Create an Account</CardTitle>
-        <CardDescription>Join CreatorChain Hub and start your journey.</CardDescription>
+        <CardDescription>Join ad the add hub and start your journey.</CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -131,4 +131,3 @@ export function SignupForm() {
       </CardFooter>
     </Card>
   );
-}

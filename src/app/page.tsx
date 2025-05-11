@@ -1,4 +1,5 @@
 
+import React from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -13,7 +14,7 @@ export default function Home() {
 
       {/* Features Section */}
       <section className="py-16 md:py-24">
-        <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">Why CreatorChain Hub?</h2>
+        <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">Why ad the add hub?</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <Link href="/portfolio" className="block hover:no-underline group">
             <Card className="shadow-lg group-hover:shadow-primary/20 transition-shadow duration-300 h-full flex flex-col">
@@ -85,7 +86,7 @@ export default function Home() {
         <div className="container mx-auto text-center">
           <h2 className="text-3xl md:text-4xl font-bold">Ready to Join the Revolution?</h2>
           <p className="mt-4 text-lg text-muted-foreground max-w-xl mx-auto">
-            Become a part of the CreatorChain Hub community today and take your Web3 journey to the next level.
+            Become a part of the ad the add hub community today and take your Web3 journey to the next level.
           </p>
           <Button size="lg" className="mt-8" asChild>
             <Link href="/signup">Sign Up Now <ArrowRight className="ml-2 h-5 w-5" /></Link>

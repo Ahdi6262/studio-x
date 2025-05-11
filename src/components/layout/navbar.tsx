@@ -1,4 +1,3 @@
-
 "use client";
 
 import Link from 'next/link';
@@ -10,7 +9,7 @@ import { useAuth } from '@/contexts/auth-context';
 import { UserAvatarDropdown } from '@/components/auth/user-avatar-dropdown';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 const mainNavItems = [
   { label: 'Home', href: '/' },
@@ -35,17 +34,19 @@ export function Navbar() {
   const { isAuthenticated } = useAuth();
   const pathname = usePathname();
   const [isMounted, setIsMounted] = useState(false);
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
 
   useEffect(() => {
     setIsMounted(true);
   }, []);
 
+  const closeSheet = useCallback(() => setIsSheetOpen(false), []);
 
-  const renderNavItems = (items: {label: string, href: string}[]) => items.map((item) => {
+  const renderNavItems = useCallback((items: {label: string, href: string}[]) => items.map((item) => {
     const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href));
     return (
       <Link
-        key={item.href} 
+        key={item.label} 
         href={item.href}
         className={cn(
           "text-sm font-medium transition-colors hover:text-primary",
@@ -55,14 +56,15 @@ export function Navbar() {
         {item.label}
       </Link>
     );
-  });
+  }), [pathname]);
 
-  const renderMobileNavItems = (items: {label: string, href: string}[]) => items.map((item) => {
+  const renderMobileNavItems = useCallback((items: {label: string, href: string}[], closeSheetFn: () => void ) => items.map((item) => {
     const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href));
     return (
       <Link
-        key={item.href}
+        key={item.label}
         href={item.href}
+        onClick={closeSheetFn}
         className={cn(
           "text-lg font-medium transition-colors hover:text-primary hover:bg-primary/5 py-2 px-3 rounded-md block",
           isActive ? "text-primary bg-primary/10" : ""
@@ -71,7 +73,7 @@ export function Navbar() {
         {item.label}
       </Link>
     );
-  });
+  }), [pathname]);
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -79,7 +81,7 @@ export function Navbar() {
         <Link href="/" className="mr-6 flex items-center space-x-2">
           <Icons.Logo className="h-6 w-6 text-primary" />
           <span className="font-bold sm:inline-block text-xl font-heading">
-            CreatorChain Hub
+            ad the add hub
           </span>
         </Link>
         
@@ -112,7 +114,7 @@ export function Navbar() {
           )}
           
           <div className="md:hidden">
-            <Sheet>
+            <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
               <SheetTrigger asChild>
                 <Button variant="ghost" size="icon">
                   <Menu className="h-5 w-5" />
@@ -120,19 +122,19 @@ export function Navbar() {
                 </Button>
               </SheetTrigger>
               <SheetContent side="right" className="w-[300px] sm:w-[400px] overflow-y-auto">
-                <SheetHeader>
-                  <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
+                <SheetHeader className="sr-only"> {/* Visually hide header but provide for accessibility */}
+                  <SheetTitle>Navigation Menu</SheetTitle>
                 </SheetHeader>
-                <Link href="/" className="mt-4 mb-6 flex items-center space-x-2"> {/* Adjusted margin for header */}
+                <Link href="/" onClick={closeSheet} className="mt-4 mb-6 flex items-center space-x-2"> {/* Adjusted margin for header */}
                   <Icons.Logo className="h-7 w-7 text-primary" />
                   <span className="font-bold text-2xl font-heading">
-                    CreatorChain Hub
+                    ad the add hub
                   </span>
                 </Link>
                 <nav className="flex flex-col space-y-2 mt-6">
-                  {renderMobileNavItems(mainNavItems)}
-                  {renderMobileNavItems(otherNavItems)}
-                  {renderMobileNavItems(utilityNavItems)}
+                  {renderMobileNavItems(mainNavItems, closeSheet)}
+                  {renderMobileNavItems(otherNavItems, closeSheet)}
+                  {renderMobileNavItems(utilityNavItems, closeSheet)}
 
                   <hr className="my-4 border-border" />
                   {isMounted ? ( 
@@ -141,10 +143,10 @@ export function Navbar() {
                     ) : (
                       <>
                        <Button variant="outline" className="w-full" asChild>
-                        <Link href="/login">Login</Link>
+                        <Link href="/login" onClick={closeSheet}>Login</Link>
                       </Button>
                       <Button className="w-full" asChild>
-                        <Link href="/signup">Sign Up</Link>
+                        <Link href="/signup" onClick={closeSheet}>Sign Up</Link>
                       </Button>
                       </>
                     )

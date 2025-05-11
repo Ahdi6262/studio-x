@@ -6,16 +6,25 @@ import { mockLeaderboard } from "@/lib/mock-data";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { RefreshCw } from "lucide-react";
-
-// Assume the first user in mock data is the current user for demo
-const currentUserId = mockLeaderboard.length > 0 ? mockLeaderboard[0].id : null;
+import { useEffect, useState } from "react";
 
 export default function LeaderboardPage() {
+  // Assume the first user in mock data is the current user for demo
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Client-side only effect to avoid hydration issues with Math.random or similar
+    if (mockLeaderboard.length > 0) {
+      setCurrentUserId(mockLeaderboard[0].id);
+    }
+  }, []);
+
+
   return (
     <div className="container mx-auto px-4 py-12">
       <PageHeader
         title="Creator Leaderboard"
-        description="See who's making waves in the CreatorChain Hub! Points are awarded for contributions, course completions, and community engagement."
+        description="See who's making waves in the ad the add hub! Points are awarded for contributions, course completions, and community engagement."
         actions={
             <Button variant="outline">
                 <RefreshCw className="mr-2 h-4 w-4 animate-spin-slow" /> Refresh Leaderboard

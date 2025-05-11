@@ -22,7 +22,7 @@ export const HeroSection = memo(function HeroSection() {
   const staticContent = (
     <>
       <h1 className="text-5xl md:text-6xl font-bold tracking-tight text-foreground">
-        Welcome to <span className="text-primary">CreatorChain Hub</span>
+        Welcome to <span className="text-primary">ad the add hub</span>
       </h1>
       <p className="mt-6 text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto">
         The ultimate platform for Web3 creators. Showcase your portfolio, learn new skills, connect with the community, and climb the leaderboard.
@@ -38,7 +38,7 @@ export const HeroSection = memo(function HeroSection() {
       <div className="mt-16 relative">
         <Image 
           src="https://picsum.photos/seed/hero/1200/600" 
-          alt="CreatorChain Hub platform showcase" 
+          alt="ad the add hub platform showcase" 
           width={1200} 
           height={600}
           className="rounded-xl shadow-2xl mx-auto object-cover"
@@ -61,7 +61,7 @@ export const HeroSection = memo(function HeroSection() {
           <>
             <h1 className="text-5xl md:text-6xl font-bold tracking-tight text-foreground">
               <AnimatedTextWord text="Welcome to" el="span" className="block" delay={0.1} stagger={0.15}/>
-              <AnimatedTextCharacter text="CreatorChain Hub" el="span" className="text-primary block mt-1 md:mt-2" delay={0.5} stagger={0.04} />
+              <AnimatedTextCharacter text="ad the add hub" el="span" className="text-primary block mt-1 md:mt-2" delay={0.5} stagger={0.04} />
             </h1>
             <p 
               className="mt-6 text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto animate-fadeInUp" 
@@ -86,7 +86,7 @@ export const HeroSection = memo(function HeroSection() {
             >
               <Image 
                 src="https://picsum.photos/seed/hero/1200/600" 
-                alt="CreatorChain Hub platform showcase" 
+                alt="ad the add hub platform showcase" 
                 width={1200} 
                 height={600}
                 className="rounded-xl shadow-2xl mx-auto object-cover"

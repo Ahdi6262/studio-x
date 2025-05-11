@@ -24,7 +24,7 @@ export default function UniversityIITDelhiPage() {
     {
       title: "Quantitative Finance",
       description: "Delve into the intersection of finance, mathematics, and computational techniques to model and manage risk.",
-      href: "#", 
+      href: "/university/iit-delhi/quantitative-finance", 
       icon: DollarSign,
       actionText: "Learn More"
     },
@@ -45,7 +45,7 @@ export default function UniversityIITDelhiPage() {
     {
       title: "Mathematics",
       description: "Deepen your understanding of core mathematical concepts. Many foundational and advanced math courses are part of the B.Tech departmental curriculum.",
-      href: "/university/iit-delhi/academics/department-btech", 
+      href: "/university/iit-delhi/mathematics", 
       icon: Sigma,
       actionText: "Learn More"
     }

@@ -1,7 +1,8 @@
 
 "use client";
 
-import { useState, type FormEvent } from 'react';
+import type { FormEvent } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -12,6 +13,9 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Icons } from '@/components/icons';
 import { useAuth } from '@/contexts/auth-context';
 import { useToast } from '@/hooks/use-toast';
+import type { MockRegisteredUser } from '@/types/auth';
+
+const MOCK_USERS_STORAGE_KEY = 'mockRegisteredUsers';
 
 export function LoginForm() {
   const router = useRouter();
@@ -25,25 +29,51 @@ export function LoginForm() {
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
     setIsLoading(true);
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API delay
     
-    // Mock login logic
-    if (email === 'user@example.com' && password === 'password') {
-      login({ name: 'Test User', email }, keepLoggedIn);
-      toast({ title: "Login Successful", description: "Welcome back!" });
-      router.push('/profile'); 
-    } else {
+    let loggedIn = false;
+
+    // 1. Check mock registered users from localStorage
+    try {
+      const storedUsersRaw = localStorage.getItem(MOCK_USERS_STORAGE_KEY);
+      if (storedUsersRaw) {
+        const users: MockRegisteredUser[] = JSON.parse(storedUsersRaw);
+        if (Array.isArray(users)) {
+          const matchedUser = users.find(u => u.email === email && u.password === password);
+          if (matchedUser) {
+            login({ name: matchedUser.name, email: matchedUser.email, avatar: matchedUser.avatar }, keepLoggedIn);
+            toast({ title: "Login Successful", description: "Welcome back!" });
+            router.push('/dashboard');
+            loggedIn = true;
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Error reading mock users from localStorage:", error);
+      // Continue to fallback if localStorage fails
+    }
+
+    // 2. Fallback to hardcoded default user if not logged in yet
+    if (!loggedIn) {
+      if (email === 'user@example.com' && password === 'password') {
+        const defaultAvatar = `https://avatar.vercel.sh/${email}.png?size=128`;
+        login({ name: 'Test User', email, avatar: defaultAvatar }, keepLoggedIn);
+        toast({ title: "Login Successful", description: "Welcome back! (Default User)" });
+        router.push('/dashboard');
+        loggedIn = true;
+      }
+    }
+
+    if (!loggedIn) {
       toast({ title: "Login Failed", description: "Invalid email or password.", variant: "destructive" });
     }
+    
     setIsLoading(false);
   };
 
   const handleGoogleLogin = () => {
     setIsLoading(true);
-    // Placeholder for Google login API call
     console.log("Attempting Google login...");
-    // Example: window.location.href = '/api/auth/google';
     setTimeout(() => {
       toast({ title: "Google Login", description: "Google login functionality coming soon!" });
       setIsLoading(false);
@@ -52,9 +82,7 @@ export function LoginForm() {
 
   const handleGithubLogin = () => {
     setIsLoading(true);
-    // Placeholder for GitHub login API call
     console.log("Attempting GitHub login...");
-    // Example: window.location.href = '/api/auth/github';
     setTimeout(() => {
       toast({ title: "GitHub Login", description: "GitHub login functionality coming soon!" });
       setIsLoading(false);
@@ -63,9 +91,7 @@ export function LoginForm() {
 
   const handleFacebookLogin = () => {
     setIsLoading(true);
-    // Placeholder for Facebook login API call
     console.log("Attempting Facebook login...");
-    // Example: window.location.href = '/api/auth/facebook';
     setTimeout(() => {
       toast({ title: "Facebook Login", description: "Facebook login functionality coming soon!" });
       setIsLoading(false);
@@ -73,7 +99,6 @@ export function LoginForm() {
   };
 
   const handleKeepLoggedInChange = (checked: boolean | 'indeterminate') => {
-    // Defer the state update to prevent flushSync error
     setTimeout(() => {
         setKeepLoggedIn(checked as boolean);
     }, 0);

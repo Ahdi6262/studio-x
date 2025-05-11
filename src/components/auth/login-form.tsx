@@ -72,6 +72,13 @@ export function LoginForm() {
     }, 1500);
   };
 
+  const handleKeepLoggedInChange = (checked: boolean | 'indeterminate') => {
+    // Defer the state update to prevent flushSync error
+    setTimeout(() => {
+        setKeepLoggedIn(checked as boolean);
+    }, 0);
+  };
+
   return (
     <Card className="w-full max-w-md shadow-xl">
       <CardHeader className="text-center">
@@ -109,7 +116,7 @@ export function LoginForm() {
               <Checkbox 
                 id="keep-logged-in" 
                 checked={keepLoggedIn}
-                onCheckedChange={(checked) => setKeepLoggedIn(checked as boolean)}
+                onCheckedChange={handleKeepLoggedInChange}
                 disabled={isLoading}
               />
               <Label htmlFor="keep-logged-in" className="text-sm font-normal">Keep me signed in</Label>

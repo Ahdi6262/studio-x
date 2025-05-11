@@ -24,10 +24,13 @@ const aiBooks: Record<string, string[]> = {
     "AI Engineering",
     "Co-intelligence",
     "Artificial Intelligence: A Modern Approach",
-    "Power and Prediction", // Corrected from "Power and process" based on common book titles
+    "Power and Prediction", 
     "The Coming Wave"
   ]
 };
+
+const primaryAiBooks = aiBooks.ai.slice(0, 3);
+const secondaryAiBooks = aiBooks.ai.slice(3);
 
 export default function AIOverviewPage() {
   return (
@@ -75,11 +78,25 @@ export default function AIOverviewPage() {
                   </h3>
                   {category.id === 'books' ? (
                     aiBooks.ai && aiBooks.ai.length > 0 ? (
-                      <ul className="list-disc list-inside space-y-1.5 text-foreground/90">
-                        {aiBooks.ai.map((bookTitle, index) => (
-                          <li key={index}>{bookTitle}</li>
-                        ))}
-                      </ul>
+                      <>
+                        <ul className="list-disc list-inside space-y-1.5 text-foreground/90 mb-4">
+                          {primaryAiBooks.map((bookTitle, index) => (
+                            <li key={`primary-ai-${index}`}>{bookTitle}</li>
+                          ))}
+                        </ul>
+                        {secondaryAiBooks.length > 0 && (
+                           <>
+                            {/* You can add a sub-heading here if desired, e.g.,
+                            <h4 className="text-md font-medium mt-4 mb-2 text-primary/80">Further Reading:</h4> 
+                            */}
+                            <ul className="list-disc list-inside space-y-1.5 text-foreground/90">
+                              {secondaryAiBooks.map((bookTitle, index) => (
+                                <li key={`secondary-ai-${index}`}>{bookTitle}</li>
+                              ))}
+                            </ul>
+                          </>
+                        )}
+                      </>
                     ) : (
                       <p className="text-muted-foreground">
                         No specific books listed for AI Overview yet.

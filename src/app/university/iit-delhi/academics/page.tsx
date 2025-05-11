@@ -2,10 +2,16 @@
 import { PageHeader } from "@/components/core/page-header";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { BookHeart, BookMarked, Layers, Library, BookCopy, ListPlus, GraduationCap } from "lucide-react"; 
+import { BookHeart, BookMarked, Layers, Library, BookCopy, ListPlus, GraduationCap, Lightbulb } from "lucide-react"; 
 
 export default function AcademicsPage() {
   const academicSubItems = [
+    { 
+      label: 'Institute Courses (B.Tech)', 
+      href: '/university/iit-delhi/academics/institute-courses',
+      icon: Library,
+      description: "Browse B.Tech courses offered institute-wide, often covering foundational or interdisciplinary subjects."
+    },
     { 
       label: 'Departmental Core (B.Tech)', 
       href: '/university/iit-delhi/academics/departmental-core',
@@ -17,12 +23,6 @@ export default function AcademicsPage() {
       href: '/university/iit-delhi/academics/minor-degrees',
       icon: BookMarked,
       description: "Discover options to specialize in an additional field of study alongside your main degree."
-    },
-    { 
-      label: 'Institute Courses (B.Tech)', 
-      href: '/university/iit-delhi/academics/institute-courses',
-      icon: Library,
-      description: "Browse B.Tech courses offered institute-wide, often covering foundational or interdisciplinary subjects."
     },
     { 
       label: 'Departmental Electives (B.Tech)', 
@@ -47,6 +47,12 @@ export default function AcademicsPage() {
       href: '/university/iit-delhi/academics/open-courses',
       icon: GraduationCap,
       description: "Access a selection of courses open to all students, fostering interdisciplinary learning."
+    },
+    {
+      label: 'Projects',
+      href: '/university/iit-delhi/academics/projects',
+      icon: Lightbulb,
+      description: "Explore various academic and research projects undertaken at the institute."
     }
   ];
 

@@ -8,4 +8,18 @@ export const Footer = React.memo(function Footer() {
           &copy; {new Date().getFullYear()} ad the add hub. All rights reserved.
         </p>
         <div className="flex space-x-4">
-          {
+          {/* Placeholder for social media or other links */}
+          {/* Example:
+          <Link href="/privacy" className="text-sm text-muted-foreground hover:text-primary">
+            Privacy Policy
+          </Link>
+          <Link href="/terms" className="text-sm text-muted-foreground hover:text-primary">
+            Terms of Service
+          </Link>
+          */}
+        </div>
+      </div>
+    </footer>
+  );
+});
+Footer.displayName = 'Footer';

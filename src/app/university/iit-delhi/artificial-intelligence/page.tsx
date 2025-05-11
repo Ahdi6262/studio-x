@@ -17,21 +17,21 @@ const aiSubTopicsData: AISubTopic[] = [
   {
     title: "Artificial Intelligence Overview",
     description: "Understand the core concepts, history, and broad applications of Artificial Intelligence. Explore foundational principles and ethical considerations.",
-    href: "#", // Placeholder, can be updated to a specific page
+    href: "/university/iit-delhi/artificial-intelligence/overview",
     icon: Brain,
     actionText: "Explore Overview"
   },
   {
     title: "Machine Learning",
     description: "Dive into algorithms, statistical models, and techniques that enable computer systems to learn from and make decisions based on data.",
-    href: "#", // Placeholder
+    href: "/university/iit-delhi/artificial-intelligence/machine-learning",
     icon: Cpu,
     actionText: "Explore ML"
   },
   {
     title: "Deep Learning",
     description: "Discover neural networks, including convolutional (CNNs) and recurrent (RNNs) networks, and their applications in complex pattern recognition tasks.",
-    href: "#", // Placeholder
+    href: "/university/iit-delhi/artificial-intelligence/deep-learning",
     icon: Layers,
     actionText: "Explore DL"
   }
@@ -70,3 +70,4 @@ export default function ArtificialIntelligencePage() {
     </div>
   );
 }
+

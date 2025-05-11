@@ -21,7 +21,7 @@ const openSans = Open_Sans({
 });
 
 export const metadata: Metadata = {
-  title: 'ad the add hub',
+  title: 'HEX THE ADD HUB',
   description: 'The central hub for creators on the chain.',
 };
 

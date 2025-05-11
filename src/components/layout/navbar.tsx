@@ -81,7 +81,7 @@ export function Navbar() {
         <Link href="/" className="mr-6 flex items-center space-x-2">
           <Icons.Logo className="h-6 w-6 text-primary" />
           <span className="font-bold sm:inline-block text-xl font-heading">
-            ad the add hub
+            HEX THE ADD HUB
           </span>
         </Link>
         
@@ -128,7 +128,7 @@ export function Navbar() {
                 <Link href="/" onClick={closeSheet} className="mt-4 mb-6 flex items-center space-x-2"> {/* Adjusted margin for header */}
                   <Icons.Logo className="h-7 w-7 text-primary" />
                   <span className="font-bold text-2xl font-heading">
-                    ad the add hub
+                    HEX THE ADD HUB
                   </span>
                 </Link>
                 <nav className="flex flex-col space-y-2 mt-6">

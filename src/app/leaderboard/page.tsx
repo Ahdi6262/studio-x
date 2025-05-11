@@ -24,7 +24,7 @@ export default function LeaderboardPage() {
     <div className="container mx-auto px-4 py-12">
       <PageHeader
         title="Creator Leaderboard"
-        description="See who's making waves in the ad the add hub! Points are awarded for contributions, course completions, and community engagement."
+        description="See who's making waves in the HEX THE ADD HUB! Points are awarded for contributions, course completions, and community engagement."
         actions={
             <Button variant="outline">
                 <RefreshCw className="mr-2 h-4 w-4 animate-spin-slow" /> Refresh Leaderboard

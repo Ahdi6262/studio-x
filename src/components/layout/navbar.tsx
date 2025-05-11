@@ -2,16 +2,10 @@
 "use client";
 
 import Link from 'next/link';
-import { Menu, ChevronDown } from 'lucide-react';
+import { Menu } from 'lucide-react'; // Removed ChevronDown as About dropdown is removed
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-  DropdownMenuSeparator,
-} from '@/components/ui/dropdown-menu';
+// DropdownMenu components are removed as they are no longer used for "About"
 import { Icons } from '@/components/icons';
 import { useAuth } from '@/contexts/auth-context';
 import { UserAvatarDropdown } from '@/components/auth/user-avatar-dropdown';
@@ -22,24 +16,18 @@ const mainNavItems = [
   { label: 'Courses', href: '/courses' },
 ];
 
-const coolDudeNavItems = [
+// These items were previously under a "Cool Dude" conceptual grouping in the prompt,
+// but appeared after "About". "Academics" is removed from here.
+const otherNavItems = [
   { label: 'People', href: '/people' },
   { label: 'Events', href: '/events' },
-  { label: 'Academics', href: '/academics' },
-];
-
-const aboutSubItems = [
-  { label: 'Departmental Core', href: '/about/departmental-core' },
-  { label: 'Interdisciplinary Initiatives', href: '/about/interdisciplinary-initiatives' },
-  { label: 'Research Labs', href: '/about/research-labs' },
-  { label: 'Minor Degrees', href: '/about/minor-degrees' },
-  { label: 'Academic Sections', href: '/about/academic-sections' },
+  // { label: 'Academics', href: '/academics' }, // Removed as per request
 ];
 
 const utilityNavItems = [
   { label: 'Leaderboard', href: '/leaderboard' },
   { label: 'Blog', href: '/blog' },
-  { label: 'Cool Dude', href: '/cool-dude' },
+  { label: 'Cool Dude', href: '/cool-dude' }, // Link to Cool Dude page
 ];
 
 
@@ -66,6 +54,15 @@ export function Navbar() {
     </Link>
   ));
 
+  // Sub-items for mobile "Academics" - these were formerly for "About"
+  const academicsMobileSubItems = [
+    { label: 'Departmental Core', href: '/academics/departmental-core' },
+    { label: 'Interdisciplinary Initiatives', href: '/academics/interdisciplinary-initiatives' },
+    { label: 'Research Labs', href: '/academics/research-labs' },
+    { label: 'Minor Degrees', href: '/academics/minor-degrees' },
+    { label: 'Academic Sections', href: '/academics/academic-sections' },
+  ];
+
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 max-w-screen-2xl items-center">
@@ -78,23 +75,8 @@ export function Navbar() {
         
         <nav className="hidden md:flex gap-4 items-center">
           {renderNavItems(mainNavItems)}
-          
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="text-sm font-medium text-foreground/70 transition-colors hover:text-foreground px-0">
-                About <ChevronDown className="ml-1 h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start">
-              {aboutSubItems.map((subItem) => (
-                <DropdownMenuItem key={subItem.label} asChild>
-                  <Link href={subItem.href}>{subItem.label}</Link>
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-
-          {renderNavItems(coolDudeNavItems)}
+          {/* "About" DropdownMenu removed */}
+          {renderNavItems(otherNavItems)}
           {renderNavItems(utilityNavItems)}
         </nav>
 
@@ -125,10 +107,11 @@ export function Navbar() {
                 <nav className="flex flex-col space-y-3 mt-8">
                   {renderMobileNavItems(mainNavItems)}
                   
-                  {/* Mobile "About" with sub-items */}
-                  <div className="text-lg font-medium">About</div>
+                  {/* Mobile "Academics" section with sub-items (formerly About) */}
+                  {/* This is a conceptual grouping for mobile, actual page is linked from Cool Dude */}
+                  <div className="text-lg font-medium">Academics</div>
                   <div className="flex flex-col space-y-2 pl-4">
-                    {aboutSubItems.map((subItem) => (
+                    {academicsMobileSubItems.map((subItem) => (
                        <Link
                         key={subItem.label}
                         href={subItem.href}
@@ -139,7 +122,7 @@ export function Navbar() {
                     ))}
                   </div>
                   
-                  {renderMobileNavItems(coolDudeNavItems)}
+                  {renderMobileNavItems(otherNavItems)}
                   {renderMobileNavItems(utilityNavItems)}
 
                   <hr className="my-4 border-border" />

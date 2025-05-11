@@ -2,6 +2,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { BookOpen } from 'lucide-react'; // Icon for the new button
 
 export default function CoolDudePage() {
   return (
@@ -43,11 +44,26 @@ export default function CoolDudePage() {
           </div>
 
           {/* Box Under the Fold - Circular Glass Frame */}
-          <div className="bg-[#f8f8f8]/80 dark:bg-neutral-800/80 backdrop-blur-lg rounded-full py-4 px-8 shadow-xl">
+          <div className="bg-[#f8f8f8]/80 dark:bg-neutral-800/80 backdrop-blur-lg rounded-full py-4 px-8 shadow-xl mb-8">
             <p className="text-md md:text-lg font-semibold text-neutral-700 dark:text-neutral-300">
               IIT Delhi | Mathematics
             </p>
           </div>
+
+          {/* Button to Academics Page */}
+          <div className="mt-4">
+            <Button
+              asChild
+              size="lg"
+              className="bg-primary/80 hover:bg-primary text-primary-foreground"
+            >
+              <Link href="/academics">
+                <BookOpen className="mr-2 h-5 w-5" />
+                Explore Academic Offerings
+              </Link>
+            </Button>
+          </div>
+
         </div>
       </div>
     </div>

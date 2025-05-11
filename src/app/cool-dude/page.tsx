@@ -47,7 +47,7 @@ export default function CoolDudePage() {
           <div className="mt-8">
             <Button
               asChild
-              className="bg-[#f8f8f8]/80 dark:bg-neutral-800/80 backdrop-blur-lg rounded-full py-4 px-8 shadow-xl text-md md:text-lg font-semibold text-neutral-700 dark:text-neutral-300 hover:opacity-90 transition-opacity"
+              className="bg-[#f8f8f8]/80 dark:bg-neutral-800/80 backdrop-blur-lg rounded-full py-6 px-12 shadow-xl text-xl md:text-2xl font-semibold text-neutral-700 dark:text-neutral-300 hover:opacity-90 transition-opacity"
             >
               <Link href="/academics">
                 IIT Delhi | Mathematics

@@ -8,10 +8,16 @@ import { PageHeader } from "@/components/core/page-header";
 import { StatCard } from "@/components/dashboard/stat-card";
 import { QuickLinks } from "@/components/dashboard/quick-links";
 import { ActivityChart } from "@/components/dashboard/activity-chart";
+import { RecommendationsWidget } from "@/components/dashboard/recommendations-widget";
+import { ProgressTrackerWidget } from "@/components/dashboard/progress-tracker-widget";
+import { CommunityFeedWidget } from "@/components/dashboard/community-feed-widget";
+import { AchievementsWidget } from "@/components/dashboard/achievements-widget";
+import { DirectMessageWidget } from "@/components/dashboard/direct-message-widget";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { BookOpen, FolderKanban, CalendarClock, Award, MessageSquare, Settings, User, Trophy } from "lucide-react";
+import { BookOpen, FolderKanban, CalendarClock, Award, MessageSquare, Settings, User, Trophy, Edit, LayoutGrid } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { mockLeaderboard, type LeaderboardUser } from '@/lib/mock-data';
+import { Button } from "@/components/ui/button";
 
 export default function DashboardPage() {
   const { user, isAuthenticated, isLoading: authIsLoading } = useAuth();
@@ -28,14 +34,16 @@ export default function DashboardPage() {
       <div className="container mx-auto px-4 py-12">
         <PageHeader title="Dashboard" description="Loading your dashboard..." />
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-8">
-          <Skeleton className="h-32" />
-          <Skeleton className="h-32" />
-          <Skeleton className="h-32" />
-          <Skeleton className="h-32" />
+          {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-32" />)}
         </div>
         <div className="grid gap-6 lg:grid-cols-3">
             <Skeleton className="h-64 lg:col-span-2" />
             <Skeleton className="h-64" />
+        </div>
+         <div className="grid gap-6 mt-8 md:grid-cols-2 lg:grid-cols-3">
+          <Skeleton className="h-48" />
+          <Skeleton className="h-48" />
+          <Skeleton className="h-48" />
         </div>
       </div>
     );
@@ -43,18 +51,14 @@ export default function DashboardPage() {
 
   let currentUserBoardData: LeaderboardUser | undefined = undefined;
   if (mockLeaderboard.length > 0) {
-    // For demo purposes, we'll assume the authenticated user is the first one in the mock leaderboard.
-    // In a real application, you would find the user based on their actual ID or a matching property (e.g., user.name).
-    // currentUserBoardData = mockLeaderboard.find(lbUser => lbUser.name === user.name);
-    // If not found by name, or for simpler demo:
-    currentUserBoardData = mockLeaderboard[0];
+    currentUserBoardData = mockLeaderboard.find(lbUser => lbUser.name === user.name) || mockLeaderboard[0];
   }
 
   const userStats = {
     points: currentUserBoardData ? currentUserBoardData.points : 0,
-    coursesEnrolled: 3, // Placeholder - replace with actual data
-    projectsCreated: 2, // Placeholder - replace with actual data
-    upcomingEvents: 1,  // Placeholder - replace with actual data
+    coursesEnrolled: 3, 
+    projectsCreated: 2, 
+    upcomingEvents: 1,  
   };
 
   const quickLinksData = [
@@ -69,9 +73,14 @@ export default function DashboardPage() {
       <PageHeader
         title={`Welcome back, ${user.name.split(' ')[0]}!`}
         description="Here's a quick overview of your activity and progress."
+        actions={
+            <Button variant="outline">
+                <LayoutGrid className="mr-2 h-4 w-4" /> Customize Layout (Soon)
+            </Button>
+        }
       />
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-8">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 mb-8">
         <StatCard
           title="Total Points"
           value={userStats.points.toLocaleString()}
@@ -114,16 +123,38 @@ export default function DashboardPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2">
+        {/* Main Column */}
+        <div className="lg:col-span-2 space-y-8">
           <ActivityChart />
+          <RecommendationsWidget />
+          <ProgressTrackerWidget />
         </div>
         
+        {/* Sidebar Column */}
         <div className="space-y-8">
             <QuickLinks title="Quick Links" links={quickLinksData} />
+            <AchievementsWidget />
+            <CommunityFeedWidget />
+            <DirectMessageWidget />
+             <Card>
+                <CardHeader>
+                    <CardTitle className="flex items-center">
+                        <Edit className="mr-2 h-5 w-5 text-primary" /> Customizable Layout
+                    </CardTitle>
+                    <CardDescription>
+                        Drag and drop widgets to personalize your dashboard view. (Feature coming soon!)
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <div className="text-center py-8 text-muted-foreground">
+                        <p>Layout customization is under development.</p>
+                    </div>
+                </CardContent>
+            </Card>
             <Card>
                 <CardHeader>
                     <CardTitle className="flex items-center">
-                        <MessageSquare className="mr-2 h-5 w-5 text-primary" /> Recent Activity
+                        <MessageSquare className="mr-2 h-5 w-5 text-primary" /> Old Recent Activity
                     </CardTitle>
                     <CardDescription>
                         Latest updates and notifications.

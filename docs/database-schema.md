@@ -59,6 +59,16 @@ Links projects to tags.
 - `tag_id`: UUID (Foreign Key to a global `tags` table, or use `tag_name` if tags are simpler)
 - *Primary Key*: (`project_id`, `tag_id`)
 
+### `project_contributions`
+Tracks user contributions to projects for points and activity.
+- `id`: UUID (Primary Key)
+- `user_id`: UUID (Foreign Key to `users.id`, Indexed)
+- `project_id`: UUID (Foreign Key to `projects.id`, Indexed)
+- `contribution_type`: VARCHAR(50) (e.g., 'code_commit', 'design_asset', 'documentation', 'feedback')
+- `description`: TEXT (Optional, details about the contribution)
+- `contribution_date`: TIMESTAMP (Default: CURRENT_TIMESTAMP)
+- `points_awarded`: INTEGER (Default: 0)
+
 ## 3. Courses
 
 ### `courses`
@@ -109,8 +119,9 @@ Tracks user enrollment and progress in courses.
 - `course_id`: UUID (Foreign Key to `courses.id`, Indexed)
 - `enrolled_at`: TIMESTAMP (Default: CURRENT_TIMESTAMP)
 - `progress_percentage`: INTEGER (0-100, Default: 0)
-- `completed_at`: TIMESTAMP (Nullable)
+- `completed_lessons`: JSONB (Array of `lesson_id`s, Default: '[]')
 - `last_accessed_lesson_id`: UUID (Foreign Key to `course_lessons.id`, Nullable)
+- `completed_at`: TIMESTAMP (Nullable)
 - *Constraint*: Unique (`user_id`, `course_id`)
 
 ### `course_ratings`
@@ -124,7 +135,7 @@ Stores user ratings and reviews for courses.
 - `updated_at`: TIMESTAMP (Default: CURRENT_TIMESTAMP)
 - *Constraint*: Unique (`user_id`, `course_id`)
 
-## 4. Leaderboard
+## 4. Leaderboard & Gamification
 
 ### `user_points`
 Stores aggregated points for users.
@@ -134,24 +145,65 @@ Stores aggregated points for users.
 - `weekly_points`: INTEGER (Default: 0, reset periodically)
 - `last_updated_at`: TIMESTAMP (Default: CURRENT_TIMESTAMP)
 
-### `user_achievements`
-Tracks achievements unlocked by users.
-- `id`: UUID (Primary Key)
-- `user_id`: UUID (Foreign Key to `users.id`, Indexed)
-- `achievement_key`: VARCHAR(100) (e.g., 'top_contributor', 'course_completed_blockchain_intro', Indexed)
-- `achieved_at`: TIMESTAMP (Default: CURRENT_TIMESTAMP)
-- `metadata`: JSONB (Optional, for achievement-specific data)
-- *Constraint*: Unique (`user_id`, `achievement_key`)
-
 ### `achievement_definitions`
 Defines available achievements.
 - `key`: VARCHAR(100) (Primary Key)
 - `name`: VARCHAR(255)
 - `description`: TEXT
-- `icon_url`: VARCHAR(2048) (Optional)
+- `icon_url`: VARCHAR(2048) (Optional, or use Lucide icon name)
 - `points_value`: INTEGER (Optional, points awarded for this achievement)
+- `criteria`: JSONB (Optional, for defining specific unlock criteria)
 
-## 5. Blog (Future Feature)
+### `user_achievements`
+Tracks achievements unlocked by users.
+- `id`: UUID (Primary Key)
+- `user_id`: UUID (Foreign Key to `users.id`, Indexed)
+- `achievement_key`: VARCHAR(100) (Foreign Key to `achievement_definitions.key`, Indexed)
+- `achieved_at`: TIMESTAMP (Default: CURRENT_TIMESTAMP)
+- `metadata`: JSONB (Optional, for achievement-specific data like course ID if it's a course completion achievement)
+- *Constraint*: Unique (`user_id`, `achievement_key`)
+
+## 5. Dashboard & User Activity
+
+### `user_activity_events`
+Stores various user activities for feeds, recommendations, and analytics.
+- `id`: UUID (Primary Key)
+- `user_id`: UUID (Foreign Key to `users.id`, Indexed)
+- `event_type`: VARCHAR(100) (e.g., 'course_enrollment', 'lesson_completed', 'project_created', 'project_contribution', 'forum_post', 'achievement_unlocked')
+- `event_data`: JSONB (Contextual data, e.g., `{ "course_id": "uuid", "course_title": "..." }`)
+- `timestamp`: TIMESTAMP (Default: CURRENT_TIMESTAMP, Indexed)
+
+### `dashboard_layouts`
+Stores user-specific dashboard widget layout preferences.
+- `user_id`: UUID (Foreign Key to `users.id`, Primary Key)
+- `layout_config`: JSONB (Stores an array of widget configurations, e.g., `[{ "widget_id": "recommendations", "order": 1, "col_span": 2 }, ...]`)
+- `updated_at`: TIMESTAMP (Default: CURRENT_TIMESTAMP)
+
+## 6. Community & Social
+
+### `community_feed_items`
+Pre-processed items for the community feed (can be derived from `user_activity_events` or direct posts).
+- `id`: UUID (Primary Key)
+- `user_id`: UUID (Foreign Key to `users.id`, Nullable if system-generated)
+- `item_type`: VARCHAR(50) (e.g., 'new_project', 'course_completion', 'user_milestone', 'announcement')
+- `title`: VARCHAR(255)
+- `description`: TEXT (Optional)
+- `link`: VARCHAR(2048) (Optional)
+- `image_url`: VARCHAR(2048) (Optional)
+- `item_data`: JSONB (Specific data related to the item type)
+- `timestamp`: TIMESTAMP (Default: CURRENT_TIMESTAMP, Indexed)
+
+### `direct_messages`
+Stores direct messages between users.
+- `id`: UUID (Primary Key)
+- `sender_id`: UUID (Foreign Key to `users.id`, Indexed)
+- `receiver_id`: UUID (Foreign Key to `users.id`, Indexed)
+- `content`: TEXT
+- `timestamp`: TIMESTAMP (Default: CURRENT_TIMESTAMP, Indexed)
+- `read_status`: BOOLEAN (Default: false)
+- `conversation_id`: VARCHAR(255) (Generated to group messages, e.g., sorted user_ids combination, Indexed)
+
+## 7. Blog (Future Feature)
 
 ### `blog_posts`
 - `id`: UUID (Primary Key)
@@ -172,7 +224,7 @@ Defines available achievements.
 - `tag_id`: UUID (Foreign Key to `tags.id`)
 - *Primary Key*: (`post_id`, `tag_id`)
 
-## 6. Events (If custom events beyond Google Calendar are needed)
+## 8. Events (If custom events beyond Google Calendar are needed)
 
 ### `platform_events`
 - `id`: UUID (Primary Key)
@@ -187,7 +239,7 @@ Defines available achievements.
 - `created_at`: TIMESTAMP (Default: CURRENT_TIMESTAMP)
 - `updated_at`: TIMESTAMP (Default: CURRENT_TIMESTAMP)
 
-## 7. Life Tracking
+## 9. Life Tracking
 
 ### `life_tracker_settings`
 Stores user-specific settings for the life tracking feature.
@@ -209,7 +261,7 @@ Allows users to mark significant weeks or events in their life calendar.
 - `event_type_color`: VARCHAR(7) (Optional, hex color for custom event highlight)
 - `created_at`: TIMESTAMP (Default: CURRENT_TIMESTAMP)
 
-## 8. "My Knowledge" (University/Academic Data)
+## 10. "My Knowledge" (University/Academic Data)
 
 ### `knowledge_domains`
 Top-level domains for "My Knowledge", e.g., "IIT Delhi", "Quantitative Finance".
@@ -243,7 +295,7 @@ Individual pieces of knowledge, like courses, books. (General purpose or can be 
 - `data`: JSONB (Stores specific data like course list, book details, links)
 - `order_index`: INTEGER
 
-*Note on IIT Delhi courses:* The current UI has specific structures for IIT Delhi courses (Institute Core, Departmental, Minor, etc.). This could be modeled with `knowledge_items` where `item_type` is 'course_category' and `data` contains the list of courses with their credits and details, or have dedicated tables if this structure is very rigid and frequently queried.
+*Note on IIT Delhi courses:* The current UI has specific structures for IIT Delhi courses (Institute Core, Departmental, Minor, etc.). This could be modeled with `knowledge_items` where `item_type` is 'course_category_iitd' and `data` contains the list of courses with their credits and details, or have dedicated tables if this structure is very rigid and frequently queried.
 
 Example for `knowledge_items.data` where `item_type` is 'course_category_iitd':
 ```json
@@ -260,7 +312,7 @@ Example for `knowledge_items.data` where `item_type` is 'course_category_iitd':
 }
 ```
 
-## 9. General Purpose Tables
+## 11. General Purpose Tables
 
 ### `tags`
 A global table for tags that can be used across different features (projects, blog posts, etc.).
@@ -275,5 +327,3 @@ A global table for tags that can be used across different features (projects, bl
 This schema is a starting point and can be further refined based on specific query patterns, performance needs, and feature evolution. Normalization and denormalization trade-offs should be considered during implementation.
 Using a UUID for primary keys is generally a good practice for distributed systems and to avoid ID collisions if data is merged from different sources. Timestamps help in tracking data changes.
 Consider using an ORM (Object-Relational Mapper) like Prisma or TypeORM to manage database interactions and migrations in a Next.js application.
-
-```

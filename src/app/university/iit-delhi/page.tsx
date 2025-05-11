@@ -15,10 +15,10 @@ export default function UniversityIITDelhiPage() {
         <div className="bg-card p-6 rounded-lg shadow-md hover:shadow-primary/20 transition-shadow">
           <div className="flex items-center mb-3">
             <School className="h-6 w-6 text-primary mr-3" />
-            <h2 className="text-xl font-semibold text-primary">Academics</h2>
+            <h2 className="text-xl font-semibold text-primary">IIT Delhi</h2>
           </div>
           <p className="text-muted-foreground mb-4">
-            Discover our academic structure, departments, and degree options.
+            IIT Delhi offers a unique opportunity to learn and evolve with its comprehensive B.Tech and M.Tech programs.
           </p>
           <Button asChild variant="link" className="p-0 text-primary">
             <Link href="/university/iit-delhi/academics">
@@ -31,3 +31,4 @@ export default function UniversityIITDelhiPage() {
     </div>
   );
 }
+

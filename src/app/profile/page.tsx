@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useAuth } from "@/contexts/auth-context";
@@ -8,6 +9,7 @@ import { PageHeader } from "@/components/core/page-header";
 import { Edit3, Mail, User, Shield } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import { Icons } from "@/components/icons"; // Added import for Icons
 
 export default function ProfilePage() {
   const { user, isAuthenticated } = useAuth();

@@ -16,6 +16,22 @@ const firebaseConfig = {
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
 };
 
+// Check if Firebase API key is present
+if (!firebaseConfig.apiKey) {
+  console.error(
+    "Firebase API Key (NEXT_PUBLIC_FIREBASE_API_KEY) is missing or undefined. " +
+    "Please ensure it is correctly set in your .env.local file and that your Next.js " +
+    "server has been restarted after changes to .env files."
+  );
+}
+if (!firebaseConfig.projectId) {
+  console.error(
+    "Firebase Project ID (NEXT_PUBLIC_FIREBASE_PROJECT_ID) is missing or undefined. " +
+    "Please ensure it is correctly set in your .env.local file."
+  );
+}
+
+
 // Initialize Firebase
 let app: FirebaseApp;
 if (!getApps().length) {
@@ -29,3 +45,4 @@ const db: Firestore = getFirestore(app);
 // const storage: FirebaseStorage = getStorage(app); // For avatar uploads later
 
 export { app, auth, db /*, storage */ };
+

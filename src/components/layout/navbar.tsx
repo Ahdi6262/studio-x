@@ -2,13 +2,14 @@
 "use client";
 
 import Link from 'next/link';
-import { Menu } from 'lucide-react'; // Removed ChevronDown as About dropdown is removed
+import { Menu } from 'lucide-react'; 
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-// DropdownMenu components are removed as they are no longer used for "About"
 import { Icons } from '@/components/icons';
 import { useAuth } from '@/contexts/auth-context';
 import { UserAvatarDropdown } from '@/components/auth/user-avatar-dropdown';
+import { usePathname } from 'next/navigation';
+import { cn } from '@/lib/utils';
 
 const mainNavItems = [
   { label: 'Home', href: '/' },
@@ -16,45 +17,54 @@ const mainNavItems = [
   { label: 'Courses', href: '/courses' },
 ];
 
-// These items were previously under a "Cool Dude" conceptual grouping in the prompt,
-// but appeared after "About". "Academics" is removed from here.
 const otherNavItems = [
   { label: 'People', href: '/people' },
   { label: 'Events', href: '/events' },
-  // { label: 'Academics', href: '/academics' }, // Removed as per request
 ];
 
 const utilityNavItems = [
   { label: 'Leaderboard', href: '/leaderboard' },
   { label: 'Blog', href: '/blog' },
-  { label: 'Cool Dude', href: '/cool-dude' }, // Link to Cool Dude page
+  { label: 'Cool Dude', href: '/cool-dude' }, 
 ];
 
 
 export function Navbar() {
   const { isAuthenticated } = useAuth();
+  const pathname = usePathname();
 
-  const renderNavItems = (items: {label: string, href: string}[]) => items.map((item) => (
-    <Link
-      key={item.label}
-      href={item.href}
-      className="text-sm font-medium text-foreground/70 transition-colors hover:text-foreground"
-    >
-      {item.label}
-    </Link>
-  ));
+  const renderNavItems = (items: {label: string, href: string}[]) => items.map((item) => {
+    const isActive = pathname === item.href;
+    return (
+      <Link
+        key={item.label}
+        href={item.href}
+        className={cn(
+          "text-sm font-medium transition-colors hover:text-primary",
+          isActive ? "text-primary font-semibold" : "text-foreground/70"
+        )}
+      >
+        {item.label}
+      </Link>
+    );
+  });
 
-  const renderMobileNavItems = (items: {label: string, href: string}[]) => items.map((item) => (
-    <Link
-      key={item.label}
-      href={item.href}
-      className="text-lg font-medium transition-colors hover:text-primary"
-    >
-      {item.label}
-    </Link>
-  ));
+  const renderMobileNavItems = (items: {label: string, href: string}[]) => items.map((item) => {
+    const isActive = pathname === item.href;
+    return (
+      <Link
+        key={item.label}
+        href={item.href}
+        className={cn(
+          "text-lg font-medium transition-colors hover:text-primary hover:bg-primary/5 py-2 px-3 rounded-md block",
+          isActive ? "text-primary bg-primary/10" : ""
+        )}
+      >
+        {item.label}
+      </Link>
+    );
+  });
 
-  // Sub-items for mobile "Academics" - these were formerly for "About"
   const academicsMobileSubItems = [
     { label: 'Departmental Core', href: '/academics/departmental-core' },
     { label: 'Interdisciplinary Initiatives', href: '/academics/interdisciplinary-initiatives' },
@@ -62,6 +72,9 @@ export function Navbar() {
     { label: 'Minor Degrees', href: '/academics/minor-degrees' },
     { label: 'Academic Sections', href: '/academics/academic-sections' },
   ];
+  
+  const isAcademicsSectionActive = academicsMobileSubItems.some(item => pathname === item.href) || pathname === '/academics';
+
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -75,7 +88,6 @@ export function Navbar() {
         
         <nav className="hidden md:flex gap-4 items-center">
           {renderNavItems(mainNavItems)}
-          {/* "About" DropdownMenu removed */}
           {renderNavItems(otherNavItems)}
           {renderNavItems(utilityNavItems)}
         </nav>
@@ -103,23 +115,42 @@ export function Navbar() {
                   <span className="sr-only">Toggle Menu</span>
                 </Button>
               </SheetTrigger>
-              <SheetContent side="right" className="w-[300px] sm:w-[400px]">
-                <nav className="flex flex-col space-y-3 mt-8">
+              <SheetContent side="right" className="w-[300px] sm:w-[400px] overflow-y-auto">
+                <Link href="/" className="mb-6 flex items-center space-x-2">
+                  <Icons.Logo className="h-7 w-7 text-primary" />
+                  <span className="font-bold text-2xl font-heading">
+                    CreatorChain Hub
+                  </span>
+                </Link>
+                <nav className="flex flex-col space-y-2 mt-6">
                   {renderMobileNavItems(mainNavItems)}
                   
-                  {/* Mobile "Academics" section with sub-items (formerly About) */}
-                  {/* This is a conceptual grouping for mobile, actual page is linked from Cool Dude */}
-                  <div className="text-lg font-medium">Academics</div>
-                  <div className="flex flex-col space-y-2 pl-4">
-                    {academicsMobileSubItems.map((subItem) => (
-                       <Link
-                        key={subItem.label}
-                        href={subItem.href}
-                        className="text-base font-normal text-foreground/80 transition-colors hover:text-primary"
-                      >
-                        {subItem.label}
-                      </Link>
-                    ))}
+                  <div>
+                    <div 
+                      className={cn(
+                        "text-lg font-medium py-2 px-3 rounded-md block hover:bg-primary/5",
+                        isAcademicsSectionActive ? "text-primary bg-primary/10" : ""
+                      )}
+                    >
+                      <Link href="/academics">Academics</Link>
+                    </div>
+                    <div className="flex flex-col space-y-1 pl-5 mt-1"> {/* Indent sub-items */}
+                      {academicsMobileSubItems.map((subItem) => {
+                        const isSubItemActive = pathname === subItem.href;
+                        return (
+                          <Link
+                            key={subItem.label}
+                            href={subItem.href}
+                            className={cn(
+                              "text-base font-normal text-foreground/80 transition-colors hover:text-primary hover:bg-primary/5 py-1.5 px-2 rounded-md block",
+                              isSubItemActive ? "text-primary bg-primary/10 font-medium" : ""
+                            )}
+                          >
+                            {subItem.label}
+                          </Link>
+                        );
+                      })}
+                    </div>
                   </div>
                   
                   {renderMobileNavItems(otherNavItems)}

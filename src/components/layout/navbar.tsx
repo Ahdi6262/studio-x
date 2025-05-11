@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from 'next/link';
@@ -16,6 +17,7 @@ const mainNavItems = [
   { label: 'Portfolio', href: '/portfolio' },
   { label: 'Courses', href: '/courses' },
   { label: 'My Knowledge', href: '/university/iit-delhi' }, 
+  { label: 'Dashboard', href: '/dashboard' },
 ];
 
 const otherNavItems = [
@@ -31,7 +33,7 @@ const utilityNavItems = [
 
 
 export function Navbar() {
-  const { isAuthenticated } = useAuth();
+  const { user, isAuthenticated, isLoading: authIsLoading } = useAuth();
   const pathname = usePathname();
   const [isMounted, setIsMounted] = useState(false);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
@@ -43,6 +45,9 @@ export function Navbar() {
   const closeSheet = useCallback(() => setIsSheetOpen(false), []);
 
   const renderNavItems = useCallback((items: {label: string, href: string}[]) => items.map((item) => {
+    if (item.label === 'Dashboard' && !isAuthenticated) {
+      return null;
+    }
     const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href));
     return (
       <Link
@@ -56,9 +61,12 @@ export function Navbar() {
         {item.label}
       </Link>
     );
-  }), [pathname]);
+  }), [pathname, isAuthenticated]);
 
   const renderMobileNavItems = useCallback((items: {label: string, href: string}[], closeSheetFn: () => void ) => items.map((item) => {
+     if (item.label === 'Dashboard' && !isAuthenticated) {
+      return null;
+    }
     const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href));
     return (
       <Link
@@ -73,7 +81,7 @@ export function Navbar() {
         {item.label}
       </Link>
     );
-  }), [pathname]);
+  }), [pathname, isAuthenticated]);
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -92,8 +100,8 @@ export function Navbar() {
         </nav>
 
         <div className="flex flex-1 items-center justify-end space-x-4">
-          {isMounted ? ( 
-            isAuthenticated ? (
+          {isMounted && !authIsLoading ? ( 
+            isAuthenticated && user ? (
               <UserAvatarDropdown />
             ) : (
               <nav className="hidden md:flex items-center space-x-2">
@@ -137,8 +145,8 @@ export function Navbar() {
                   {renderMobileNavItems(utilityNavItems, closeSheet)}
 
                   <hr className="my-4 border-border" />
-                  {isMounted ? ( 
-                    isAuthenticated ? (
+                  {isMounted && !authIsLoading ? ( 
+                    isAuthenticated && user ? (
                      <UserAvatarDropdown isMobile={true} />
                     ) : (
                       <>

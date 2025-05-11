@@ -9,7 +9,7 @@ export default function UniversityIITDelhiPage() {
     <div className="container mx-auto px-4 py-12">
       <PageHeader
         title="My knowledge"
-        description="Explore information related to IIT Delhi, including academic programs, research, and more."
+        description="This section outlines the diverse sources of my learning, including foundational academic knowledge from institutions like IIT Delhi, and ongoing exploration of various research areas."
       />
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <div className="bg-card p-6 rounded-lg shadow-md hover:shadow-primary/20 transition-shadow">
@@ -31,6 +31,7 @@ export default function UniversityIITDelhiPage() {
     </div>
   );
 }
+
 
 
 

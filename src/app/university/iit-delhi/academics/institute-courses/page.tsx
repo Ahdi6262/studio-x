@@ -19,7 +19,8 @@ interface CourseCategory {
   description?: string;
   courses: CourseItem[];
   totalCredits: number | string;
-  icon?: React.ElementType;
+  icon: React.ElementType; // Icon for the Card Header
+  iconLetter: string; // Letter for the Tab Trigger
 }
 
 const instituteCourseData: CourseCategory[] = [
@@ -27,6 +28,7 @@ const instituteCourseData: CourseCategory[] = [
     id: "basic-sciences",
     title: "Institute Core: Basic Sciences",
     icon: BookOpen,
+    iconLetter: "B",
     description: "Fundamental scientific principles for engineers.",
     courses: [
       { id: "bs1", name: "CML101 Introduction to Chemistry", credits: 4 },
@@ -43,9 +45,8 @@ const instituteCourseData: CourseCategory[] = [
     id: "engineering-arts-sciences",
     title: "Institute Core: Engineering Arts and Sciences",
     icon: ClipboardList,
+    iconLetter: "E",
     description: "Core engineering disciplines and visualization skills.",
-    // Credits for individual courses in this section were not explicitly specified in the prompt.
-    // Listing them as TBD. User should verify/update.
     courses: [
       { id: "eas1", name: "APL100 Engineering Mechanics", credits: "TBD" },
       { id: "eas2", name: "COL100 Introduction to Computer Science", credits: "TBD" },
@@ -60,9 +61,9 @@ const instituteCourseData: CourseCategory[] = [
   {
     id: "programme-linked-core",
     title: "Programme-Linked Basic / Engineering Arts / Sciences Core",
-    icon: Library, // Using Library as a generic icon
+    icon: Library, 
+    iconLetter: "P",
     description: "Specialized core courses linked to specific engineering programs.",
-     // Credits for individual courses in this section were not explicitly specified in the prompt.
     courses: [
       { id: "plc1", name: "COL106 Data Structures and Algorithms", credits: "TBD" },
       { id: "plc2", name: "ELL201 Digital Electronics", credits: "TBD" },
@@ -74,6 +75,7 @@ const instituteCourseData: CourseCategory[] = [
     id: "humanities-social-sciences",
     title: "Humanities and Social Sciences Courses",
     icon: Users,
+    iconLetter: "H",
     description: "Courses fostering critical thinking and communication skills.",
     courses: [
       { id: "hss1", name: "HUL212 Microeconomics", credits: 4 },
@@ -81,7 +83,7 @@ const instituteCourseData: CourseCategory[] = [
       { id: "hss3", name: "HUL101 English in Practice", credits: 3 },
       { id: "hss4", name: "HUL243 Language and Communication", credits: 4 },
     ],
-    totalCredits: 15, // Sum of 4+4+3+4
+    totalCredits: 15, 
   },
 ];
 
@@ -99,11 +101,23 @@ export default function InstituteCoursesPage() {
       />
       
       <Tabs defaultValue={instituteCourseData[0].id} className="w-full">
-        <TabsList className="grid w-full grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 mb-6">
+        <TabsList className="grid grid-cols-2 gap-3 mb-8"> {/* Changed to 2x2 grid and adjusted gap */}
           {instituteCourseData.map((category) => (
-            <TabsTrigger key={category.id} value={category.id} className="text-xs sm:text-sm">
-              {category.icon && <category.icon className="mr-2 h-4 w-4 flex-shrink-0" />}
-              {category.title}
+            <TabsTrigger 
+              key={category.id} 
+              value={category.id} 
+              className="w-full flex flex-col sm:flex-row items-center justify-center p-3 text-xs sm:text-sm h-20 sm:h-16 leading-tight" // Adjusted padding and height
+            >
+              <div className="relative mr-0 sm:mr-2 mb-1 sm:mb-0 flex-shrink-0">
+                <BookOpen className="h-5 w-5 sm:h-6 sm:w-6 text-primary" /> 
+                <span 
+                  className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-[55%] text-[0.5rem] sm:text-[0.6rem] font-bold text-primary-foreground"
+                  style={{ lineHeight: 1 }}
+                >
+                  {category.iconLetter}
+                </span>
+              </div>
+              <span className="truncate text-center sm:text-left flex-grow w-full sm:w-auto">{category.title}</span>
             </TabsTrigger>
           ))}
         </TabsList>

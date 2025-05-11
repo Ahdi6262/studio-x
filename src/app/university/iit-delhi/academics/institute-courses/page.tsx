@@ -101,12 +101,12 @@ export default function InstituteCoursesPage() {
       />
       
       <Tabs defaultValue={instituteCourseData[0].id} className="w-full">
-        <TabsList className="grid grid-cols-2 gap-3 mb-8"> {/* Changed to 2x2 grid and adjusted gap */}
+        <TabsList className="grid grid-cols-2 gap-3 mb-8 h-auto"> {/* Adjusted to 2x2 grid, gap, and h-auto */}
           {instituteCourseData.map((category) => (
             <TabsTrigger 
               key={category.id} 
               value={category.id} 
-              className="w-full flex flex-col sm:flex-row items-center justify-center p-3 text-xs sm:text-sm h-20 sm:h-16 leading-tight" // Adjusted padding and height
+              className="w-full flex flex-col sm:flex-row items-center justify-center p-3 text-xs sm:text-sm h-20 sm:h-16 leading-tight truncate" // Added truncate for long text
             >
               <div className="relative mr-0 sm:mr-2 mb-1 sm:mb-0 flex-shrink-0">
                 <BookOpen className="h-5 w-5 sm:h-6 sm:w-6 text-primary" /> 
@@ -164,3 +164,4 @@ export default function InstituteCoursesPage() {
     </div>
   );
 }
+

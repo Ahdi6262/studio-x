@@ -1,4 +1,3 @@
-
 "use client";
 
 import Link from 'next/link';
@@ -10,6 +9,7 @@ import { useAuth } from '@/contexts/auth-context';
 import { UserAvatarDropdown } from '@/components/auth/user-avatar-dropdown';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
+import { useState, useEffect } from 'react'; // Import useState and useEffect
 
 const mainNavItems = [
   { label: 'Home', href: '/' },
@@ -32,6 +32,12 @@ const utilityNavItems = [
 export function Navbar() {
   const { isAuthenticated } = useAuth();
   const pathname = usePathname();
+  const [isMounted, setIsMounted] = useState(false); // Add mounted state
+
+  useEffect(() => {
+    setIsMounted(true); // Set to true after component mounts
+  }, []);
+
 
   const renderNavItems = (items: {label: string, href: string}[]) => items.map((item) => {
     const isActive = pathname === item.href;
@@ -41,7 +47,7 @@ export function Navbar() {
         href={item.href}
         className={cn(
           "text-sm font-medium transition-colors hover:text-primary",
-          isActive ? "text-primary font-semibold" : "text-foreground/70"
+          isActive ? "text-primary bg-primary/10 px-3 py-1.5 rounded-md" : "text-foreground/70 px-3 py-1.5"
         )}
       >
         {item.label}
@@ -86,23 +92,32 @@ export function Navbar() {
           </span>
         </Link>
         
-        <nav className="hidden md:flex gap-4 items-center">
+        <nav className="hidden md:flex gap-1 items-center"> {/* Reduced gap slightly for tighter nav items */}
           {renderNavItems(mainNavItems)}
           {renderNavItems(otherNavItems)}
           {renderNavItems(utilityNavItems)}
         </nav>
 
         <div className="flex flex-1 items-center justify-end space-x-4">
-          {isAuthenticated ? (
-            <UserAvatarDropdown />
+          {/* Auth section: Defer rendering until mounted */}
+          {isMounted ? ( 
+            isAuthenticated ? (
+              <UserAvatarDropdown />
+            ) : (
+              <nav className="hidden md:flex items-center space-x-2">
+                <Button variant="ghost" asChild>
+                  <Link href="/login">Login</Link>
+                </Button>
+                <Button asChild>
+                  <Link href="/signup">Sign Up</Link>
+                </Button>
+              </nav>
+            )
           ) : (
+            // Placeholder for desktop to prevent layout shift
             <nav className="hidden md:flex items-center space-x-2">
-              <Button variant="ghost" asChild>
-                <Link href="/login">Login</Link>
-              </Button>
-              <Button asChild>
-                <Link href="/signup">Sign Up</Link>
-              </Button>
+              <div className="h-9 w-[60px] bg-muted/50 rounded-md animate-pulse"></div> {/* Approx size of Login button */}
+              <div className="h-10 w-[88px] bg-muted/50 rounded-md animate-pulse"></div> {/* Approx size of Sign Up button */}
             </nav>
           )}
           
@@ -126,15 +141,16 @@ export function Navbar() {
                   {renderMobileNavItems(mainNavItems)}
                   
                   <div>
-                    <div 
-                      className={cn(
+                    <Link
+                        href="/academics"
+                        className={cn(
                         "text-lg font-medium py-2 px-3 rounded-md block hover:bg-primary/5",
                         isAcademicsSectionActive ? "text-primary bg-primary/10" : ""
                       )}
                     >
-                      <Link href="/academics">Academics</Link>
-                    </div>
-                    <div className="flex flex-col space-y-1 pl-5 mt-1"> {/* Indent sub-items */}
+                      Academics
+                    </Link>
+                    <div className="flex flex-col space-y-1 pl-5 mt-1">
                       {academicsMobileSubItems.map((subItem) => {
                         const isSubItemActive = pathname === subItem.href;
                         return (
@@ -157,17 +173,26 @@ export function Navbar() {
                   {renderMobileNavItems(utilityNavItems)}
 
                   <hr className="my-4 border-border" />
-                  {isAuthenticated ? (
+                   {/* Auth section in mobile menu: Defer rendering until mounted */}
+                  {isMounted ? ( 
+                    isAuthenticated ? (
                      <UserAvatarDropdown isMobile={true} />
-                  ) : (
-                    <>
+                    ) : (
+                      <>
                        <Button variant="outline" className="w-full" asChild>
                         <Link href="/login">Login</Link>
                       </Button>
                       <Button className="w-full" asChild>
                         <Link href="/signup">Sign Up</Link>
                       </Button>
-                    </>
+                      </>
+                    )
+                  ) : (
+                    // Placeholder for mobile auth buttons
+                    <div className="space-y-2">
+                      <div className="h-10 bg-muted/50 rounded-md animate-pulse w-full"></div>
+                      <div className="h-10 bg-muted/50 rounded-md animate-pulse w-full"></div>
+                    </div>
                   )}
                 </nav>
               </SheetContent>

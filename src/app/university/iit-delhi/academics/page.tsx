@@ -8,7 +8,7 @@ export default function AcademicsPage() {
   const academicSubItems = [
     { label: 'Departmental Core', href: '/university/iit-delhi/academics/departmental-core' },
     { label: 'Interdisciplinary Initiatives', href: '/university/iit-delhi/academics/interdisciplinary-initiatives' },
-    { label: 'Research Labs', href: '/university/iit-delhi/academics/research-labs' },
+    // { label: 'Research Labs', href: '/university/iit-delhi/academics/research-labs' }, // Removed as per request
     { label: 'Minor Degrees', href: '/university/iit-delhi/academics/minor-degrees' },
     { label: 'Academic Sections', href: '/university/iit-delhi/academics/academic-sections' },
   ];
@@ -40,3 +40,4 @@ export default function AcademicsPage() {
     </div>
   );
 }
+

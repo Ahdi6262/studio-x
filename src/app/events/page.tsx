@@ -23,7 +23,10 @@ export default function EventsPage() {
         <div className="aspect-[16/10] md:aspect-[16/9] lg:aspect-[21/9] xl:aspect-[16/6] w-full border border-border/40 rounded-lg overflow-hidden">
           <iframe
             src={calendarEmbedUrl}
-            style={{ borderWidth: 0 }}
+            style={{ 
+              borderWidth: 0,
+              filter: 'invert(1) hue-rotate(180deg)' 
+            }}
             width="100%"
             height="100%"
             frameBorder="0"
@@ -33,7 +36,7 @@ export default function EventsPage() {
           ></iframe>
         </div>
         <p className="mt-4 text-sm text-muted-foreground text-center">
-          <strong>Note:</strong> This is a placeholder calendar. Please replace the embed URL in the code with your actual public Google Calendar.
+          <strong>Note:</strong> This is a placeholder calendar. Please replace the embed URL in the code with your actual public Google Calendar. The dark mode is simulated with a CSS filter and may not be perfect.
         </p>
       </div>
     </div>

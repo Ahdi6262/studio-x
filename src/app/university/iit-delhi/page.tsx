@@ -1,14 +1,14 @@
 
 import { PageHeader } from "@/components/core/page-header";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
 import { School, DollarSign, Brain, Code2 as Code, Sigma } from "lucide-react"; 
+import type { ElementType } from "react";
 
 interface KnowledgeArea {
   title: string;
   description: string;
   href: string;
-  icon: React.ElementType;
+  icon: ElementType;
   actionText: string;
 }
 
@@ -59,23 +59,22 @@ export default function UniversityIITDelhiPage() {
       />
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {knowledgeAreas.map((area) => (
-          <div key={area.title} className="bg-card p-6 rounded-lg shadow-md hover:shadow-primary/20 transition-shadow flex flex-col">
-            <div className="flex items-center mb-3">
-              <area.icon className="h-6 w-6 text-primary mr-3 flex-shrink-0" />
-              <h2 className="text-xl font-semibold text-primary">{area.title}</h2>
-            </div>
-            <p className="text-muted-foreground text-sm mb-4 flex-grow min-h-[80px]"> 
-              {area.description}
-            </p>
-            <Button asChild variant="link" className="p-0 text-primary mt-auto self-start">
-              <Link href={area.href}>
+          <Link href={area.href} key={area.title} className="block hover:no-underline group">
+            <div className="bg-card p-6 rounded-lg shadow-md group-hover:shadow-primary/20 transition-shadow flex flex-col h-full">
+              <div className="flex items-center mb-3">
+                <area.icon className="h-6 w-6 text-primary mr-3 flex-shrink-0" />
+                <h2 className="text-xl font-semibold text-primary">{area.title}</h2>
+              </div>
+              <p className="text-muted-foreground text-sm mb-4 flex-grow min-h-[80px]"> 
+                {area.description}
+              </p>
+              <div className="mt-auto self-start text-primary text-sm font-medium group-hover:underline">
                 {area.actionText} &rarr;
-              </Link>
-            </Button>
-          </div>
+              </div>
+            </div>
+          </Link>
         ))}
       </div>
     </div>
   );
 }
-

@@ -1,11 +1,18 @@
 
 import { PageHeader } from "@/components/core/page-header";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
 import { BookHeart, BookMarked, Layers, Library, BookCopy, ListPlus, GraduationCap, Lightbulb, NotebookPen, Layers3 } from "lucide-react"; 
+import type { ElementType } from "react";
+
+interface AcademicSubItem {
+  label: string;
+  href: string;
+  icon: ElementType;
+  description: string;
+}
 
 export default function AcademicsPage() {
-  const academicSubItems = [
+  const academicSubItems: AcademicSubItem[] = [
     { 
       label: 'Institute Courses (B.Tech)', 
       href: '/university/iit-delhi/academics/institute-courses',
@@ -52,23 +59,22 @@ export default function AcademicsPage() {
       />
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {academicSubItems.map(item => (
-          <div key={item.label} className="bg-card p-6 rounded-lg shadow-md hover:shadow-primary/20 transition-shadow flex flex-col">
-            <div className="flex items-center mb-3">
-              <item.icon className="h-7 w-7 text-primary mr-3 flex-shrink-0" />
-              <h2 className="text-xl font-semibold text-primary">{item.label}</h2>
-            </div>
-            <p className="text-muted-foreground mb-4 text-sm flex-grow min-h-[60px]">
-              {item.description}
-            </p>
-            <Button asChild variant="link" className="p-0 text-primary mt-auto self-start">
-              <Link href={item.href}>
+          <Link href={item.href} key={item.label} className="block hover:no-underline group">
+            <div className="bg-card p-6 rounded-lg shadow-md group-hover:shadow-primary/20 transition-shadow flex flex-col h-full">
+              <div className="flex items-center mb-3">
+                <item.icon className="h-7 w-7 text-primary mr-3 flex-shrink-0" />
+                <h2 className="text-xl font-semibold text-primary">{item.label}</h2>
+              </div>
+              <p className="text-muted-foreground mb-4 text-sm flex-grow min-h-[60px]">
+                {item.description}
+              </p>
+              <div className="mt-auto self-start text-primary text-sm font-medium group-hover:underline">
                 Learn More &rarr;
-              </Link>
-            </Button>
-          </div>
+              </div>
+            </div>
+          </Link>
         ))}
       </div>
     </div>
   );
 }
-

@@ -18,35 +18,39 @@ import {
   fetchSignInMethodsForEmail
 } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
-import { doc, setDoc, getDoc, serverTimestamp, arrayUnion, updateDoc, type FieldValue } from "firebase/firestore"; 
+import { doc, setDoc, getDoc, serverTimestamp, arrayUnion, updateDoc, type FieldValue, type Timestamp } from "firebase/firestore"; 
 
 export interface UserData {
   uid: string;
   name: string | null;
   email: string | null;
-  avatar_url?: string | null; // Matches Firestore schema
+  avatar_url?: string | null; 
   bio?: string | null;
   dashboard_layout_preferences?: Record<string, any>;
-  web3_wallets?: Array<{ address: string; chain_id: string; linked_at: FieldValue | Date; is_primary: boolean; }>; // Use FieldValue for write, Date for read
+  web3_wallets?: Array<{ address: string; chain_id: string; linked_at: FieldValue | Date; is_primary: boolean; }>; 
   auth_providers_linked?: Array<{ provider_name: string; provider_user_id: string; }>;
 }
 
-// Define a more specific type for data written to Firestore for user creation
-interface FirestoreUserCreateData extends Partial<UserData> {
-  created_at: FieldValue;
-  updated_at: FieldValue;
-  // Ensure all required fields from UserData that are not optional are listed or handled
+interface FirestoreUserCreateData {
   uid: string;
   email: string | null;
   name: string | null;
+  avatar_url?: string | null;
+  bio?: string | null;
+  dashboard_layout_preferences?: Record<string, any>;
+  web3_wallets?: Array<{ address: string; chain_id: string; linked_at: FieldValue; is_primary: boolean; }>;
+  auth_providers_linked?: Array<{ provider_name: string; provider_user_id: string; }>;
+  created_at: FieldValue;
+  updated_at: FieldValue;
 }
 
-// Define a more specific type for data written to Firestore for user profile updates
-interface FirestoreUserUpdateData extends Partial<UserData> {
+interface FirestoreUserUpdateData {
   updated_at: FieldValue;
-  name?: string | null; // Explicitly include fields that can be updated
+  name?: string | null;
   bio?: string | null;
   avatar_url?: string | null;
+  web3_wallets?: FieldValue; // For arrayUnion
+  auth_providers_linked?: FieldValue; // For arrayUnion
 }
 
 
@@ -63,7 +67,13 @@ interface AuthContextType {
   signInWithGoogle: () => Promise<FirebaseUser>;
   signInWithGithub: () => Promise<FirebaseUser>;
   signInWithFacebook: () => Promise<FirebaseUser>;
-  connectWallet: (address: string, chainId: string) => Promise<void>; // Basic wallet connect
+  connectWallet: () => Promise<{ address: string; chainId: string } | null>; // Connects and links if logged in
+  connectedWalletAddress: string | null;
+  isConnectingWallet: boolean;
+  // Placeholder for signature-based auth and Web3 data fetching
+  // signInWithWalletSignature: () => Promise<FirebaseUser | null>;
+  // fetchTokenBalance: (tokenAddress: string) => Promise<string | null>;
+  // checkNFTOwnership: (contractAddress: string, tokenId: string) => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -73,6 +83,8 @@ const USER_DATA_STORAGE_KEY = 'authUser';
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<UserData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [connectedWalletAddress, setConnectedWalletAddress] = useState<string | null>(null);
+  const [isConnectingWallet, setIsConnectingWallet] = useState(false);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
@@ -81,9 +93,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const userDocRef = doc(db, "users", firebaseUser.uid);
         const userDocSnap = await getDoc(userDocRef);
         
+        let userDataToSet: UserData;
+
         if (userDocSnap.exists()) {
-          const firestoreUser = userDocSnap.data() as UserData; // Assume data matches UserData
-          const userData: UserData = {
+          const firestoreUser = userDocSnap.data() as UserData; 
+          userDataToSet = {
             uid: firebaseUser.uid,
             name: firestoreUser.name || firebaseUser.displayName,
             email: firestoreUser.email || firebaseUser.email,
@@ -93,10 +107,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             web3_wallets: firestoreUser.web3_wallets?.map(w => ({...w, linked_at: (w.linked_at as Timestamp)?.toDate ? (w.linked_at as Timestamp).toDate() : new Date() })) || [],
             auth_providers_linked: firestoreUser.auth_providers_linked || [],
           };
-          setUser(userData);
-          localStorage.setItem(USER_DATA_STORAGE_KEY, JSON.stringify(userData));
         } else {
-          const newUserData: UserData = {
+          // New user or user data not yet in Firestore (e.g. after social sign-up)
+          userDataToSet = {
             uid: firebaseUser.uid,
             email: firebaseUser.email,
             name: firebaseUser.displayName,
@@ -107,20 +120,53 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             auth_providers_linked: firebaseUser.providerData.map(p => ({ provider_name: p.providerId, provider_user_id: p.uid })),
           };
           const newFirestoreData: FirestoreUserCreateData = {
-            ...newUserData,
+            ...userDataToSet,
             created_at: serverTimestamp(),
             updated_at: serverTimestamp(),
           };
           await setDoc(doc(db, "users", firebaseUser.uid), newFirestoreData, { merge: true });
-          setUser(newUserData);
-          localStorage.setItem(USER_DATA_STORAGE_KEY, JSON.stringify(newUserData));
         }
+        setUser(userDataToSet);
+        localStorage.setItem(USER_DATA_STORAGE_KEY, JSON.stringify(userDataToSet));
+        // Check if any linked wallets from Firestore should update connectedWalletAddress
+        if (userDataToSet.web3_wallets && userDataToSet.web3_wallets.length > 0) {
+            const primaryWallet = userDataToSet.web3_wallets.find(w => w.is_primary);
+            if (primaryWallet) setConnectedWalletAddress(primaryWallet.address);
+        }
+
       } else {
         setUser(null);
+        setConnectedWalletAddress(null);
         localStorage.removeItem(USER_DATA_STORAGE_KEY);
       }
       setIsLoading(false);
     });
+
+    // Listen for MetaMask account changes
+    if (typeof window !== 'undefined' && window.ethereum) {
+      const handleAccountsChanged = (accounts: string[]) => {
+        if (accounts.length > 0) {
+          setConnectedWalletAddress(accounts[0]);
+          // If user is logged in, consider auto-linking or prompting to link the new active account
+        } else {
+          setConnectedWalletAddress(null);
+        }
+      };
+      window.ethereum.on('accountsChanged', handleAccountsChanged);
+      
+      // Initial check for connected account
+      window.ethereum.request({ method: 'eth_accounts' }).then(accounts => {
+        if (Array.isArray(accounts) && accounts.length > 0) {
+            setConnectedWalletAddress(accounts[0]);
+        }
+      }).catch(console.error);
+
+      return () => {
+        unsubscribe();
+        window.ethereum.removeListener('accountsChanged', handleAccountsChanged);
+      };
+    }
+
     return () => unsubscribe();
   }, []);
 
@@ -128,6 +174,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const loginUser = async (email: string, password: string, keepLoggedIn: boolean = false): Promise<FirebaseUser> => {
     setIsLoading(true);
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
+    // Auth state change will handle user data loading
     setIsLoading(false);
     return userCredential.user;
   };
@@ -150,12 +197,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         updated_at: serverTimestamp(),
     };
     await setDoc(doc(db, "users", userCredential.user.uid), newUserFirestoreData);
+    // Auth state change will handle user data loading
     setIsLoading(false);
     return userCredential.user;
   };
 
   const logoutUser = async (): Promise<void> => {
     await signOut(auth);
+    // Auth state change will handle setting user to null
   };
 
   const updateUserAvatar = async (avatarUrl: string): Promise<void> => {
@@ -201,15 +250,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await sendPasswordResetEmail(auth, email);
   };
 
-  const handleSocialSignIn = async (provider: GoogleAuthProvider | GithubAuthProvider | FacebookAuthProvider): Promise<FirebaseUser> => {
+  const handleSocialSignIn = async (providerInstance: GoogleAuthProvider | GithubAuthProvider | FacebookAuthProvider): Promise<FirebaseUser> => {
     setIsLoading(true);
     try {
-        const result = await signInWithPopup(auth, provider);
+        const result = await signInWithPopup(auth, providerInstance);
         const firebaseUser = result.user;
         const userDocRef = doc(db, "users", firebaseUser.uid);
         const userDocSnap = await getDoc(userDocRef);
 
-        const providerData = { provider_name: provider.providerId, provider_user_id: firebaseUser.uid };
+        const providerData = { provider_name: providerInstance.providerId, provider_user_id: firebaseUser.uid };
 
         if (!userDocSnap.exists()) { 
             const newUserFirestoreData: FirestoreUserCreateData = {
@@ -228,24 +277,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } else { 
             const existingData = userDocSnap.data() as UserData;
             const authProviders = existingData.auth_providers_linked || [];
-            if (!authProviders.some((p) => p.provider_name === provider.providerId)) {
+            if (!authProviders.some((p) => p.provider_name === providerInstance.providerId)) {
                 authProviders.push(providerData);
             }
-            const updateData: FirestoreUserUpdateData = { 
+            const updateData: Partial<FirestoreUserUpdateData> = { 
               updated_at: serverTimestamp(),
               name: firebaseUser.displayName || existingData.name, 
               avatar_url: firebaseUser.photoURL || existingData.avatar_url,
               email: firebaseUser.email || existingData.email, 
-              auth_providers_linked: authProviders
+              auth_providers_linked: arrayUnion(providerData) // Use arrayUnion to avoid duplicates if logic is complex
             };
             await updateDoc(userDocRef, updateData);
         }
+        // Auth state change will handle user data loading
         return firebaseUser;
     } catch (error: any) {
         if (error.code === 'auth/account-exists-with-different-credential' && auth.currentUser && error.customData?.email) {
-            // const methods = await fetchSignInMethodsForEmail(auth, error.customData.email);
             try {
-                await linkWithPopup(auth.currentUser, provider); 
+                await linkWithPopup(auth.currentUser, providerInstance); 
+                const userDocRef = doc(db, "users", auth.currentUser.uid);
+                await updateDoc(userDocRef, { 
+                    auth_providers_linked: arrayUnion({ provider_name: providerInstance.providerId, provider_user_id: auth.currentUser.uid }),
+                    updated_at: serverTimestamp()
+                });
                 return auth.currentUser; 
             } catch (linkError) {
                 console.error("Social account linking error:", linkError);
@@ -263,25 +317,76 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signInWithGithub = () => handleSocialSignIn(new GithubAuthProvider());
   const signInWithFacebook = () => handleSocialSignIn(new FacebookAuthProvider());
 
-  const connectWallet = async (address: string, chainId: string): Promise<void> => {
-    if (auth.currentUser && user) {
-      const newWallet = { address, chain_id: chainId, linked_at: serverTimestamp(), is_primary: !(user.web3_wallets && user.web3_wallets.length > 0) };
-      const userDocRef = doc(db, "users", auth.currentUser.uid);
+  const connectWallet = async (): Promise<{ address: string; chainId: string } | null> => {
+    if (typeof window.ethereum === 'undefined') {
+      throw new Error("MetaMask (or other Ethereum wallet) not detected. Please install it.");
+    }
+    setIsConnectingWallet(true);
+    try {
+      const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' }) as string[];
+      if (accounts.length === 0) {
+        throw new Error("No accounts found. Please create or import an account in your wallet.");
+      }
+      const address = accounts[0];
+      const chainId = await window.ethereum.request({ method: 'eth_chainId' }) as string;
       
-      const updatePayload: { web3_wallets: FieldValue; updated_at: FieldValue } = {
-        web3_wallets: arrayUnion(newWallet),
-        updated_at: serverTimestamp()
-      };
-      await updateDoc(userDocRef, updatePayload);
-      
-      setUser(prevUser => ({
-        ...prevUser!,
-        web3_wallets: [...(prevUser?.web3_wallets || []), {...newWallet, linked_at: new Date() }] // Simulate immediate update with JS Date
-      }));
-    } else {
-      throw new Error("User not authenticated to connect wallet.");
+      setConnectedWalletAddress(address);
+
+      if (auth.currentUser && user) {
+        const userDocRef = doc(db, "users", auth.currentUser.uid);
+        const currentWallets = user.web3_wallets || [];
+        const walletExists = currentWallets.some(w => w.address.toLowerCase() === address.toLowerCase());
+
+        if (!walletExists) {
+            const newWalletEntry = { 
+                address: address, 
+                chain_id: chainId, 
+                linked_at: serverTimestamp(), 
+                is_primary: currentWallets.length === 0 
+            };
+            await updateDoc(userDocRef, {
+                web3_wallets: arrayUnion(newWalletEntry),
+                updated_at: serverTimestamp()
+            });
+            // Optimistically update local user state
+            setUser(prevUser => ({
+                ...prevUser!,
+                web3_wallets: [...(prevUser?.web3_wallets || []), {...newWalletEntry, linked_at: new Date() }]
+            }));
+        }
+      }
+      return { address, chainId };
+    } catch (error: any) {
+      console.error("Wallet connection failed:", error);
+      throw error; // Re-throw to be caught by UI
+    } finally {
+      setIsConnectingWallet(false);
     }
   };
+
+  // Placeholder for actual signature-based auth
+  // const signInWithWalletSignature = async (): Promise<FirebaseUser | null> => {
+  //   // 1. Connect wallet (use connectWallet or similar)
+  //   // 2. Request a nonce/message from backend
+  //   // 3. User signs message (window.ethereum.request({ method: 'personal_sign', params: [message, address] }))
+  //   // 4. Send signature, message, address to backend for verification
+  //   // 5. Backend verifies, creates/fetches user, returns custom token
+  //   // 6. Frontend signInWithCustomToken(auth, customToken)
+  //   console.warn("signInWithWalletSignature not implemented yet.");
+  //   return null;
+  // };
+
+  // Placeholder for Web3 data fetching (would typically be in a service or hook)
+  // const fetchTokenBalance = async (tokenAddress: string): Promise<string | null> => {
+  //   // Call backend API which uses ethers.js to get balance
+  //   console.warn("fetchTokenBalance not implemented yet.");
+  //   return null;
+  // };
+  // const checkNFTOwnership = async (contractAddress: string, tokenId: string): Promise<boolean> => {
+  //   // Call backend API which uses ethers.js
+  //   console.warn("checkNFTOwnership not implemented yet.");
+  //   return false;
+  // };
 
 
   return (
@@ -298,7 +403,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         signInWithGoogle,
         signInWithGithub,
         signInWithFacebook,
-        connectWallet
+        connectWallet,
+        connectedWalletAddress,
+        isConnectingWallet,
+        // signInWithWalletSignature, 
+        // fetchTokenBalance,
+        // checkNFTOwnership,
     }}>
       {children}
     </AuthContext.Provider>
@@ -312,6 +422,3 @@ export function useAuth() {
   }
   return context;
 }
-
-// Added Timestamp type from firebase/firestore for web3_wallets.linked_at
-import type { Timestamp } from "firebase/firestore";

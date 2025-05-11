@@ -5,7 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageHeader } from "@/components/core/page-header";
-import { Edit3, Mail, User, Shield, UploadCloud, Save, BookUser } from "lucide-react";
+import { Edit3, Mail, User, Shield, UploadCloud, Save, BookUser, Link2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, type ChangeEvent, useState, type FormEvent } from "react";
 import { Icons } from "@/components/icons";
@@ -25,6 +25,8 @@ export default function ProfilePage() {
     signInWithGithub, 
     signInWithFacebook,
     isLoading: authIsLoading,
+    connectedWalletAddress, // For display
+    connectWallet, // To initiate connection if not already via navbar
   } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
@@ -38,13 +40,13 @@ export default function ProfilePage() {
   const [isPageLoading, setIsPageLoading] = useState(true);
 
   useEffect(() => {
-    if (!authIsLoading &amp;&amp; !isAuthenticated) {
+    if (!authIsLoading && !isAuthenticated) {
       router.push('/login');
     } else if (user) {
       setDisplayName(user.name || '');
       setBio(user.bio || '');
       setIsPageLoading(false);
-    } else if (!authIsLoading &amp;&amp; !user) {
+    } else if (!authIsLoading && !user) {
       setIsPageLoading(false); 
     }
   }, [isAuthenticated, user, router, authIsLoading]);
@@ -68,11 +70,9 @@ export default function ProfilePage() {
       setIsSaving(true);
       const reader = new FileReader();
       reader.onloadend = async () => {
-        const dataUrl = reader.result as string; // Firebase Storage can take data URLs for upload
+        const dataUrl = reader.result as string; 
         try {
-          // In a real app, upload dataUrl to Firebase Storage, get the download URL, then update user profile
-          // For now, we simulate this by directly using dataUrl if avatar field expects it, or placeholder if URL needed
-          await updateUserAvatar(dataUrl); // Assuming updateUserAvatar can handle data URL or uploads it
+          await updateUserAvatar(dataUrl); 
           toast({ title: "Avatar Updated", description: "Your new avatar has been set." });
         } catch (error: any) {
            toast({ title: "Avatar Update Failed", description: error.message || "Could not update avatar.", variant: "destructive" });
@@ -105,13 +105,13 @@ export default function ProfilePage() {
     setIsSaving(true);
     try {
         let linkMethod;
-        if (providerName === 'google') linkMethod = signInWithGoogle; // These methods now handle linking/creating
+        if (providerName === 'google') linkMethod = signInWithGoogle; 
         else if (providerName === 'github') linkMethod = signInWithGithub;
         else if (providerName === 'facebook') linkMethod = signInWithFacebook;
         else return;
 
         await linkMethod(); 
-        toast({ title: `${providerName.charAt(0).toUpperCase() + providerName.slice(1)} Account Action Successful`, description: `Successfully interacted with ${providerName}.` });
+        toast({ title: `${providerName.charAt(0).toUpperCase() + providerName.slice(1)} Account Action Successful`, description: `Successfully interacted with ${providerName}. Check your provider list.` });
     } catch (error: any) {
         console.error(`Error with ${providerName} account:`, error);
         toast({ title: `Failed to process ${providerName}`, description: error.message || "An error occurred.", variant: "destructive"});
@@ -152,7 +152,6 @@ export default function ProfilePage() {
   }
   
   const fallbackName = user.name ? user.name.substring(0, 2).toUpperCase() : (user.email ? user.email.substring(0,2).toUpperCase() : 'U');
-  // Use user.avatar_url which matches Firestore schema
   const avatarSrc = user.avatar_url || (user.email ? `https://avatar.vercel.sh/${user.email}.png?size=128` : `https://avatar.vercel.sh/default.png?size=128`);
 
 
@@ -162,7 +161,7 @@ export default function ProfilePage() {
         title="My Profile" 
         description="Manage your account settings and preferences."
         actions={
-          !isEditing &amp;&amp; (
+          !isEditing && (
             <Button variant="outline" onClick={() => setIsEditing(true)}>
               <Edit3 className="mr-2 h-4 w-4" /> Edit Profile
             </Button>
@@ -189,7 +188,7 @@ export default function ProfilePage() {
               onChange={handleFileChange} 
             />
             <Button className="w-full mt-2" onClick={handleAvatarUploadClick} disabled={isSaving}>
-              <UploadCloud className="mr-2 h-4 w-4" /> {isSaving &amp;&amp; fileInputRef.current?.files?.length ? 'Uploading...' : 'Change Avatar'}
+              <UploadCloud className="mr-2 h-4 w-4" /> {isSaving && fileInputRef.current?.files?.length ? 'Uploading...' : 'Change Avatar'}
             </Button>
           </CardContent>
         </Card>
@@ -274,17 +273,31 @@ export default function ProfilePage() {
               <h3 className="text-lg font-semibold mb-2">Connected Accounts</h3>
               <div className="space-y-3">
                 <Button variant="outline" className="w-full justify-start" onClick={() => handleSocialLink('google')} disabled={isSaving}>
-                  <Icons.Google className="mr-2 h-4 w-4" /> Connect/Refresh Google
+                  <Icons.Google className="mr-2 h-4 w-4" /> 
+                  {user.auth_providers_linked?.some(p => p.provider_name === 'google.com') ? 'Refresh Google Link' : 'Link Google Account'}
                 </Button>
                  <Button variant="outline" className="w-full justify-start" onClick={() => handleSocialLink('github')} disabled={isSaving}>
-                  <Icons.Github className="mr-2 h-4 w-4" /> Connect/Refresh GitHub
+                  <Icons.Github className="mr-2 h-4 w-4" /> 
+                  {user.auth_providers_linked?.some(p => p.provider_name === 'github.com') ? 'Refresh GitHub Link' : 'Link GitHub Account'}
                 </Button>
                 <Button variant="outline" className="w-full justify-start" onClick={() => handleSocialLink('facebook')} disabled={isSaving}>
-                  <Icons.Facebook className="mr-2 h-4 w-4" /> Connect/Refresh Facebook
+                  <Icons.Facebook className="mr-2 h-4 w-4" /> 
+                  {user.auth_providers_linked?.some(p => p.provider_name === 'facebook.com') ? 'Refresh Facebook Link' : 'Link Facebook Account'}
                 </Button>
-                 <Button variant="outline" className="w-full justify-start" disabled> {/* Web3 wallet linking needs separate logic */}
-                  <Icons.Metamask className="mr-2 h-5 w-5" /> Link Web3 Wallet (Coming Soon)
+                 <Button variant="outline" className="w-full justify-start" onClick={connectWallet} disabled={!!connectedWalletAddress}>
+                  <Link2 className="mr-2 h-5 w-5" /> 
+                  {connectedWalletAddress ? `Linked: ${connectedWalletAddress.substring(0,6)}...` : 'Link Web3 Wallet'}
                 </Button>
+                {user.web3_wallets && user.web3_wallets.length > 0 && (
+                    <div className="mt-2 text-xs text-muted-foreground">
+                        <p>Linked Wallets:</p>
+                        <ul className="list-disc pl-5">
+                            {user.web3_wallets.map(wallet => (
+                                <li key={wallet.address}>{wallet.address.substring(0,10)}... ({wallet.chain_id}) {wallet.is_primary ? '(Primary)' : ''}</li>
+                            ))}
+                        </ul>
+                    </div>
+                )}
               </div>
             </div>
           </CardContent>
@@ -293,4 +306,3 @@ export default function ProfilePage() {
     </div>
   );
 }
-

@@ -1,8 +1,7 @@
-
 "use client";
 
 import Link from 'next/link';
-import { Menu, Settings as SettingsIcon, Link2, Search, Bell, Coins, Landmark } from 'lucide-react'; // Added Coins, Landmark
+import { Menu, Settings as SettingsIcon, Link2, Search, Bell, Coins, Landmark, UserCircle, LayoutDashboard, Award, LogOut } from 'lucide-react'; 
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Icons } from '@/components/icons';
@@ -13,6 +12,8 @@ import { cn } from '@/lib/utils';
 import { useState, useEffect, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Input } from '@/components/ui/input';
+import { Separator } from '../ui/separator';
+import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 
 const mainNavItems = [
   { label: 'Home', href: '/' },
@@ -37,62 +38,31 @@ const utilityNavItems = [
 
 
 export function Navbar() {
-  const { user, isAuthenticated, isLoading: authIsLoading, connectWallet: connectWalletContext } = useAuth();
+  const { 
+    user, 
+    isAuthenticated, 
+    isLoading: authIsLoading, 
+    connectWallet, 
+    connectedWalletAddress, 
+    isConnectingWallet 
+  } = useAuth();
   const pathname = usePathname();
   const { toast } = useToast();
   const [isMounted, setIsMounted] = useState(false);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
-  const [connectedWalletAddress, setConnectedWalletAddress] = useState<string | null>(null);
-  const [isConnectingWallet, setIsConnectingWallet] = useState(false);
-
+  
   useEffect(() => {
     setIsMounted(true);
-    if (typeof window !== 'undefined' && window.ethereum && window.ethereum.selectedAddress) {
-      setConnectedWalletAddress(window.ethereum.selectedAddress);
-    }
-    // Listen for account changes
-    if (window.ethereum) {
-      const handleAccountsChanged = (accounts: string[]) => {
-        if (accounts.length > 0) {
-          setConnectedWalletAddress(accounts[0]);
-        } else {
-          setConnectedWalletAddress(null);
-        }
-      };
-      window.ethereum.on('accountsChanged', handleAccountsChanged);
-      return () => {
-        window.ethereum.removeListener('accountsChanged', handleAccountsChanged);
-      };
-    }
-
   }, []);
 
   const closeSheet = useCallback(() => setIsSheetOpen(false), []);
 
   const handleConnectWallet = async () => {
-    if (typeof window.ethereum !== 'undefined') {
-      setIsConnectingWallet(true);
-      try {
-        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-        if (accounts && accounts.length > 0) {
-          const address = accounts[0];
-          setConnectedWalletAddress(address);
-          if (user) {
-            const chainId = await window.ethereum.request({ method: 'eth_chainId' });
-            await connectWalletContext(address, chainId);
-            toast({ title: "Wallet Connected", description: `Address: ${address.substring(0,6)}...${address.substring(address.length - 4)} linked to your profile.` });
-          } else {
-            toast({ title: "Wallet Connected", description: `Address: ${address.substring(0,6)}...${address.substring(address.length - 4)}. Log in to link to profile.` });
-          }
-        }
-      } catch (error: any) {
-        console.error("Failed to connect wallet:", error);
-        toast({ title: "Wallet Connection Failed", description: error.message || "Could not connect to wallet.", variant: "destructive" });
-      } finally {
-        setIsConnectingWallet(false);
-      }
-    } else {
-      toast({ title: "MetaMask Not Found", description: "Please install MetaMask or another Ethereum wallet.", variant: "destructive" });
+    try {
+      await connectWallet();
+      // Toast success handled within connectWallet or by observing connectedWalletAddress
+    } catch (error: any) {
+      toast({ title: "Wallet Connection Failed", description: error.message || "Could not connect to wallet.", variant: "destructive" });
     }
   };
 
@@ -107,44 +77,54 @@ export function Navbar() {
     const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href));
     const IconComponent = item.icon;
     return (
-      <Link
+      <Button
         key={item.label}
-        href={item.href}
+        variant="ghost"
+        asChild
         className={cn(
-          "text-sm font-medium transition-colors hover:text-primary flex items-center",
-          isActive ? "text-primary bg-primary/10 px-3 py-1.5 rounded-md" : "text-foreground/70 px-3 py-1.5"
+          "text-sm font-medium transition-colors hover:text-primary flex items-center px-3 py-1.5",
+          isActive ? "text-primary bg-primary/10" : "text-foreground/70"
         )}
       >
-        {IconComponent && <IconComponent className="mr-1.5 h-4 w-4" />}
-        {item.label}
-      </Link>
+        <Link href={item.href}>
+          {IconComponent && <IconComponent className="mr-1.5 h-4 w-4" />}
+          {item.label}
+        </Link>
+      </Button>
     );
   }), [pathname, isAuthenticated, authIsLoading]);
 
   const renderMobileNavItems = useCallback((items: {label: string, href: string, requiresAuth?: boolean, icon?: any}[], closeSheetFn: () => void ) => items.map((item) => {
-     if (item.requiresAuth && !isAuthenticated && !authIsLoading) { // Check authIsLoading here too
+     if (item.requiresAuth && !isAuthenticated && !authIsLoading) { 
       return null;
     }
-     if (item.requiresAuth && authIsLoading) { // Show skeleton/placeholder while auth is loading
+     if (item.requiresAuth && authIsLoading) { 
         return <div key={item.label} className="h-10 bg-muted/50 rounded-md animate-pulse w-full"></div>;
     }
     const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href));
     const IconComponent = item.icon;
     return (
-      <Link
+      <Button
         key={item.label}
-        href={item.href}
+        variant="ghost"
+        asChild
         onClick={closeSheetFn}
         className={cn(
-          "text-lg font-medium transition-colors hover:text-primary hover:bg-primary/5 py-2 px-3 rounded-md block flex items-center",
+          "text-lg font-medium transition-colors hover:text-primary hover:bg-primary/5 py-2 px-3 rounded-md block w-full justify-start flex items-center",
           isActive ? "text-primary bg-primary/10" : ""
         )}
       >
-        {IconComponent && <IconComponent className="mr-2 h-5 w-5" />}
-        {item.label}
-      </Link>
+        <Link href={item.href}>
+         {IconComponent && <IconComponent className="mr-2 h-5 w-5" />}
+         {item.label}
+        </Link>
+      </Button>
     );
   }), [pathname, isAuthenticated, authIsLoading]);
+  
+  const fallbackName = user?.name ? user.name.substring(0, 2).toUpperCase() : (user?.email ? user.email.substring(0,2).toUpperCase() : 'U');
+  const avatarSrc = user?.avatar_url || (user?.email ? `https://avatar.vercel.sh/${user.email}.png?size=32` : `https://avatar.vercel.sh/default.png?size=32`);
+
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -196,9 +176,11 @@ export function Navbar() {
                 </Button>
               </nav>
             )
-          ) : (
+          ) : ( // Auth is loading or component not mounted
             <nav className="hidden md:flex items-center space-x-2">
-              <div className="h-8 w-8 bg-muted/50 rounded-full animate-pulse"></div> {/* Avatar placeholder */}
+              <div className="h-9 w-20 bg-muted/50 rounded-md animate-pulse"></div>
+              <div className="h-9 w-24 bg-muted/50 rounded-md animate-pulse"></div>
+              <div className="h-8 w-8 bg-muted/50 rounded-full animate-pulse"></div> 
             </nav>
           )}
           
@@ -212,7 +194,8 @@ export function Navbar() {
               </SheetTrigger>
               <SheetContent side="right" className="w-[300px] sm:w-[400px] overflow-y-auto">
                 <SheetHeader className="sr-only">
-                  <SheetTitle>Navigation Menu</SheetTitle>
+                  {/* Screen reader accessible title, not visually displayed here as per DialogContent structure in ui/sheet */}
+                  <SheetTitle>Navigation Menu</SheetTitle> 
                 </SheetHeader>
                 <Link href="/" onClick={closeSheet} className="mt-4 mb-6 flex items-center space-x-2">
                   <Icons.Logo className="h-7 w-7 text-primary" />
@@ -229,7 +212,7 @@ export function Navbar() {
                   {renderMobileNavItems(otherNavItems, closeSheet)}
                   {renderMobileNavItems(utilityNavItems, closeSheet)}
 
-                  <hr className="my-4 border-border" />
+                  <Separator className="my-3" />
                   
                   {isMounted && (
                     <Button
@@ -245,14 +228,33 @@ export function Navbar() {
 
                   {isMounted && !authIsLoading ? (
                     isAuthenticated && user ? (
-                     <UserAvatarDropdown isMobile={true} />
+                     // Display user info and auth actions directly in sheet
+                     <div className="flex flex-col space-y-1 pt-2">
+                        <div className="flex items-center space-x-3 p-2 mb-1">
+                          <Avatar className="h-10 w-10">
+                            <AvatarImage src={avatarSrc} alt={user.name || 'User'} />
+                            <AvatarFallback>{fallbackName}</AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <p className="font-semibold text-sm">{user.name || "User"}</p>
+                            <p className="text-xs text-muted-foreground">{user.email}</p>
+                          </div>
+                        </div>
+                        <Separator />
+                        <Button variant="ghost" className="w-full justify-start text-lg py-2" asChild onClick={closeSheet}><Link href="/profile"><UserCircle className="mr-2 h-5 w-5" /> Profile</Link></Button>
+                        <Button variant="ghost" className="w-full justify-start text-lg py-2" asChild onClick={closeSheet}><Link href="/dashboard"><LayoutDashboard className="mr-2 h-5 w-5" /> Dashboard</Link></Button>
+                        <Button variant="ghost" className="w-full justify-start text-lg py-2" asChild onClick={closeSheet}><Link href="/profile/certificates"><Award className="mr-2 h-5 w-5" /> Certificates</Link></Button>
+                        <Button variant="ghost" className="w-full justify-start text-lg py-2" asChild onClick={closeSheet}><Link href="/settings"><SettingsIcon className="mr-2 h-5 w-5" /> Settings</Link></Button>
+                        <Separator />
+                        <Button variant="ghost" className="w-full justify-start text-destructive hover:text-destructive text-lg py-2" onClick={() => { useAuth().logoutUser(); closeSheet(); }}><LogOut className="mr-2 h-5 w-5" /> Logout</Button>
+                      </div>
                     ) : (
                       <>
-                       <Button variant="outline" className="w-full py-2 text-lg" asChild>
-                        <Link href="/login" onClick={closeSheet}>Login</Link>
+                       <Button variant="outline" className="w-full py-2 text-lg" asChild onClick={closeSheet}>
+                        <Link href="/login">Login</Link>
                       </Button>
-                      <Button className="w-full py-2 text-lg" asChild>
-                        <Link href="/signup" onClick={closeSheet}>Sign Up</Link>
+                      <Button className="w-full py-2 text-lg" asChild onClick={closeSheet}>
+                        <Link href="/signup">Sign Up</Link>
                       </Button>
                       </>
                     )

@@ -1,6 +1,7 @@
+
 "use client";
 
-import { Button } from "@/components/ui/button";
+import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -9,39 +10,57 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Filter, Search } from "lucide-react";
+import { Search } from "lucide-react";
+import type { Project } from "@/lib/mock-data";
 
-export function ProjectFilters() {
-  // Mock categories
-  const categories = ["All", "NFT", "AI", "Web3", "Marketplace", "Social Media"];
+// Mock categories, could be dynamic in a real app
+const categories = ["All", "NFT", "AI", "Web3", "Marketplace", "Social Media", "Solidity", "React", "Python", "Next.js", "IPFS", "Ceramic"];
+
+
+interface ProjectFiltersProps {
+  onFilterChange: (filters: { searchTerm: string; category: string }) => void;
+}
+
+export function ProjectFilters({ onFilterChange }: ProjectFiltersProps) {
+  const [searchTerm, setSearchTerm] = useState("");
+  const [category, setCategory] = useState("All");
+
+  useEffect(() => {
+    onFilterChange({ searchTerm, category });
+  }, [searchTerm, category, onFilterChange]);
 
   return (
     <div className="mb-8 p-6 bg-card rounded-lg shadow">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-end">
         <div className="space-y-2">
           <label htmlFor="search-projects" className="text-sm font-medium">Search Projects</label>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-            <Input id="search-projects" placeholder="Search by title or keyword..." className="pl-10" />
+            <Input 
+              id="search-projects" 
+              placeholder="Search by title, description, or tag..." 
+              className="pl-10" 
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
           </div>
         </div>
         <div className="space-y-2">
-          <label htmlFor="category-filter" className="text-sm font-medium">Filter by Category</label>
-          <Select defaultValue="All">
+          <label htmlFor="category-filter" className="text-sm font-medium">Filter by Category/Technology</label>
+          <Select value={category} onValueChange={setCategory}>
             <SelectTrigger id="category-filter">
               <SelectValue placeholder="Select category" />
             </SelectTrigger>
             <SelectContent>
-              {categories.map(category => (
-                <SelectItem key={category} value={category}>{category}</SelectItem>
+              {categories.map(cat => (
+                <SelectItem key={cat} value={cat}>{cat}</SelectItem>
               ))}
             </SelectContent>
           </Select>
         </div>
-        <Button className="md:mt-auto">
-          <Filter className="mr-2 h-4 w-4" /> Apply Filters
-        </Button>
+        {/* "Apply Filters" button removed, filtering happens on change */}
       </div>
     </div>
   );
 }
+

@@ -2,15 +2,15 @@
 import { PageHeader } from "@/components/core/page-header";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { BookHeart } from "lucide-react"; // Using a different icon
+import { BookHeart } from "lucide-react"; 
 
 export default function AcademicsPage() {
   const academicSubItems = [
-    { label: 'Departmental Core', href: '/academics/departmental-core' },
-    { label: 'Interdisciplinary Initiatives', href: '/academics/interdisciplinary-initiatives' },
-    { label: 'Research Labs', href: '/academics/research-labs' },
-    { label: 'Minor Degrees', href: '/academics/minor-degrees' },
-    { label: 'Academic Sections', href: '/academics/academic-sections' },
+    { label: 'Departmental Core', href: '/university/iit-delhi/academics/departmental-core' },
+    { label: 'Interdisciplinary Initiatives', href: '/university/iit-delhi/academics/interdisciplinary-initiatives' },
+    { label: 'Research Labs', href: '/university/iit-delhi/academics/research-labs' },
+    { label: 'Minor Degrees', href: '/university/iit-delhi/academics/minor-degrees' },
+    { label: 'Academic Sections', href: '/university/iit-delhi/academics/academic-sections' },
   ];
 
   return (

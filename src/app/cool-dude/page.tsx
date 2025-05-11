@@ -2,7 +2,6 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-// BookOpen icon is no longer used for the modified button.
 
 export default function CoolDudePage() {
   return (
@@ -32,12 +31,11 @@ export default function CoolDudePage() {
             </p>
             <Button
               asChild
-              variant="outline" // Using outline to better showcase border and glow
+              variant="outline" 
               className="group border-2 border-[#0000ff] dark:border-blue-400 text-[#0000ff] dark:text-blue-400 hover:bg-[#0000ff] dark:hover:bg-blue-400 hover:text-white dark:hover:text-black px-8 py-3 text-lg font-semibold rounded-lg relative overflow-hidden animate-glowBlue hover:animate-none"
             >
               <Link href="#">
                 Explore More
-                {/* Animated underline */}
                 <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-[#0000ff] dark:bg-blue-400 group-hover:w-full transition-all duration-300 ease-in-out"></span>
               </Link>
             </Button>
@@ -47,9 +45,10 @@ export default function CoolDudePage() {
           <div className="mt-8">
             <Button
               asChild
+              size="lg"
               className="bg-[#f8f8f8]/80 dark:bg-neutral-800/80 backdrop-blur-lg rounded-full py-6 px-12 shadow-xl text-xl md:text-2xl font-semibold text-neutral-700 dark:text-neutral-300 hover:opacity-90 transition-opacity"
             >
-              <Link href="/academics">
+              <Link href="/university/iit-delhi/academics">
                 IIT Delhi | Mathematics
               </Link>
             </Button>
@@ -60,4 +59,3 @@ export default function CoolDudePage() {
     </div>
   );
 }
-

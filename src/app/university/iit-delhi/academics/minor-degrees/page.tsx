@@ -4,22 +4,22 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 
-export default function ResearchLabsPage() {
+export default function MinorDegreesPage() {
   return (
     <div className="container mx-auto px-4 py-12">
       <Button variant="outline" size="sm" asChild className="mb-8">
-          <Link href="/academics">
+          <Link href="/university/iit-delhi/academics">
               <ArrowLeft className="mr-2 h-4 w-4" /> Back to Academics
           </Link>
       </Button>
       <PageHeader
-        title="Research Labs"
-        description="Discover the cutting-edge research being conducted in our state-of-the-art laboratories."
+        title="Minor Degrees"
+        description="Learn about the Minor Degree programs offered to broaden your academic horizons."
       />
-       <div className="bg-card p-8 rounded-lg shadow-lg">
+      <div className="bg-card p-8 rounded-lg shadow-lg">
         <p className="text-muted-foreground">
-          Information about our Research Labs is being compiled. 
-          This area will provide insights into various research groups, their projects, facilities, and contributions to their respective fields.
+          Details on Minor Degrees will be updated soon. 
+          This section will outline the available minor programs, their requirements, and how they can complement your primary field of study.
         </p>
       </div>
     </div>

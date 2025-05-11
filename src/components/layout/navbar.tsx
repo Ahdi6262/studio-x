@@ -9,12 +9,13 @@ import { useAuth } from '@/contexts/auth-context';
 import { UserAvatarDropdown } from '@/components/auth/user-avatar-dropdown';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import { useState, useEffect } from 'react'; // Import useState and useEffect
+import { useState, useEffect } from 'react';
 
 const mainNavItems = [
   { label: 'Home', href: '/' },
   { label: 'Portfolio', href: '/portfolio' },
   { label: 'Courses', href: '/courses' },
+  { label: 'University IIT Delhi', href: '/university/iit-delhi' }, // New Item
 ];
 
 const otherNavItems = [
@@ -32,15 +33,15 @@ const utilityNavItems = [
 export function Navbar() {
   const { isAuthenticated } = useAuth();
   const pathname = usePathname();
-  const [isMounted, setIsMounted] = useState(false); // Add mounted state
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
-    setIsMounted(true); // Set to true after component mounts
+    setIsMounted(true);
   }, []);
 
 
   const renderNavItems = (items: {label: string, href: string}[]) => items.map((item) => {
-    const isActive = pathname === item.href;
+    const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href));
     return (
       <Link
         key={item.label}
@@ -56,7 +57,7 @@ export function Navbar() {
   });
 
   const renderMobileNavItems = (items: {label: string, href: string}[]) => items.map((item) => {
-    const isActive = pathname === item.href;
+    const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href));
     return (
       <Link
         key={item.label}
@@ -71,17 +72,6 @@ export function Navbar() {
     );
   });
 
-  const academicsMobileSubItems = [
-    { label: 'Departmental Core', href: '/academics/departmental-core' },
-    { label: 'Interdisciplinary Initiatives', href: '/academics/interdisciplinary-initiatives' },
-    { label: 'Research Labs', href: '/academics/research-labs' },
-    { label: 'Minor Degrees', href: '/academics/minor-degrees' },
-    { label: 'Academic Sections', href: '/academics/academic-sections' },
-  ];
-  
-  const isAcademicsSectionActive = academicsMobileSubItems.some(item => pathname === item.href) || pathname === '/academics';
-
-
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 max-w-screen-2xl items-center">
@@ -92,14 +82,13 @@ export function Navbar() {
           </span>
         </Link>
         
-        <nav className="hidden md:flex gap-1 items-center"> {/* Reduced gap slightly for tighter nav items */}
+        <nav className="hidden md:flex gap-1 items-center">
           {renderNavItems(mainNavItems)}
           {renderNavItems(otherNavItems)}
           {renderNavItems(utilityNavItems)}
         </nav>
 
         <div className="flex flex-1 items-center justify-end space-x-4">
-          {/* Auth section: Defer rendering until mounted */}
           {isMounted ? ( 
             isAuthenticated ? (
               <UserAvatarDropdown />
@@ -114,14 +103,12 @@ export function Navbar() {
               </nav>
             )
           ) : (
-            // Placeholder for desktop to prevent layout shift
             <nav className="hidden md:flex items-center space-x-2">
-              <div className="h-9 w-[60px] bg-muted/50 rounded-md animate-pulse"></div> {/* Approx size of Login button */}
-              <div className="h-10 w-[88px] bg-muted/50 rounded-md animate-pulse"></div> {/* Approx size of Sign Up button */}
+              <div className="h-9 w-[60px] bg-muted/50 rounded-md animate-pulse"></div>
+              <div className="h-10 w-[88px] bg-muted/50 rounded-md animate-pulse"></div>
             </nav>
           )}
           
-          {/* Mobile Menu */}
           <div className="md:hidden">
             <Sheet>
               <SheetTrigger asChild>
@@ -139,41 +126,10 @@ export function Navbar() {
                 </Link>
                 <nav className="flex flex-col space-y-2 mt-6">
                   {renderMobileNavItems(mainNavItems)}
-                  
-                  <div>
-                    <Link
-                        href="/academics"
-                        className={cn(
-                        "text-lg font-medium py-2 px-3 rounded-md block hover:bg-primary/5",
-                        isAcademicsSectionActive ? "text-primary bg-primary/10" : ""
-                      )}
-                    >
-                      Academics
-                    </Link>
-                    <div className="flex flex-col space-y-1 pl-5 mt-1">
-                      {academicsMobileSubItems.map((subItem) => {
-                        const isSubItemActive = pathname === subItem.href;
-                        return (
-                          <Link
-                            key={subItem.label}
-                            href={subItem.href}
-                            className={cn(
-                              "text-base font-normal text-foreground/80 transition-colors hover:text-primary hover:bg-primary/5 py-1.5 px-2 rounded-md block",
-                              isSubItemActive ? "text-primary bg-primary/10 font-medium" : ""
-                            )}
-                          >
-                            {subItem.label}
-                          </Link>
-                        );
-                      })}
-                    </div>
-                  </div>
-                  
                   {renderMobileNavItems(otherNavItems)}
                   {renderMobileNavItems(utilityNavItems)}
 
                   <hr className="my-4 border-border" />
-                   {/* Auth section in mobile menu: Defer rendering until mounted */}
                   {isMounted ? ( 
                     isAuthenticated ? (
                      <UserAvatarDropdown isMobile={true} />
@@ -188,7 +144,6 @@ export function Navbar() {
                       </>
                     )
                   ) : (
-                    // Placeholder for mobile auth buttons
                     <div className="space-y-2">
                       <div className="h-10 bg-muted/50 rounded-md animate-pulse w-full"></div>
                       <div className="h-10 bg-muted/50 rounded-md animate-pulse w-full"></div>

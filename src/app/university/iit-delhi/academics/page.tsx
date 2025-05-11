@@ -7,7 +7,7 @@ import { BookHeart, BookMarked, Layers, Library } from "lucide-react";
 export default function AcademicsPage() {
   const academicSubItems = [
     { 
-      label: 'Departmental Core', 
+      label: 'Departmental Core (B.Tech)', 
       href: '/university/iit-delhi/academics/departmental-core',
       icon: BookHeart,
       description: "Explore the fundamental courses required for your chosen department."
@@ -19,13 +19,13 @@ export default function AcademicsPage() {
       description: "Discover options to specialize in an additional field of study."
     },
     { 
-      label: 'Institute Courses', 
+      label: 'Institute Courses (B.Tech)', 
       href: '/university/iit-delhi/academics/institute-courses',
       icon: Library,
       description: "Browse courses offered institute-wide, often covering foundational or interdisciplinary subjects."
     },
     { 
-      label: 'Departmental Electives', 
+      label: 'Departmental Electives (B.Tech)', 
       href: '/university/iit-delhi/academics/departmental-electives',
       icon: Layers,
       description: "Choose from a range of specialized elective courses within your department."

@@ -2,7 +2,7 @@
 import { PageHeader } from "@/components/core/page-header";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { BookHeart, BookMarked, Layers, Library, BookCopy, ListPlus } from "lucide-react"; 
+import { BookHeart, BookMarked, Layers, Library, BookCopy, ListPlus, GraduationCap } from "lucide-react"; 
 
 export default function AcademicsPage() {
   const academicSubItems = [
@@ -33,15 +33,21 @@ export default function AcademicsPage() {
     { 
       label: 'Programme Core (M.Tech)', 
       href: '/university/iit-delhi/academics/programme-core-mtech',
-      icon: BookCopy, // Example icon, replace if needed
+      icon: BookCopy, 
       description: "Delve into the core courses for various M.Tech specializations."
     },
     { 
       label: 'Programme Electives (M.Tech)', 
       href: '/university/iit-delhi/academics/programme-electives-mtech',
-      icon: ListPlus, // Example icon, replace if needed
+      icon: ListPlus, 
       description: "Explore elective options available for M.Tech programmes to deepen your expertise."
     },
+    {
+      label: 'Open Courses',
+      href: '/university/iit-delhi/academics/open-courses',
+      icon: GraduationCap,
+      description: "Access a selection of courses open to all students, fostering interdisciplinary learning."
+    }
   ];
 
   return (
@@ -50,7 +56,7 @@ export default function AcademicsPage() {
         title="Academics at IIT Delhi"
         description="Navigate through the core requirements, elective options, and degree programs available at IIT Delhi."
       />
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"> {/* Adjusted to lg:grid-cols-3 for better display of 6 items */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {academicSubItems.map(item => (
           <div key={item.label} className="bg-card p-6 rounded-lg shadow-md hover:shadow-primary/20 transition-shadow flex flex-col">
             <div className="flex items-center mb-3">

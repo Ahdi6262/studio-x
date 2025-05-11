@@ -15,12 +15,13 @@ import { useToast } from '@/hooks/use-toast';
 
 export function LoginForm() {
   const router = useRouter();
-  const { loginUser, signInWithGoogle, signInWithGithub, signInWithFacebook } = useAuth();
+  const { loginUser, signInWithGoogle, signInWithGithub, signInWithFacebook, signInWithWalletSignature } = useAuth();
   const { toast } = useToast();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [keepLoggedIn, setKeepLoggedIn] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isSocialLoading, setIsSocialLoading] = useState<string | null>(null); // To track specific social provider loading
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
@@ -37,7 +38,7 @@ export function LoginForm() {
   };
 
   const handleSocialLogin = async (provider: 'google' | 'github' | 'facebook') => {
-    setIsLoading(true);
+    setIsSocialLoading(provider);
     try {
       let socialLoginMethod;
       if (provider === 'google') socialLoginMethod = signInWithGoogle;
@@ -45,7 +46,7 @@ export function LoginForm() {
       else if (provider === 'facebook') socialLoginMethod = signInWithFacebook;
       else {
         toast({title: "Error", description: "Unknown social provider", variant: "destructive"});
-        setIsLoading(false);
+        setIsSocialLoading(null);
         return;
       }
 
@@ -54,14 +55,25 @@ export function LoginForm() {
       router.push('/dashboard');
     } catch (error: any) {
       console.error(`${provider} login failed:`, error);
-      // Handle specific Firebase errors for social logins if needed (e.g., account-exists-with-different-credential)
       toast({ title: `${provider.charAt(0).toUpperCase() + provider.slice(1)} Login Failed`, description: error.message || "Could not sign in.", variant: "destructive" });
     }
-    setIsLoading(false);
+    setIsSocialLoading(null);
   }
 
+  const handleWeb3Login = async () => {
+    setIsSocialLoading('wallet');
+    try {
+        await signInWithWalletSignature();
+        // Assuming signInWithWalletSignature handles navigation or auth state updates that trigger navigation
+        // If it returns a user, you might want to navigate here or show a success toast.
+        // For now, success/failure toasts are expected to be handled within signInWithWalletSignature or AuthContext.
+    } catch (error: any) {
+        toast({title: "Web3 Login Failed", description: error.message || "Failed to sign in with wallet.", variant: "destructive"});
+    }
+    setIsSocialLoading(null);
+  };
+
   const handleKeepLoggedInChange = (checked: boolean | 'indeterminate') => {
-    // Ensure setTimeout is not needed due to direct state update
     setKeepLoggedIn(checked as boolean);
   };
 
@@ -82,7 +94,7 @@ export function LoginForm() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              disabled={isLoading}
+              disabled={isLoading || !!isSocialLoading}
             />
           </div>
           <div className="space-y-2">
@@ -94,7 +106,7 @@ export function LoginForm() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              disabled={isLoading}
+              disabled={isLoading || !!isSocialLoading}
             />
           </div>
           <div className="flex items-center justify-between">
@@ -103,7 +115,7 @@ export function LoginForm() {
                 id="keep-logged-in" 
                 checked={keepLoggedIn}
                 onCheckedChange={handleKeepLoggedInChange}
-                disabled={isLoading}
+                disabled={isLoading || !!isSocialLoading}
               />
               <Label htmlFor="keep-logged-in" className="text-sm font-normal">Keep me signed in</Label>
             </div>
@@ -111,7 +123,7 @@ export function LoginForm() {
               Forgot password?
             </Link>
           </div>
-          <Button type="submit" className="w-full" disabled={isLoading}>
+          <Button type="submit" className="w-full" disabled={isLoading || !!isSocialLoading}>
             {isLoading ? 'Logging in...' : 'Login'}
           </Button>
         </form>
@@ -126,18 +138,22 @@ export function LoginForm() {
           </div>
         </div>
         <div className="mt-6 grid grid-cols-1 gap-4">
-          <Button variant="outline" onClick={() => handleSocialLogin('google')} disabled={isLoading}>
-            <Icons.Google className="mr-2 h-4 w-4" /> Google
+          <Button variant="outline" onClick={() => handleSocialLogin('google')} disabled={isLoading || !!isSocialLoading}>
+            {isSocialLoading === 'google' ? <Icons.Logo className="mr-2 h-4 w-4 animate-spin" /> : <Icons.Google className="mr-2 h-4 w-4" />}
+             Google
           </Button>
-          <Button variant="outline" onClick={() => handleSocialLogin('github')} disabled={isLoading}>
-            <Icons.Github className="mr-2 h-4 w-4" /> GitHub
+          <Button variant="outline" onClick={() => handleSocialLogin('github')} disabled={isLoading || !!isSocialLoading}>
+            {isSocialLoading === 'github' ? <Icons.Logo className="mr-2 h-4 w-4 animate-spin" /> : <Icons.Github className="mr-2 h-4 w-4" />}
+             GitHub
           </Button>
-          <Button variant="outline" onClick={() => handleSocialLogin('facebook')} disabled={isLoading}>
-            <Icons.Facebook className="mr-2 h-4 w-4" /> Facebook
+          <Button variant="outline" onClick={() => handleSocialLogin('facebook')} disabled={isLoading || !!isSocialLoading}>
+            {isSocialLoading === 'facebook' ? <Icons.Logo className="mr-2 h-4 w-4 animate-spin" /> : <Icons.Facebook className="mr-2 h-4 w-4" />}
+             Facebook
           </Button>
         </div>
-        <Button variant="outline" className="w-full mt-4" disabled={isLoading}>
-          <Icons.Metamask className="mr-2 h-5 w-5" /> Connect Wallet (Web3)
+        <Button variant="outline" className="w-full mt-4" onClick={handleWeb3Login} disabled={isLoading || !!isSocialLoading}>
+          {isSocialLoading === 'wallet' ? <Icons.Logo className="mr-2 h-5 w-5 animate-spin" /> : <Icons.Metamask className="mr-2 h-5 w-5" />}
+           Login with Wallet
         </Button>
       </CardContent>
       <CardFooter className="flex flex-col items-center space-y-2">
@@ -151,4 +167,3 @@ export function LoginForm() {
     </Card>
   );
 }
-

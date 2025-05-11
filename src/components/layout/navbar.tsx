@@ -44,7 +44,9 @@ export function Navbar() {
     isLoading: authIsLoading, 
     connectWallet, 
     connectedWalletAddress, 
-    isConnectingWallet 
+    isConnectingWallet,
+    signInWithWalletSignature, // Added
+    logoutUser // Added for mobile menu
   } = useAuth();
   const pathname = usePathname();
   const { toast } = useToast();
@@ -60,9 +62,18 @@ export function Navbar() {
   const handleConnectWallet = async () => {
     try {
       await connectWallet();
-      // Toast success handled within connectWallet or by observing connectedWalletAddress
+      toast({ title: "Wallet Action", description: connectedWalletAddress ? `Wallet ${connectedWalletAddress.substring(0,6)}... connected.` : "Wallet connected." });
     } catch (error: any) {
       toast({ title: "Wallet Connection Failed", description: error.message || "Could not connect to wallet.", variant: "destructive" });
+    }
+  };
+
+  const handleWeb3Login = async () => {
+    try {
+      await signInWithWalletSignature();
+      // Success toast will be handled by auth context or after successful login
+    } catch (error: any) {
+      toast({ title: "Web3 Login Failed", description: error.message || "Could not sign in with wallet.", variant: "destructive" });
     }
   };
 
@@ -83,7 +94,7 @@ export function Navbar() {
         asChild
         className={cn(
           "text-sm font-medium transition-colors hover:text-primary flex items-center px-3 py-1.5",
-          isActive ? "text-primary bg-primary/10" : "text-foreground/70"
+          isActive ? "text-primary bg-primary/10" : "text-foreground/70 hover:text-primary"
         )}
       >
         <Link href={item.href}>
@@ -156,7 +167,7 @@ export function Navbar() {
               variant="outline"
               size="sm"
               onClick={handleConnectWallet}
-              disabled={isConnectingWallet || !!connectedWalletAddress}
+              disabled={isConnectingWallet} // Disable only while actively connecting
             >
               <Link2 className="mr-2 h-4 w-4" />
               {isConnectingWallet ? "Connecting..." : connectedWalletAddress ? `${connectedWalletAddress.substring(0,6)}...${connectedWalletAddress.substring(connectedWalletAddress.length - 4)}` : "Connect Wallet"}
@@ -174,12 +185,16 @@ export function Navbar() {
                 <Button asChild>
                   <Link href="/signup">Sign Up</Link>
                 </Button>
+                <Button variant="outline" size="sm" onClick={handleWeb3Login} disabled={isConnectingWallet}>
+                    <Icons.Metamask className="mr-2 h-5 w-5" /> Login with Wallet
+                </Button>
               </nav>
             )
-          ) : ( // Auth is loading or component not mounted
+          ) : ( 
             <nav className="hidden md:flex items-center space-x-2">
+              <div className="h-9 w-16 bg-muted/50 rounded-md animate-pulse"></div>
               <div className="h-9 w-20 bg-muted/50 rounded-md animate-pulse"></div>
-              <div className="h-9 w-24 bg-muted/50 rounded-md animate-pulse"></div>
+              <div className="h-9 w-32 bg-muted/50 rounded-md animate-pulse"></div>
               <div className="h-8 w-8 bg-muted/50 rounded-full animate-pulse"></div> 
             </nav>
           )}
@@ -193,16 +208,15 @@ export function Navbar() {
                 </Button>
               </SheetTrigger>
               <SheetContent side="right" className="w-[300px] sm:w-[400px] overflow-y-auto">
-                <SheetHeader className="sr-only">
-                  {/* Screen reader accessible title, not visually displayed here as per DialogContent structure in ui/sheet */}
-                  <SheetTitle>Navigation Menu</SheetTitle> 
+                <SheetHeader className="mb-4 border-b pb-4">
+                  <SheetTitle className="sr-only">Navigation Menu</SheetTitle> 
+                  <Link href="/" onClick={closeSheet} className="flex items-center space-x-2">
+                    <Icons.Logo className="h-7 w-7 text-primary" />
+                    <span className="font-bold text-xl font-heading">
+                      HEX THE ADD HUB
+                    </span>
+                  </Link>
                 </SheetHeader>
-                <Link href="/" onClick={closeSheet} className="mt-4 mb-6 flex items-center space-x-2">
-                  <Icons.Logo className="h-7 w-7 text-primary" />
-                  <span className="font-bold text-2xl font-heading">
-                    HEX THE ADD HUB
-                  </span>
-                </Link>
                 <div className="relative my-4">
                   <Input type="search" placeholder="Search..." className="h-10 pl-10 pr-3 w-full text-base peer" />
                   <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground peer-focus:text-primary" />
@@ -219,7 +233,7 @@ export function Navbar() {
                       variant="outline"
                       className="w-full justify-start py-2 text-lg"
                       onClick={() => { handleConnectWallet(); closeSheet(); }}
-                      disabled={isConnectingWallet || !!connectedWalletAddress}
+                      disabled={isConnectingWallet}
                     >
                       <Link2 className="mr-2 h-5 w-5" />
                       {isConnectingWallet ? "Connecting..." : connectedWalletAddress ? `${connectedWalletAddress.substring(0,6)}...` : "Connect Wallet"}
@@ -228,7 +242,6 @@ export function Navbar() {
 
                   {isMounted && !authIsLoading ? (
                     isAuthenticated && user ? (
-                     // Display user info and auth actions directly in sheet
                      <div className="flex flex-col space-y-1 pt-2">
                         <div className="flex items-center space-x-3 p-2 mb-1">
                           <Avatar className="h-10 w-10">
@@ -246,7 +259,7 @@ export function Navbar() {
                         <Button variant="ghost" className="w-full justify-start text-lg py-2" asChild onClick={closeSheet}><Link href="/profile/certificates"><Award className="mr-2 h-5 w-5" /> Certificates</Link></Button>
                         <Button variant="ghost" className="w-full justify-start text-lg py-2" asChild onClick={closeSheet}><Link href="/settings"><SettingsIcon className="mr-2 h-5 w-5" /> Settings</Link></Button>
                         <Separator />
-                        <Button variant="ghost" className="w-full justify-start text-destructive hover:text-destructive text-lg py-2" onClick={() => { useAuth().logoutUser(); closeSheet(); }}><LogOut className="mr-2 h-5 w-5" /> Logout</Button>
+                        <Button variant="ghost" className="w-full justify-start text-destructive hover:text-destructive text-lg py-2" onClick={() => { logoutUser(); closeSheet(); }}><LogOut className="mr-2 h-5 w-5" /> Logout</Button>
                       </div>
                     ) : (
                       <>
@@ -256,10 +269,14 @@ export function Navbar() {
                       <Button className="w-full py-2 text-lg" asChild onClick={closeSheet}>
                         <Link href="/signup">Sign Up</Link>
                       </Button>
+                       <Button variant="outline" className="w-full justify-start py-2 text-lg" onClick={() => { handleWeb3Login(); closeSheet(); }} disabled={isConnectingWallet}>
+                          <Icons.Metamask className="mr-2 h-5 w-5" /> Login with Wallet
+                       </Button>
                       </>
                     )
                   ) : (
                     <div className="space-y-2">
+                      <div className="h-10 bg-muted/50 rounded-md animate-pulse w-full"></div>
                       <div className="h-10 bg-muted/50 rounded-md animate-pulse w-full"></div>
                       <div className="h-10 bg-muted/50 rounded-md animate-pulse w-full"></div>
                     </div>

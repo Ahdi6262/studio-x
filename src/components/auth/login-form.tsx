@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, type FormEvent } from 'react';
@@ -7,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox'; // Added Checkbox import
 import { Icons } from '@/components/icons';
 import { useAuth } from '@/contexts/auth-context';
 import { useToast } from '@/hooks/use-toast';
@@ -17,6 +19,7 @@ export function LoginForm() {
   const { toast } = useToast();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [keepLoggedIn, setKeepLoggedIn] = useState(false); // Added state for "Keep me signed in"
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (event: FormEvent) => {
@@ -27,7 +30,7 @@ export function LoginForm() {
     
     // Mock login logic
     if (email === 'user@example.com' && password === 'password') {
-      login({ name: 'Test User', email });
+      login({ name: 'Test User', email }, keepLoggedIn); // Pass keepLoggedIn to login function
       toast({ title: "Login Successful", description: "Welcome back!" });
       router.push('/profile'); // Redirect to profile or dashboard
     } else {
@@ -68,6 +71,20 @@ export function LoginForm() {
               disabled={isLoading}
             />
           </div>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <Checkbox 
+                id="keep-logged-in" 
+                checked={keepLoggedIn}
+                onCheckedChange={(checked) => setKeepLoggedIn(checked as boolean)}
+                disabled={isLoading}
+              />
+              <Label htmlFor="keep-logged-in" className="text-sm font-normal">Keep me signed in</Label>
+            </div>
+            <Link href="#" className="text-sm text-primary hover:underline">
+              Forgot password?
+            </Link>
+          </div>
           <Button type="submit" className="w-full" disabled={isLoading}>
             {isLoading ? 'Logging in...' : 'Login'}
           </Button>
@@ -95,9 +112,6 @@ export function LoginForm() {
         </Button>
       </CardContent>
       <CardFooter className="flex flex-col items-center space-y-2">
-        <Link href="#" className="text-sm text-primary hover:underline">
-          Forgot password?
-        </Link>
         <p className="text-sm text-muted-foreground">
           Don&apos;t have an account?{' '}
           <Link href="/signup" className="font-medium text-primary hover:underline">

@@ -122,6 +122,11 @@ export default {
           '0%, 100%': { boxShadow: '0 0 5px rgba(0, 120, 255, 0.5), 0 0 10px rgba(0, 120, 255, 0.4), 0 0 15px rgba(0, 120, 255, 0.3)' },
           '50%': { boxShadow: '0 0 10px rgba(0, 120, 255, 0.7), 0 0 20px rgba(0, 120, 255, 0.6), 0 0 30px rgba(0, 120, 255, 0.5)' },
         },
+        'spin-slow': {
+          to: {
+            transform: 'rotate(360deg)',
+          },
+        },
   		},
   		animation: {
   			'accordion-down': 'accordion-down 0.2s ease-out',
@@ -132,6 +137,7 @@ export default {
         'float-3': 'float-3 30s ease-in-out infinite',
         'float-4': 'float-4 22s ease-in-out infinite',
         'glowBlue': 'glowBlue 2s ease-in-out infinite alternate',
+        'spin-slow': 'spin-slow 3s linear infinite',
   		}
   	}
   },

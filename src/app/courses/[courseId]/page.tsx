@@ -7,6 +7,7 @@ import { PageHeader } from '@/components/core/page-header';
 import { ArrowLeft, Star, Users, Clock, BookOpen, CheckCircle, PlayCircle } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Separator } from '@/components/ui/separator';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 
 async function getCourseData(courseId: string): Promise<Course | undefined> {
   return mockCourses.find(c => c.id === courseId);

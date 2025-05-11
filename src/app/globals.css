@@ -87,6 +87,6 @@
     @apply font-heading font-semibold; /* Uses Poppins from tailwind.config.ts, default to semibold */
   }
   p {
-    @apply text-[#efefff]; /* Changed paragraph color */
+    @apply text-muted-foreground; /* Changed paragraph color to use theme's muted-foreground */
   }
 }

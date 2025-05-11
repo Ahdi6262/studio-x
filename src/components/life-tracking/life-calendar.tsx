@@ -1,10 +1,11 @@
 
 "use client";
 
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { differenceInWeeks, parseISO, getYear } from 'date-fns';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface LifeCalendarProps {
   birthDate: string;
@@ -25,7 +26,7 @@ const getLifeStageColor = (ageInYears: number): string => {
 };
 
 export function LifeCalendar({ birthDate, lifeExpectancyYears }: LifeCalendarProps) {
-  const [currentDate, setCurrentDate] = useState(new Date());
+  const [currentDate, setCurrentDate] = useState<Date | null>(null);
 
   useEffect(() => {
     // This ensures `new Date()` is only called on the client after hydration
@@ -34,7 +35,9 @@ export function LifeCalendar({ birthDate, lifeExpectancyYears }: LifeCalendarPro
 
 
   const { weeksSpent, totalWeeks, weeksLeft, lifeProgressPercent } = useMemo(() => {
-    if (!birthDate) return { weeksSpent: 0, totalWeeks: 0, weeksLeft: 0, lifeProgressPercent: 0 };
+    if (!birthDate || !currentDate) { // Wait for currentDate to be set
+        return { weeksSpent: 0, totalWeeks: lifeExpectancyYears * WEEKS_IN_YEAR, weeksLeft: lifeExpectancyYears * WEEKS_IN_YEAR, lifeProgressPercent: 0 };
+    }
     
     const dob = parseISO(birthDate);
     const spent = differenceInWeeks(currentDate, dob);
@@ -55,7 +58,28 @@ export function LifeCalendar({ birthDate, lifeExpectancyYears }: LifeCalendarPro
     return <Card><CardContent><p className="text-muted-foreground p-4">Please set your birth date in settings.</p></CardContent></Card>;
   }
   
-  const dobYear = getYear(parseISO(birthDate));
+  const dobYear = currentDate ? getYear(parseISO(birthDate)) : 0;
+
+  if (!currentDate) {
+    return (
+      <Card className="shadow-xl">
+        <CardHeader>
+          <CardTitle>Life Progress: Calculating...</CardTitle>
+          <CardDescription>
+            Loading your life calendar.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Skeleton className="h-64 w-full" />
+          <div className="mt-4 flex flex-wrap gap-x-4 gap-y-2 text-xs text-muted-foreground">
+            <Skeleton className="h-4 w-20" />
+            <Skeleton className="h-4 w-20" />
+            <Skeleton className="h-4 w-20" />
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className="shadow-xl">
@@ -121,5 +145,3 @@ export function LifeCalendar({ birthDate, lifeExpectancyYears }: LifeCalendarPro
     </Card>
   );
 }
-// Need to add useState and useEffect for currentDate to avoid hydration errors
-import { useState, useEffect } from 'react';

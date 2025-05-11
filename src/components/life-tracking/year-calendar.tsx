@@ -2,9 +2,10 @@
 "use client";
 
 import { useMemo, useState, useEffect } from 'react';
-import { differenceInWeeks, getYear, addYears, startOfYear, parseISO, format } from 'date-fns';
+import { differenceInWeeks, getYear, addYears, parseISO, format } from 'date-fns';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface YearCalendarProps {
   birthDate: string;
@@ -13,7 +14,7 @@ interface YearCalendarProps {
 const WEEKS_IN_YEAR_DISPLAY = 52; // Typically 52 weeks displayed
 
 export function YearCalendar({ birthDate }: YearCalendarProps) {
-  const [currentDate, setCurrentDate] = useState(new Date());
+  const [currentDate, setCurrentDate] = useState<Date | null>(null);
 
   useEffect(() => {
     // Ensures `new Date()` is client-side only after mount
@@ -21,7 +22,9 @@ export function YearCalendar({ birthDate }: YearCalendarProps) {
   }, []);
   
   const { weeksUntilNextBday, yearProgressPercent, weeksPassedThisBirthYear, nextBirthdayDateFormatted } = useMemo(() => {
-    if (!birthDate) return { weeksUntilNextBday: 0, yearProgressPercent: 0, weeksPassedThisBirthYear: 0, nextBirthdayDateFormatted: '' };
+    if (!birthDate || !currentDate) { // Wait for currentDate to be set
+        return { weeksUntilNextBday: 0, yearProgressPercent: 0, weeksPassedThisBirthYear: 0, nextBirthdayDateFormatted: 'Calculating...' };
+    }
 
     const dob = parseISO(birthDate);
     const currentYear = getYear(currentDate);
@@ -47,6 +50,20 @@ export function YearCalendar({ birthDate }: YearCalendarProps) {
 
   if (!birthDate) {
     return <Card><CardContent><p className="text-muted-foreground p-4">Please set your birth date in settings.</p></CardContent></Card>;
+  }
+
+  if (!currentDate) {
+    return (
+      <Card className="shadow-xl">
+        <CardHeader>
+          <CardTitle>Year Progress: Calculating...</CardTitle>
+          <CardDescription>Loading year calendar.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Skeleton className="h-24 w-full" />
+        </CardContent>
+      </Card>
+    );
   }
 
   return (

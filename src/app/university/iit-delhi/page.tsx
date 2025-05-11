@@ -24,28 +24,28 @@ export default function UniversityIITDelhiPage() {
     {
       title: "Quantitative Finance",
       description: "Delve into the intersection of finance, mathematics, and computational techniques to model and manage risk.",
-      href: "#", // Placeholder link, update when page exists
+      href: "#", // No specific page for this topic yet
       icon: DollarSign,
       actionText: "Learn More"
     },
     {
       title: "Artificial Intelligence",
-      description: "Explore the fascinating world of AI, including machine learning, deep learning, and natural language processing.",
-      href: "#", // Placeholder link, update when page exists
+      description: "Explore the fascinating world of AI, including machine learning, deep learning, and natural language processing. Relevant courses can be found within Minor Degrees.",
+      href: "/university/iit-delhi/academics/minor-degrees", // CS Minor includes AI/ML courses
       icon: Brain,
       actionText: "Learn More"
     },
     {
       title: "Programming Languages",
-      description: "Master various programming paradigms and languages, from foundational C++ to modern Python and JavaScript.",
-      href: "#", // Placeholder link, update when page exists
+      description: "Master various programming paradigms and languages. Relevant courses can be found within Minor Degrees and Institute Courses.",
+      href: "/university/iit-delhi/academics/minor-degrees", // CS Minor includes Programming Languages course
       icon: Code,
       actionText: "Learn More"
     },
     {
       title: "Mathematics",
-      description: "Deepen your understanding of core mathematical concepts, theories, and their applications in various scientific fields.",
-      href: "#", // Placeholder link, update when page exists
+      description: "Deepen your understanding of core mathematical concepts. Many foundational and advanced math courses are part of the B.Tech departmental curriculum.",
+      href: "/university/iit-delhi/academics/department-btech", // B.Tech Departmental courses are math-heavy
       icon: Sigma,
       actionText: "Learn More"
     }
@@ -78,3 +78,4 @@ export default function UniversityIITDelhiPage() {
     </div>
   );
 }
+

@@ -1,41 +1,14 @@
-import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowRight, Zap, Users, BookOpen } from 'lucide-react';
+import { HeroSection } from '@/components/home/hero-section'; // Import the new HeroSection
 
 export default function Home() {
   return (
     <div className="container mx-auto px-4 py-12">
       {/* Hero Section */}
-      <section className="text-center py-16 md:py-24">
-        <h1 className="text-5xl md:text-6xl font-bold tracking-tight text-foreground">
-          Welcome to <span className="text-primary">CreatorChain Hub</span>
-        </h1>
-        <p className="mt-6 text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto">
-          The ultimate platform for Web3 creators. Showcase your portfolio, learn new skills, connect with the community, and climb the leaderboard.
-        </p>
-        <div className="mt-10 flex flex-col sm:flex-row justify-center gap-4">
-          <Button size="lg" asChild>
-            <Link href="/signup">Get Started <ArrowRight className="ml-2 h-5 w-5" /></Link>
-          </Button>
-          <Button size="lg" variant="outline" asChild>
-            <Link href="/courses">Explore Courses</Link>
-          </Button>
-        </div>
-        <div className="mt-16 relative">
-          <Image 
-            src="https://picsum.photos/seed/hero/1200/600" 
-            alt="CreatorChain Hub platform showcase" 
-            width={1200} 
-            height={600}
-            className="rounded-xl shadow-2xl mx-auto object-cover"
-            data-ai-hint="futuristic digital abstract"
-            priority
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent rounded-xl"></div>
-        </div>
-      </section>
+      <HeroSection />
 
       {/* Features Section */}
       <section className="py-16 md:py-24">

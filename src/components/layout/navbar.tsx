@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from 'next/link';
@@ -15,7 +16,7 @@ const mainNavItems = [
   { label: 'Home', href: '/' },
   { label: 'Portfolio', href: '/portfolio' },
   { label: 'Courses', href: '/courses' },
-  { label: 'University IIT Delhi', href: '/university/iit-delhi' }, // New Item
+  { label: 'My Knowledge', href: '/university/iit-delhi' }, 
 ];
 
 const otherNavItems = [
@@ -103,6 +104,7 @@ export function Navbar() {
               </nav>
             )
           ) : (
+            // Skeleton loaders for auth buttons
             <nav className="hidden md:flex items-center space-x-2">
               <div className="h-9 w-[60px] bg-muted/50 rounded-md animate-pulse"></div>
               <div className="h-10 w-[88px] bg-muted/50 rounded-md animate-pulse"></div>
@@ -144,6 +146,7 @@ export function Navbar() {
                       </>
                     )
                   ) : (
+                     // Skeleton loaders for mobile auth buttons
                     <div className="space-y-2">
                       <div className="h-10 bg-muted/50 rounded-md animate-pulse w-full"></div>
                       <div className="h-10 bg-muted/50 rounded-md animate-pulse w-full"></div>
@@ -158,3 +161,4 @@ export function Navbar() {
     </header>
   );
 }
+

@@ -27,7 +27,7 @@ const otherNavItems = [
 const utilityNavItems = [
   { label: 'Leaderboard', href: '/leaderboard' },
   { label: 'Blog', href: '/blog' },
-  // { label: 'Cool Dude', href: '/cool-dude' }, // Removed Cool Dude
+  { label: 'Life Tracking', href: '/life-tracking'},
 ];
 
 
@@ -45,7 +45,7 @@ export function Navbar() {
     const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href));
     return (
       <Link
-        key={item.label} // Changed key to item.label as href might not be unique if structure changes
+        key={item.href} 
         href={item.href}
         className={cn(
           "text-sm font-medium transition-colors hover:text-primary",
@@ -61,7 +61,7 @@ export function Navbar() {
     const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href));
     return (
       <Link
-        key={item.label} // Changed key to item.label
+        key={item.href}
         href={item.href}
         className={cn(
           "text-lg font-medium transition-colors hover:text-primary hover:bg-primary/5 py-2 px-3 rounded-md block",
